@@ -1,0 +1,45 @@
+# This file stores the atomic weights and masses that will be used in the mass-weighted Hessian calculation.
+#
+# format is:
+# element_name,atomic_number,atomic_symbol,atomic_weight, [atomic_number_of_replacement, symbol_of_replacement]
+#
+# if no replacements are specified, the atomic weight will be used to calculate the frequencies and
+# no KIEs can be calculated at that position
+#
+# comment lines begin with # and will be ignored
+# anything after a # is also ignored
+#
+# choices here are taken to match those of quiver
+# otherwise, data taken from http://physics.nist.gov/cgi-bin/Compositions/stand_alone.pl
+#
+# as a safety feature, you must specify the data in ascending order of atomic number
+hydrogen,1,H,1.00783,1H,1.00783,2D,2.0141,3T,3.016049
+lithium,3,Li,6.94
+boron,5,B,10.811
+carbon,6,C,12.0,12C,12.0,13C,13.00335,14C,14.0031
+nitrogen,7,N,14.0067,14N,14.0031,15N,15.0001
+oxygen,8,O,15.9994,16O,15.9949,17O,16.9991,18O,17.9992
+fluorine,9,F,18.9984
+sodium,11,Na,22.9898
+magnesium,12,Mg,24.305
+silicon,14,Si,28.0855
+phosphorus,15,P,30.9738
+sulfur,16,S,32.453
+chlorine,17,Cl,35.453
+potassium,19,K,39.0983
+titanium,22,Ti,47.867
+iron,26,Fe,55.845
+cobalt,27,Co,58.9332
+nickel,28,Ni,58.6934
+copper,29,Cu,63.546
+zinc,30,Zn,65.39
+selenium,34,Se,78.96
+bromine,35,Br,79.9
+rhodium,45,Rh,102.9055
+palladium,46,Pd,106.42
+silver,47,Ag,107.8682
+tin,50,Sn,118.71
+iodine,53,I,126.9045
+cesium,55,Cs,132.9055
+platinum,78,Pt,195.078
+gold,79,Au,196.9665
