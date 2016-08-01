@@ -24,8 +24,8 @@ class System(object):
                     raise AttributeError("Number of atoms not detected.")
                 self.number_of_atoms = number_of_atoms
                 
-                m = re.match("Forces \(Hartrees/Bohr\)(.+)Cartesian Forces")
-                for match in re.finditer("Forces \(Hartrees/Bohr\)(.+))", out_data):
+                #m = re.match("Forces \(Hartrees/Bohr\)(.+)Cartesian Forces")
+                for match in re.finditer("Forces \(Hartrees/Bohr\)(.+)Cartesian Forces", out_data, re.DOTALL):
                     print match.group(0)
 
                 # units = hartrees/bohr^2 ?
@@ -50,5 +50,5 @@ class System(object):
         return fcm
 
 
-gs = System("../../quiver/claisen_demo/claisen_gs.out")
+gs = System("../test/claisen_gs.out")
 
