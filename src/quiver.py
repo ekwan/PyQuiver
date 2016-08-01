@@ -25,9 +25,8 @@ class System(object):
                 self.number_of_atoms = number_of_atoms
                 
                 m = re.match("Forces \(Hartrees/Bohr\)(.+)Cartesian Forces")
-                for match in re.finditer("Forces \(Hartrees/Bohr\)):
-                    pass
-                match.group(0)
+                for match in re.finditer("Forces \(Hartrees/Bohr\)(.+))", out_data):
+                    print match.group(0)
 
                 # units = hartrees/bohr^2 ?
                 hessian = self._parse_g09_hessian(out_data)
