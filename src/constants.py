@@ -114,3 +114,9 @@ for line in open("weights.dat", "r"):
     #print element
 print "Read atomic weight data for %d elements." % len(elements)
 
+# map from atomic number to default masses
+default_masses = {}
+for e in elements:
+    default_masses[e.atomic_number] = e.default_mass
+
+
