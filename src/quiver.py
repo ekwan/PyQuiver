@@ -11,6 +11,42 @@ def _g09_triangle_serial(row,col):
     triangle = lambda n: n*(n+1)/2
     return triangle(row) + col
 
+class Isotopologue(object):
+    def __init__(self, system, masses):
+        self.iitensor = self.calculate_inertia_tensor(masses)
+        self.mw_hessian = self.calculate_mw_hessian(masses)
+    
+    def calculate_inertia_tensor(self, masses):
+        # calculate cartesian center of mass to find intertia tensor relative to com
+        rcm = np.zeros(3)
+        total_mass = 0
+        for i in xrange(0, number_of_atoms):
+            for e in xrange(0,3):
+                total_mass += masses[i]
+                rcm[e] += positions[i][e] * masses[i]
+        for e in xrange(0,3):
+            rcm[e] = rcm[e] / total_mass
+
+        # calculate cartesian moment of inertia tensor
+        iitensor = np.zeros(shape=(3,3))
+        for e1 in xrange(0,3):
+            for e2 in xrange(0,3):
+                for i in xrange(0, number_of_atoms):
+                    if e1 == e2:
+                        iitensor[e1,e2] += masses[i] * ((positions[i,(e1+1)%3]-rcm[(e1+1)%3])**2
+                                                      + (positions[i,(e1+2)%3]-rcm[(e1+2)%3])**2)
+                    else:
+                        iitensor[e1,e2] += -1 * masses[i] * (positions[i,e1]-rcm[e1]) * (positions[i,e2]-rcm[e2])
+
+        return iitensor
+
+    def calculate_mw_hessian(self):
+        pass
+    
+    def calculate_rpfr(self):
+        pass
+
+
 class System(object):
     def __init__(self, outfile, style="g09"):
         print outfile
@@ -26,18 +62,20 @@ class System(object):
                 self.number_of_atoms = number_of_atoms
                 
                 # read in the last geometry (assumed cartesian coordinates)
-                atomic_number = [0 for i in xrange(number_of_atoms)]
-                position = [None for i in xrange(number_of_atoms)]
-                mass = np.array([0.0 for i in xrange(number_of_atoms)])
+                atomic_numbers = [0 for i in xrange(number_of_atoms)]
+                positions = np.zeros(shape=(number_of_atoms,3))
+                masses = np.zeros(number_of_atoms)
                 for m in re.finditer("Standard orientation:(.+?)Rotational constants \(GHZ\)", out_data, re.DOTALL):
                     pass
                 
                 for l in m.group(1).split('\n')[5:-2]:
                     raw_geom_line = filter(None, l.split(' '))
                     center_number = int(raw_geom_line[0]) - 1
-                    atomic_number[center_number] = int(raw_geom_line[1])
-                    mass[center_number] = raw_geom_line[1]
-                    position[center_number] = np.array(raw_geom_line[3:])
+                    atomic_numbers[center_number] = int(raw_geom_line[1])
+                    masses[center_number] = raw_geom_line[1]
+                    for e in xrange(0,3):
+                        positions[center_number][e] = raw_geom_line[3+e]
+                                                
 
                 # units = hartrees/bohr^2 ?
                 hessian = self._parse_g09_hessian(out_data)
@@ -59,10 +97,6 @@ class System(object):
             for j in xrange(0, 3*self.number_of_atoms):
                 fcm[i,j] = raw_fcm[_g09_triangle_serial(i,j)]
         return fcm
-    
-    def calculate_rpfr(self):
-        pass
-
 
 gs = System("../test/claisen_gs.out")
 
