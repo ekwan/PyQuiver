@@ -2,6 +2,7 @@ import re
 
 import numpy  as np
 import pandas as pd
+from constants import DEFAULT_MASSES
 
 root = ""
 
@@ -142,7 +143,7 @@ class System(object):
                     raw_geom_line = filter(None, l.split(' '))
                     center_number = int(raw_geom_line[0]) - 1
                     atomic_numbers[center_number] = int(raw_geom_line[1])
-                    masses[center_number] = raw_geom_line[1]
+                    masses[center_number] = DEFAULT_MASSES[atomic_numbers[center_number]]
                     for e in xrange(0,3):
                         positions[center_number][e] = raw_geom_line[3+e]
                 
