@@ -169,7 +169,8 @@ class Isotopologue(object):
 
 class System(object):
     def __init__(self, outfile, style="g09"):
-        print outfile
+        print "Reading data from %s..." % outfile
+        self.filename = outfile
         with open(outfile, 'r') as f:
             out_data = f.read()
             print out_data
@@ -220,5 +221,5 @@ class System(object):
                 fcm[i,j] = raw_fcm[_g09_triangle_serial(i,j)]
         return fcm
 
-#gs = System("../test/claisen_gs_iop.out")
-#gsiso = Isotopologue(gs, gs.masses)
+gs = System("../test/claisen_ts.out")
+gsiso = Isotopologue(gs, gs.masses)
