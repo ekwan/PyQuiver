@@ -1,0 +1,13 @@
+Minimal inertia tensor test file to be parsed by g09 parser
+NAtoms= 3
+Standard orientation:
+Blank 1
+Blank 2
+Blank 3
+Blank 4
+1 1 0 0.0 1.0 2.0
+2 3 0 -3.0 -4.0 5.0
+3 6 0 6.0 7.0 -8.0
+Blank 6
+Rotational constants (GHZ)
+NImag=0\\0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\\\\\\\\\@

@@ -29,6 +29,7 @@ class Isotopologue(object):
 
         self.number_of_atoms = system.number_of_atoms
         self.rcm, self.iitensor = self.calculate_inertia_tensor(masses, system.positions)
+
         self.mw_hessian = self.calculate_mw_hessian(self.masses3)
 
         self.calculate_internal_hessian(masses)
@@ -38,6 +39,7 @@ class Isotopologue(object):
         # calculate cartesian center of mass to find intertia tensor relative to center of mass
         rcm = np.zeros(3)
         total_mass = 0
+        import pdb; pdb.set_trace()
         for i in xrange(0, self.number_of_atoms):
             for e in xrange(0,3):
                 total_mass += masses[i]
@@ -138,9 +140,11 @@ class Isotopologue(object):
         
         # calculate the internal hessian in appropriate units
         int_hessian = np.dot(np.matrix.transpose(d_matrix), np.dot(self.mw_hessian, d_matrix)) * conv_factor
+
         # need to detect if linear!!! TODO
         projected_hessian = int_hessian[np.ix_(range(6,3*self.number_of_atoms),range(6,3*self.number_of_atoms))]
         #projected_hessian = int_hessian[np.ix_(range(0,len(zero_vectors)) + range(6,3*self.number_of_atoms),range(0,len(zero_vectors)) + range(6,3*self.number_of_atoms))]
+
         np.savetxt("int.csv", int_hessian, delimiter=",")
         np.savetxt("proj.csv", projected_hessian, delimiter=",")
         #v,w = np.linalg.eig(projected_hessian)
@@ -165,11 +169,13 @@ class Isotopologue(object):
 
 class System(object):
     def __init__(self, outfile, style="g09"):
+        print outfile
         with open(outfile, 'r') as f:
             out_data = f.read()
+            print out_data
             if style == "g09":
                 # read in the number of atoms
-                m = re.search("NAtoms\= + ([0-9]+)", out_data)
+                m = re.search("NAtoms\= +([0-9]+)", out_data)
                 if m:
                     number_of_atoms = int(m.group(1))
                 else:
@@ -214,5 +220,5 @@ class System(object):
                 fcm[i,j] = raw_fcm[_g09_triangle_serial(i,j)]
         return fcm
 
-gs = System("../test/claisen_gs_iop.out")
-gsiso = Isotopologue(gs, gs.masses)
+#gs = System("../test/claisen_gs_iop.out")
+#gsiso = Isotopologue(gs, gs.masses)
