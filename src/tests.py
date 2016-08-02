@@ -6,9 +6,9 @@ from quiver import *
 class InertiaTensorTestCase(unittest.TestCase):
     def setUp(self):
         self.system = System('../test/iitensor.out')
-        masses = { '1': 3.0,
-                   '3': 7.0,
-                   '6': 11.0 }
+        masses = { 0: 3.0,
+                   1: 7.0,
+                   2: 11.0 }
         self.systemIso = Isotopologue(self.system, masses)
 
     def tearDown(self):

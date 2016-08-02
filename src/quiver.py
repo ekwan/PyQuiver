@@ -29,7 +29,7 @@ class Isotopologue(object):
 
         self.number_of_atoms = system.number_of_atoms
         self.rcm, self.iitensor = self.calculate_inertia_tensor(masses, system.positions)
-
+        print self.rcm, self.iitensor
         self.mw_hessian = self.calculate_mw_hessian(self.masses3)
 
         self.calculate_internal_hessian(masses)
@@ -41,9 +41,10 @@ class Isotopologue(object):
         total_mass = 0
         import pdb; pdb.set_trace()
         for i in xrange(0, self.number_of_atoms):
+            total_mass += masses[i]
             for e in xrange(0,3):
-                total_mass += masses[i]
                 rcm[e] += positions[i][e] * masses[i]
+
         for e in xrange(0,3):
             rcm[e] = rcm[e] / total_mass
 
@@ -148,7 +149,7 @@ class Isotopologue(object):
         np.savetxt("int.csv", int_hessian, delimiter=",")
         np.savetxt("proj.csv", projected_hessian, delimiter=",")
         #v,w = np.linalg.eig(projected_hessian)
-        v,w = np.linalg.eig(self.mw_hessian * conv_factor)
+        v,w = np.linalg.eig(projected_hessian)
         #v,w = np.linalg.eig(int_hessian)
         # retrieve frequencies in units 1/cm
         frequencies = []
@@ -173,7 +174,6 @@ class System(object):
         self.filename = outfile
         with open(outfile, 'r') as f:
             out_data = f.read()
-            print out_data
             if style == "g09":
                 # read in the number of atoms
                 m = re.search("NAtoms\= +([0-9]+)", out_data)
@@ -221,5 +221,5 @@ class System(object):
                 fcm[i,j] = raw_fcm[_g09_triangle_serial(i,j)]
         return fcm
 
-gs = System("../test/claisen_ts.out")
-gsiso = Isotopologue(gs, gs.masses)
+#gs = System("../test/claisen_gs.out")
+#gsiso = Isotopologue(gs, gs.masses)
