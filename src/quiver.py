@@ -29,7 +29,7 @@ class Isotopologue(object):
 
         self.number_of_atoms = system.number_of_atoms
         self.rcm, self.iitensor = self.calculate_inertia_tensor(masses, system.positions)
-        print self.rcm, self.iitensor
+        #self.rcm, self.iitensor = self.calculate_inertia_tensor(masses, system.positions_angstrom)
         self.mw_hessian = self.calculate_mw_hessian(self.masses3)
 
         self.calculate_internal_hessian(masses)
@@ -39,26 +39,28 @@ class Isotopologue(object):
         # calculate cartesian center of mass to find intertia tensor relative to center of mass
         rcm = np.zeros(3)
         total_mass = 0
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         for i in xrange(0, self.number_of_atoms):
             total_mass += masses[i]
-            for e in xrange(0,3):
-                rcm[e] += positions[i][e] * masses[i]
+            rcm += positions[i] * masses[i]
 
-        for e in xrange(0,3):
-            rcm[e] = rcm[e] / total_mass
+        rcm = rcm / total_mass
 
         # calculate cartesian moment of inertia tensor
         iitensor = np.zeros(shape=(3,3))
+        # center to rcm and convert to atomic units
+        rcm_positions = positions - rcm
+
         for e1 in xrange(0,3):
             for e2 in xrange(0,3):
                 for i in xrange(0, self.number_of_atoms):
                     if e1 == e2:
-                        iitensor[e1,e2] += masses[i] * ((positions[i,(e1+1)%3]-rcm[(e1+1)%3])**2
-                                                      + (positions[i,(e1+2)%3]-rcm[(e1+2)%3])**2)
+                        iitensor[e1,e2] += masses[i] * ((rcm_positions[i,(e1+1)%3])**2
+                                                      + (rcm_positions[i,(e1+2)%3])**2)
                     else:
-                        iitensor[e1,e2] += -1 * masses[i] * (positions[i,e1]-rcm[e1]) * (positions[i,e2]-rcm[e2])
-
+                        iitensor[e1,e2] += -1 * masses[i] * (rcm_positions[i,e1]) * (rcm_positions[i,e2])
+        #print rcm
+        #print iitensor
         return rcm, iitensor
 
     def calculate_frequencies(self):
@@ -80,12 +82,12 @@ class Isotopologue(object):
         for e in xrange(0,3):
             v = np.zeros(3*self.number_of_atoms)
             for i in xrange(0, self.number_of_atoms):
-                v[3*i:3*i+3] = np.array([1.0 if x == e else 0.0 for x in xrange(0,3)]) * masses[i]
+                v[3*i:3*i+3] = np.array([1.0 if x == e else 0.0 for x in xrange(0,3)]) * np.sqrt(masses[i])
             vectors.append(v)
         
         # order concerns?
         v,w = np.linalg.eig(self.iitensor)
-        
+
         for e1 in xrange(0,3):
             v = np.zeros(3*self.number_of_atoms)
             for i in xrange(0, self.number_of_atoms):
@@ -96,7 +98,7 @@ class Isotopologue(object):
                 for e2 in xrange(0,3):
                     v[3*i+e2] = (p[(e2+1)%3] * w[e1][(e2+2)%3] - p[(e2+2)%3] * w[e1][(e2+1)%3])/np.sqrt(masses[i])
             vectors.append(v)
-
+            
         def normalize(v):
             norm=np.linalg.norm(v)
             if norm==0: 
@@ -110,6 +112,12 @@ class Isotopologue(object):
                 normalized_vectors.append(normalize(v))
             except ValueError:
                 zero_vectors.append(v)
+        '''
+        for u in normalized_vectors:
+            for v in normalized_vectors:
+                print np.inner(u,v)
+        '''
+        #print normalized_vectors
 
         def proj(u,v):
             # project u onto v
@@ -148,8 +156,9 @@ class Isotopologue(object):
 
         np.savetxt("int.csv", int_hessian, delimiter=",")
         np.savetxt("proj.csv", projected_hessian, delimiter=",")
-        #v,w = np.linalg.eig(projected_hessian)
+
         v,w = np.linalg.eig(projected_hessian)
+        #v,w = np.linalg.eig(self.mw_hessian*conv_factor)
         #v,w = np.linalg.eig(int_hessian)
         # retrieve frequencies in units 1/cm
         frequencies = []
@@ -161,7 +170,7 @@ class Isotopologue(object):
             frequencies.append(imag_flag * np.sqrt(lam)/(2*np.pi*PHYSICAL_CONSTANTS['c']))
         frequencies = np.array(frequencies)
         frequencies.sort()
-        print frequencies
+        #print frequencies
         return int_hessian
         
     def calculate_rpfr(self):
@@ -203,7 +212,12 @@ class System(object):
 
         #copy fields
         self.hessian = hessian
-        self.positions = positions
+
+        self.positions_angstrom = positions
+        self.positions = positions/PHYSICAL_CONSTANTS['atb']
+        #print self.positions_angstrom[0]
+        #print self.positions[0]
+
         self.masses = masses
         self.atomic_numbers = atomic_numbers
 
@@ -221,5 +235,5 @@ class System(object):
                 fcm[i,j] = raw_fcm[_g09_triangle_serial(i,j)]
         return fcm
 
-#gs = System("../test/claisen_gs.out")
-#gsiso = Isotopologue(gs, gs.masses)
+gs = System("../test/claisen_gs.out")
+gsiso = Isotopologue(gs, gs.masses)
