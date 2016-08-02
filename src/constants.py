@@ -6,8 +6,12 @@ import re
 
 # Physical Constants
 
-h = 6.625E-27
-#CM/2.998E10/,EM/1.440E13/,HBC/1.4387/
+PHYSICAL_CONSTANTS = {
+    'h': 6.625E-27,
+    #CM/2.998E10/,EM/1.440E13/,HBC/1.4387/
+    'c': 2.99792458E8,
+}
+
 
 ###############
 

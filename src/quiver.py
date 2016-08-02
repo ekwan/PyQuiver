@@ -3,6 +3,7 @@ import re
 import numpy  as np
 import pandas as pd
 from constants import DEFAULT_MASSES
+from constants import PHYSICAL_CONSTANTS
 
 root = ""
 
@@ -19,11 +20,18 @@ class Isotopologue(object):
     def __init__(self, system, masses):
         self.system = system
         self.masses = masses
+        # vector of masses with each entry repeated three times for convenience
+        masses3_list = []
+        for m in masses:
+            masses3_list.extend([m, m, m])
+        self.masses3 = np.array(masses3_list)
+
         self.number_of_atoms = system.number_of_atoms
         self.rcm, self.iitensor = self.calculate_inertia_tensor(masses, system.positions)
-        self.mw_hessian = self.calculate_mw_hessian(masses)
+        self.mw_hessian = self.calculate_mw_hessian(self.masses3)
 
         self.calculate_internal_hessian(masses)
+
     
     def calculate_inertia_tensor(self, masses, positions):
         # calculate cartesian center of mass to find intertia tensor relative to center of mass
@@ -52,8 +60,16 @@ class Isotopologue(object):
     def calculate_frequencies(self):
         pass
 
-    def calculate_mw_hessian(self, masses):
-        pass
+    def calculate_mw_hessian(self, masses3):
+        hessian = self.system.hessian
+        mw_hessian = np.zeros_like(hessian)
+
+        for i in xrange(0, 3*self.number_of_atoms):
+            for j in xrange(0, 3*self.number_of_atoms):
+                mw_hessian[i,j] = hessian[i,j] / np.sqrt( masses3[i] * masses3[j] )
+
+        return mw_hessian
+                
 
     def calculate_internal_hessian(self, masses):
         vectors = []
@@ -90,11 +106,12 @@ class Isotopologue(object):
                 normalized_vectors.append(normalize(v))
             except ValueError:
                 zero_vectors.append(v)
-        
+
+        '''
         for u in normalized_vectors:
             for v in normalized_vectors:
                 print np.inner(u,v)
-
+        '''
         def proj(u,v):
             # project u onto v
             #print np.inner(v,u)/np.inner(u,u)
@@ -104,16 +121,27 @@ class Isotopologue(object):
         while len(normalized_vectors) + len(zero_vectors) < 3*self.number_of_atoms:
             test_vector = standard_basis.pop()
             for v in normalized_vectors:
-                test_vector -= proj(test_vector, v)
+                test_vector -= proj(v, test_vector)
             try:
                 normalized_vectors.append(normalize(test_vector))
             except ValueError:
                 pass
-
-        print normalized_vectors
+        
+        # tiny residuals left over but otherwise good
+        '''
         for u in normalized_vectors:
             for v in normalized_vectors:
                 print np.inner(u,v)
+        '''
+        
+        # costly step
+        d_matrix = np.matrix(zero_vectors + normalized_vectors)
+
+        int_hessian = np.dot(np.matrix.transpose(d_matrix), np.dot(self.mw_hessian, d_matrix))
+        v,w = np.linalg.eig(int_hessian)
+        print v
+        return int_hessian
+        
     def calculate_rpfr(self):
         pass
 
@@ -171,5 +199,5 @@ class System(object):
                 fcm[i,j] = raw_fcm[_g09_triangle_serial(i,j)]
         return fcm
 
-gs = System("../test/co2.out")
-gsiso = Isotopologue(gs, [1.0 for i in xrange(0, gs.number_of_atoms)])
+gs = System("../test/claisen_ts.out")
+gsiso = Isotopologue(gs, gs.masses)
