@@ -1,4 +1,4 @@
-# This class holds physical constants and atomic weights.
+# This file holds physical constants and reads atomic weights.
 import sys
 import re
 
@@ -93,7 +93,7 @@ elements = []
 for line in open("weights.dat", "r"):
     # ignore comments and blank lines
     line = line.strip()
-    if line[0] == "#" or len(line) == 0:
+    if len(line) == 0 or line[0] == "#":
         continue
     line = line.split("#",1)[0]
 
@@ -119,8 +119,11 @@ for line in open("weights.dat", "r"):
 print "Read atomic weight data for %d elements." % len(elements)
 
 # map from atomic number to default masses
-DEFAULT_MASSES = {}
-for e in elements:
-    DEFAULT_MASSES[e.atomic_number] = e.default_mass
+DEFAULT_MASSES = { e.atomic_number : e.default_mass for e in elements }
 
+# map from valid isotopic replacements to masses
+REPLACEMENTS = {}
+for e in elements:
+    for replacement,mass in e.replacements:
+        REPLACEMENTS[replacement] = mass
 
