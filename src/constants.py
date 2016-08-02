@@ -7,11 +7,13 @@ import re
 # Physical Constants
 
 PHYSICAL_CONSTANTS = {
-    'h': 6.625E-27,
-    #CM/2.998E10/,EM/1.440E13/,HBC/1.4387/
-    'c': 2.99792458E8,
+    'h'  : 6.626070E-27,
+    'c'  : 2.997925E10,  # speed of light in units of cm/s
+    'Eh' : 4.359745E-18, # energy of a hartree in units of J = kg m^2/s^2
+    'a0' : 5.291772E-11, # bohr radius in units of m
+    'amu': 1.660468E-27, # atomic mass unit in units kg
 }
-
+    #CM/2.998E10/,EM/1.440E13/,HBC/1.4387/
 
 ###############
 

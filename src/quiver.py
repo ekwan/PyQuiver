@@ -20,7 +20,8 @@ class Isotopologue(object):
     def __init__(self, system, masses):
         self.system = system
         self.masses = masses
-        # vector of masses with each entry repeated three times for convenience
+
+        # create vector of masses with each entry repeated three times for convenience
         masses3_list = []
         for m in masses:
             masses3_list.extend([m, m, m])
@@ -107,11 +108,6 @@ class Isotopologue(object):
             except ValueError:
                 zero_vectors.append(v)
 
-        '''
-        for u in normalized_vectors:
-            for v in normalized_vectors:
-                print np.inner(u,v)
-        '''
         def proj(u,v):
             # project u onto v
             #print np.inner(v,u)/np.inner(u,u)
@@ -135,11 +131,32 @@ class Isotopologue(object):
         '''
         
         # costly step
+        print len(zero_vectors)
         d_matrix = np.matrix(zero_vectors + normalized_vectors)
-
-        int_hessian = np.dot(np.matrix.transpose(d_matrix), np.dot(self.mw_hessian, d_matrix))
-        v,w = np.linalg.eig(int_hessian)
-        print v
+        # conversion factor to take hartree/(bohr^2 * amu) to units 1/s^2
+        conv_factor = PHYSICAL_CONSTANTS['Eh']/(PHYSICAL_CONSTANTS['a0']**2 * PHYSICAL_CONSTANTS['amu'])
+        
+        # calculate the internal hessian in appropriate units
+        int_hessian = np.dot(np.matrix.transpose(d_matrix), np.dot(self.mw_hessian, d_matrix)) * conv_factor
+        # need to detect if linear!!! TODO
+        projected_hessian = int_hessian[np.ix_(range(6,3*self.number_of_atoms),range(6,3*self.number_of_atoms))]
+        #projected_hessian = int_hessian[np.ix_(range(0,len(zero_vectors)) + range(6,3*self.number_of_atoms),range(0,len(zero_vectors)) + range(6,3*self.number_of_atoms))]
+        np.savetxt("int.csv", int_hessian, delimiter=",")
+        np.savetxt("proj.csv", projected_hessian, delimiter=",")
+        #v,w = np.linalg.eig(projected_hessian)
+        v,w = np.linalg.eig(self.mw_hessian * conv_factor)
+        #v,w = np.linalg.eig(int_hessian)
+        # retrieve frequencies in units 1/cm
+        frequencies = []
+        for lam in v:
+            imag_flag = 1
+            if lam < 0:
+                imag_flag = -1
+            lam = np.abs(lam)
+            frequencies.append(imag_flag * np.sqrt(lam)/(2*np.pi*PHYSICAL_CONSTANTS['c']))
+        frequencies = np.array(frequencies)
+        frequencies.sort()
+        print frequencies
         return int_hessian
         
     def calculate_rpfr(self):
@@ -148,7 +165,6 @@ class Isotopologue(object):
 
 class System(object):
     def __init__(self, outfile, style="g09"):
-        print outfile
         with open(outfile, 'r') as f:
             out_data = f.read()
             if style == "g09":
@@ -185,7 +201,6 @@ class System(object):
         self.atomic_numbers = atomic_numbers
 
     def _parse_g09_hessian(self, data):
-        #    number_of_atoms = 
         m = re.search("NImag\=(.+?)\@", data, re.DOTALL)
         if m:
             raw_archive = re.sub('[\s+]', '', m.group(0))
@@ -199,5 +214,5 @@ class System(object):
                 fcm[i,j] = raw_fcm[_g09_triangle_serial(i,j)]
         return fcm
 
-gs = System("../test/claisen_ts.out")
+gs = System("../test/claisen_gs_iop.out")
 gsiso = Isotopologue(gs, gs.masses)
