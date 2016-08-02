@@ -127,3 +127,8 @@ for e in elements:
     for replacement,mass in e.replacements:
         REPLACEMENTS[replacement] = mass
 
+# map from isotopic replacements to atomic numbers
+REPLACEMENTS_Z = {}
+for e in elements:
+    for replacement,mass in e.replacements:
+        REPLACEMENTS_Z[replacement]=e.atomic_number

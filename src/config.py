@@ -1,7 +1,8 @@
 # This file reads 
 import sys
 import re
-from constants import REPLACEMENTS
+from constants import REPLACEMENTS, REPLACEMENTS_Z
+from quiver import System
 
 # Reads PyQuiver .config files.
 class Config(object):
@@ -85,6 +86,43 @@ class Config(object):
         config["isotopologues"] = isotopologues
         self.__dict__ = config
 
+    # checks if this config file is compatible with a pair of ground and transition state systems
+    def check(self, gs, ts, verbose=False):
+        if not isinstance(gs, System):
+            raise ValueError("gs is not a System")
+        if not isinstance(ts, System):
+            raise ValueError("ts is not a System")
+        n_gs_atoms = len(gs.atomic_numbers)
+        n_ts_atoms = len(ts.atomic_numbers)
+        
+        # check that the isotopic replacements make sense
+        isotopologues = self.isotopologues
+        for i,isotopologue in enumerate(isotopologues):
+            isotopologue_number = i+1
+            for j in range(len(isotopologue)):
+                # this replacement changes gs atom number from_atom
+                # and ts atom number to_atom
+                # to replacement (like "2D")
+                from_atom = isotopologue[j][0]
+                to_atom = isotopologue[j][1]
+                replacement = isotopologue[j][2]
+                replacement_string = "%d %d %d %s" % (i+1, from_atom, to_atom, replacement)
+
+                # get the atomic numbers of from_atom and to_atom
+                # must subtract one to convert from atom numbers to indices
+                from_atomZ = gs.atomic_numbers[from_atom-1]
+                to_atomZ = gs.atomic_numbers[to_atom-1]
+                replacementZ = REPLACEMENTS_Z[replacement]
+                if from_atomZ != replacementZ:
+                    raise ValueError("gs atomic number and replacement atomic number do not match for\n" % replacement_string)
+                if to_atomZ != replacementZ:
+                    raise ValueError("ts atomic number and replacement atomic number do not match for\n" % replacement_string)
+                if (from_atomZ != to_atomZ):
+                    raise ValueError("gs and ts atomic number do not match for\n" % replacement_string)
+
+        if verbose:
+            print "Config file %s makes sense with gs file %s and ts file %s.\n" % (self.filename, gs.filename, ts.filename)
+
     # convert to human-readable format
     def __str__(self):
         to_string = "Config file: %s\nTemperature: %.1f\nScaling: %.3f\nReference Isotopologue: %d\n" % (self.filename, self.temperature, self.scaling, self.reference_isotopologue)
@@ -93,7 +131,11 @@ class Config(object):
                 to_string += "   Isotopologue %2d, replacement %1d: replace gs atom %3d and ts atom %3d with %3s\n" % (i+1, j+1, isotopologue[j][0], isotopologue[j][1], isotopologue[j][2])
         return to_string[:-1]
 
-config = Config("test.config")
 #print config.__dict__
+
+gs = System("../test/claisen_gs.out")
+ts = System("../test/claisen_ts.out")
+config = Config("test.config")
 print config
+config.check(gs, ts, verbose=True)
 
