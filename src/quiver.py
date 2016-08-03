@@ -1,11 +1,9 @@
-import re
-
 import numpy  as np
 import pandas as pd
-from constants import DEFAULT_MASSES
-from constants import PHYSICAL_CONSTANTS
+import re
 
-root = ""
+from constants import DEFAULT_MASSES, PHYSICAL_CONSTANTS, REPLACEMENTS
+from config import Config
 
 def _g09_triangle_serial(row,col):
     if col > row:
@@ -13,9 +11,7 @@ def _g09_triangle_serial(row,col):
     triangle = lambda n: n*(n+1)/2
     return triangle(row) + col
 
-class IsotopolgueFactory(object):
-    pass
-
+# represents a geometric arrangement of atoms with specific masses
 class Isotopologue(object):
     def __init__(self, system, masses):
         self.system = system
@@ -29,7 +25,7 @@ class Isotopologue(object):
 
         self.number_of_atoms = system.number_of_atoms
         self.rcm, self.iitensor = self.calculate_inertia_tensor(masses, system.positions)
-        print self.rcm, self.iitensor
+        #print self.rcm, self.iitensor
         self.mw_hessian = self.calculate_mw_hessian(self.masses3)
 
         self.calculate_internal_hessian(masses)
@@ -39,7 +35,7 @@ class Isotopologue(object):
         # calculate cartesian center of mass to find intertia tensor relative to center of mass
         rcm = np.zeros(3)
         total_mass = 0
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         for i in xrange(0, self.number_of_atoms):
             total_mass += masses[i]
             for e in xrange(0,3):
@@ -134,7 +130,7 @@ class Isotopologue(object):
         '''
         
         # costly step
-        print len(zero_vectors)
+        #print len(zero_vectors)
         d_matrix = np.matrix(zero_vectors + normalized_vectors)
         # conversion factor to take hartree/(bohr^2 * amu) to units 1/s^2
         conv_factor = PHYSICAL_CONSTANTS['Eh']/(PHYSICAL_CONSTANTS['a0']**2 * PHYSICAL_CONSTANTS['amu'])
@@ -146,8 +142,8 @@ class Isotopologue(object):
         projected_hessian = int_hessian[np.ix_(range(6,3*self.number_of_atoms),range(6,3*self.number_of_atoms))]
         #projected_hessian = int_hessian[np.ix_(range(0,len(zero_vectors)) + range(6,3*self.number_of_atoms),range(0,len(zero_vectors)) + range(6,3*self.number_of_atoms))]
 
-        np.savetxt("int.csv", int_hessian, delimiter=",")
-        np.savetxt("proj.csv", projected_hessian, delimiter=",")
+        #np.savetxt("int.csv", int_hessian, delimiter=",")
+        #np.savetxt("proj.csv", projected_hessian, delimiter=",")
         #v,w = np.linalg.eig(projected_hessian)
         v,w = np.linalg.eig(projected_hessian)
         #v,w = np.linalg.eig(int_hessian)
@@ -161,7 +157,7 @@ class Isotopologue(object):
             frequencies.append(imag_flag * np.sqrt(lam)/(2*np.pi*PHYSICAL_CONSTANTS['c']))
         frequencies = np.array(frequencies)
         frequencies.sort()
-        print frequencies
+        #print frequencies
         return int_hessian
         
     def calculate_rpfr(self):
@@ -221,5 +217,38 @@ class System(object):
                 fcm[i,j] = raw_fcm[_g09_triangle_serial(i,j)]
         return fcm
 
-#gs = System("../test/claisen_gs.out")
+# returns a list of isotopologue pairs (as tuples) that make the requested isotopic substitutions
+def make_isotopologues(config, gs_system, ts_system, verbose=False):
+    # sanity checks
+    if not isinstance(config, Config):
+        raise ValueError("check config type")
+    if not isinstance(gs_system, System) or not isinstance(ts_system, System):
+        raise ValueError("check system types")
+    config.check(gs_system, ts_system)
+
+    # construct pairs of Isotopologues
+    pairs = []
+    for i,isotopologue in enumerate(config.isotopologues): # note that these are lists of instructions to make Isotopologues, not the isotopologues themselves
+        # construct isotopologues with default masses
+        gs_isotopologue = Isotopologue(gs_system, gs_system.masses)
+        ts_isotopologue = Isotopologue(ts_system, ts_system.masses)
+        if verbose:
+            print "Isotopomer %d" % (i+1)
+        for replacement in isotopologue:      # each isotopologue is a list of replacement instructions
+            gs_atom_number, ts_atom_number, replacement_label = replacement
+            replacement_mass = REPLACEMENTS[replacement_label]
+            gs_isotopologue.masses[gs_atom_number-1] = replacement_mass
+            ts_isotopologue.masses[ts_atom_number-1] = replacement_mass
+            if verbose:
+                print "   Replaced gs atom %d and ts atom %d with %s (%.4f amu)." % (gs_atom_number, ts_atom_number, replacement_label, replacement_mass)
+        pairs.append((gs_isotopologue,ts_isotopologue))
+
+    return pairs
+
+if __name__ == "__main__":
+    gs_system = System("../test/claisen_gs.out")
+    ts_system = System("../test/claisen_ts.out")
+    config = Config("test.config")
+    print config
+    isotopologues = make_isotopologues(config, gs_system, ts_system, verbose=True)
 #gsiso = Isotopologue(gs, gs.masses)

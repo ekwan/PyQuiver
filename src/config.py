@@ -1,8 +1,7 @@
-# This file reads 
+# This file reads PyQuiver configuration files. 
 import sys
 import re
 from constants import REPLACEMENTS, REPLACEMENTS_Z
-from quiver import System
 
 # Reads PyQuiver .config files.
 class Config(object):
@@ -88,10 +87,7 @@ class Config(object):
 
     # checks if this config file is compatible with a pair of ground and transition state systems
     def check(self, gs, ts, verbose=False):
-        if not isinstance(gs, System):
-            raise ValueError("gs is not a System")
-        if not isinstance(ts, System):
-            raise ValueError("ts is not a System")
+        from quiver import System
         n_gs_atoms = len(gs.atomic_numbers)
         n_ts_atoms = len(ts.atomic_numbers)
         
@@ -133,9 +129,9 @@ class Config(object):
 
 #print config.__dict__
 
-gs = System("../test/claisen_gs.out")
-ts = System("../test/claisen_ts.out")
-config = Config("test.config")
-print config
-config.check(gs, ts, verbose=True)
+#gs = System("../test/claisen_gs.out")
+#ts = System("../test/claisen_ts.out")
+#config = Config("test.config")
+#print config
+#config.check(gs, ts, verbose=True)
 
