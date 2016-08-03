@@ -13,12 +13,14 @@
 # otherwise, data taken from http://physics.nist.gov/cgi-bin/Compositions/stand_alone.pl
 #
 # as a safety feature, you must specify the data in ascending order of atomic number
-hydrogen,1,H,1.00783,1H,1.00783,2D,2.0141,3T,3.016049
+#hydrogen,1,H,1.00783,1H,1.00783,2D,2.0141,3T,3.016049
+hydrogen,1,H,1.0078250,1H,1.00783,2D,2.0141,3T,3.016049
 lithium,3,Li,6.94
 boron,5,B,10.811
 carbon,6,C,12.0,12C,12.0,13C,13.00335,14C,14.0031
 nitrogen,7,N,14.0067,14N,14.0031,15N,15.0001
-oxygen,8,O,15.9994,16O,15.9949,17O,16.9991,18O,17.9992
+#oxygen,8,O,15.9994,16O,15.9949,17O,16.9991,18O,17.9992
+oxygen,8,O,15.9949146,16O,15.9949,17O,16.9991,18O,17.9992
 fluorine,9,F,18.9984
 sodium,11,Na,22.9898
 magnesium,12,Mg,24.305
