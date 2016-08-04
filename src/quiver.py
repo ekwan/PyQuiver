@@ -302,7 +302,8 @@ class System(object):
                 fcm[i,j] = raw_fcm[_g09_triangle_serial(i,j)]
         return fcm
 
-# returns a list of isotopologue pairs (as tuples) that make the requested isotopic substitutions
+# make the requested isotopic substitutions
+# returns a list of tuples of the form (gs_isotopologue, ts_isotopologue, description)
 def make_isotopologues(config, gs_system, ts_system, verbose=False):
     # sanity checks
     if not isinstance(config, Config):
@@ -317,6 +318,7 @@ def make_isotopologues(config, gs_system, ts_system, verbose=False):
         # construct isotopologues with default masses
         gs_isotopologue = Isotopologue(gs_system, gs_system.masses)
         ts_isotopologue = Isotopologue(ts_system, ts_system.masses)
+        description = ""
         if verbose:
             print "Isotopomer %d" % (i+1)
         for replacement in isotopologue:      # each isotopologue is a list of replacement instructions
@@ -326,7 +328,8 @@ def make_isotopologues(config, gs_system, ts_system, verbose=False):
             ts_isotopologue.masses[ts_atom_number-1] = replacement_mass
             if verbose:
                 print "   Replaced gs atom %d and ts atom %d with %s (%.4f amu)." % (gs_atom_number, ts_atom_number, replacement_label, replacement_mass)
-        pairs.append((gs_isotopologue,ts_isotopologue))
+            description += "%s,%s : %s, " % replacement
+        pairs.append((gs_isotopologue,ts_isotopologue,description[:-2]))
 
     return pairs
 

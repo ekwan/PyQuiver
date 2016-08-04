@@ -1,17 +1,73 @@
 # This calculates KIEs based on the Bigeleisen-Mayer equation.
 import numpy as np
+from quiver import System, make_isotopologues
+from config import Config
 
 # load constants
-from contants import PHYSICAL_CONSTANTS
+from constants import PHYSICAL_CONSTANTS
 h  = PHYSICAL_CONSTANTS["h"]  # in J . s
 c  = PHYSICAL_CONSTANTS["c"]  # in cm . s
 kB = PHYSICAL_CONSTANTS["kB"] # in J/K
 
-# calculates the uncorrected EIE/KIE for a pair of isotopomers
+# This holds the results of a KIE calculation.
+class KIECalculation(object):
+    def __init__(self):
+        self.temperature = temperature
+        self.scaling = scaling
+        self.gs_filename = gs_filename
+        self.ts_filename = ts_filename
 
-def raw_KIE(gs_frequencies, ts_frequencies, temperature, frequency_threshold):
-    # calculate the reduced isotopic partition function 
-    pass
+        self.isotopologue_descriptions = isotopologue_descriptions
+        self.calculation_types = calculation_types # (EIE or KIE)
+
+        self.absolute_uncorrected_KIEs = absolute_uncorrected_KIEs
+        self.absolute_wigner_KIEs = absolute_wigner_KIEs
+        self.absolute_bell_KIEs = absolute_bell_KIEs
+        
+        self.relative_uncorrected_KIEs = relative_uncorrected_KIEs        
+        self.relative_wigner_KIEs = relative_wigner_KIEs
+        self.relative_bell_KIEs = relative_bell_KIEs
+
+    def __str__(self):
+        pass
+
+# calculates the EIE or KIE for the specified systems
+# returns a KIECalculation
+def calculate_KIE(config, gs_system, ts_system):
+    # get fields
+    temperature = config.temperature
+    scaling = config.scaling
+    frequency_threshold = config.frequency_threshold
+    reference_isotopologue = config.reference_isotopologue
+    
+    # generate isotopologues
+    isotopologues = make_isotopologues(config, gs_system, ts_system)
+
+    # calculate isotope effects
+    for gs_isotopologue, ts_isotopologue, description in isotopologues:
+
+
+    # construct result
+
+
+# calculates the uncorrected EIE/KIE for a pair of isotopologues
+# assumes the frequencies are sorted in ascending order
+def uncorrected_KIE(gs_isotopologue_light, gs_isotopologue_heavy, ts_isotopologue_light, ts_isotopologue_heavy, \
+                    temperature, frequency_threshold, frequency_method="mass weighted hessian"):
+    # get the frequencies
+    gs_freqs_light = gs_isotopologue
+
+    if ( gs_frequencies[0] < 0.0 and ts_frequencies[0] < 0.0):
+        # do a KIE calculation
+
+        # add the tunnelling corrections
+
+        # return result
+    else:
+        # do an EIE calculation
+        partition_function_
+
+        # return result
 
 # calculates the reduced isotopic function ratio for a species (Wolfsberg eqn 4.79)
 # assuming the symmetry ratio is 1/1
@@ -69,5 +125,3 @@ def bell(raw_KIEs, ts_frequencies_light, ts_frequencies_heavy):
     else
         correction_factor = 1.0
     return raw_KIEs * correction_factor
-
-
