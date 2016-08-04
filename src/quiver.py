@@ -26,7 +26,6 @@ def test_orthogonality(vectors):
     for l in mat:
         print l
 
-
 def schmidt(seed_vectors, rest_vectors, dimension):
     vectors = list(seed_vectors)
     test_vectors = list(rest_vectors)
@@ -69,6 +68,7 @@ class Isotopologue(object):
         self.rcm, self.rcm_positions, self.iitensor = self.calculate_inertia_tensor(masses, system.positions)
         self.mw_hessian = self.calculate_mw_hessian(self.masses3)
         self.int_hessian = self.calculate_internal_hessian(masses)
+        #self.frequencies = self.calculate_frequencies()
 
     
     def calculate_inertia_tensor(self, masses, positions):
@@ -96,9 +96,6 @@ class Isotopologue(object):
                         iitensor[e1,e2] += -1 * masses[i] * (rcm_positions[i,e1]) * (rcm_positions[i,e2])
 
         return rcm, rcm_positions, iitensor
-
-    def calculate_frequencies(self):
-        pass
 
     def calculate_mw_hessian(self, masses3):
         hessian = self.system.hessian
@@ -186,10 +183,9 @@ class Isotopologue(object):
             print nv
         
         test_orthogonality(normalized_vectors)
-        return 0
 
         standard_basis = [np.array([1.0 if x == i else 0.0 for x in xrange(0,3*self.number_of_atoms)]) for i in xrange(0,3*self.number_of_atoms)]
-        normalized_vectors = scmidt(normalized_vectors, standard_basis, 3*self.number_of_atoms)
+        normalized_vectors = schmidt(normalized_vectors, standard_basis, 3*self.number_of_atoms)
         # tiny residuals left over but otherwise good
         '''
         for u in normalized_vectors:
@@ -206,30 +202,44 @@ class Isotopologue(object):
         
         # calculate the internal hessian in appropriate units
         int_hessian = np.dot(np.matrix.transpose(d_matrix), np.dot(self.mw_hessian, d_matrix)) * conv_factor
-
-        # need to detect if linear!!! TODO
-        projected_hessian = int_hessian[np.ix_(range(6,3*self.number_of_atoms),range(6,3*self.number_of_atoms))]
-        #projected_hessian = int_hessian[np.ix_(range(0,len(zero_vectors)) + range(6,3*self.number_of_atoms),range(0,len(zero_vectors)) + range(6,3*self.number_of_atoms))]
-
-        #np.savetxt("int.csv", int_hessian, delimiter=",")
-        #np.savetxt("proj.csv", projected_hessian, delimiter=",")
-        
-        v,w = np.linalg.eig(projected_hessian)
-        #v,w = np.linalg.eig(self.mw_hessian*conv_factor)
-        #v,w = np.linalg.eig(int_hessian)
-        # retrieve frequencies in units 1/cm
-        frequencies = []
-        for lam in v:
-            imag_flag = 1
-            if lam < 0:
-                imag_flag = -1
-            lam = np.abs(lam)
-            frequencies.append(imag_flag * np.sqrt(lam)/(2*np.pi*PHYSICAL_CONSTANTS['c']))
-        frequencies = np.array(frequencies)
-        frequencies.sort()
-        print frequencies
         return int_hessian
-        
+
+    def calculate_frequencies(self, method="projected hessian"):
+        if method == "projected hessian":
+            # need to detect if linear!!! TODO
+            projected_hessian = self.int_hessian[np.ix_(range(6,3*self.number_of_atoms),range(6,3*self.number_of_atoms))]
+            #projected_hessian = int_hessian[np.ix_(range(0,len(zero_vectors)) + range(6,3*self.number_of_atoms),range(0,len(zero_vectors)) + range(6,3*self.number_of_atoms))]
+
+            #np.savetxt("int.csv", int_hessian, delimiter=",")
+            #np.savetxt("proj.csv", projected_hessian, delimiter=",")
+
+            v,w = np.linalg.eig(projected_hessian)
+            #v,w = np.linalg.eig(self.mw_hessian*conv_factor)
+            #v,w = np.linalg.eig(int_hessian)
+            # retrieve frequencies in units 1/cm
+            frequencies = []
+            for lam in v:
+                imag_flag = 1
+                if lam < 0:
+                    imag_flag = -1
+                lam = np.abs(lam)
+                frequencies.append(imag_flag * np.sqrt(lam)/(2*np.pi*PHYSICAL_CONSTANTS['c']))
+            frequencies = np.array(frequencies)
+            frequencies.sort()
+            return frequencies
+        if method == "mass weighted hessian":
+            v,w = np.linalg.eig(self.mw_hessian)
+            frequencies = []
+            for lam in v:
+                imag_flag = 1
+                if lam < 0:
+                    imag_flag = -1
+                lam = np.abs(lam)
+                frequencies.append(imag_flag * np.sqrt(lam)/(2*np.pi*PHYSICAL_CONSTANTS['c']))
+            frequencies = np.array(frequencies)
+            frequencies.sort()
+            return frequencies[6:]
+
     def calculate_rpfr(self):
         pass
 
