@@ -5,7 +5,6 @@ import re
 from constants import DEFAULT_MASSES, PHYSICAL_CONSTANTS, REPLACEMENTS
 from config import Config
 
-
 def proj(u,v):
     # project u onto v
     return np.inner(v,u)/np.inner(u,u) * u
@@ -16,17 +15,33 @@ def normalize(v):
        raise ValueError
     return v/norm
 
-def schmidt(vectors, rest_vectors, dimension):
+def test_orthogonality(vectors):
+    mat = np.zeros(shape=(len(vectors),len(vectors)))
+    for i,u in enumerate(vectors):
+        for j,v in enumerate(vectors):
+            inner = np.inner(u,v)
+            if inner != 0.0 or inner != 1.0:
+                mat[i][j] = inner
+    print "Orthogonality:"
+    for l in mat:
+        print l
+
+
+def schmidt(seed_vectors, rest_vectors, dimension):
+    vectors = list(seed_vectors)
+    test_vectors = list(rest_vectors)
     while len(vectors) < dimension:
-        test_vector = rest_vectors.pop()
-        for v in vectors:
-            test_vector -= proj(v, test_vector)
+        try:
+            test_vector = test_vectors.pop()
+            for v in vectors:
+                test_vector -= proj(v, test_vector)
             try:
                 vectors.append(normalize(test_vector))
             except ValueError:
                 pass
-        if len(rest_vectors) < 0:
-            break
+
+        except IndexError:
+            raise ValueError("Could not fill the appropriate dimensional space")            
     if len(vectors) < dimension:
         raise ValueError("Could not fill the appropriate dimensional space")
     else:
@@ -52,17 +67,14 @@ class Isotopologue(object):
 
         self.number_of_atoms = system.number_of_atoms
         self.rcm, self.rcm_positions, self.iitensor = self.calculate_inertia_tensor(masses, system.positions)
-        #self.rcm, self.iitensor = self.calculate_inertia_tensor(masses, system.positions_angstrom)
         self.mw_hessian = self.calculate_mw_hessian(self.masses3)
-
-        self.calculate_internal_hessian(masses)
+        self.int_hessian = self.calculate_internal_hessian(masses)
 
     
     def calculate_inertia_tensor(self, masses, positions):
         # calculate cartesian center of mass to find intertia tensor relative to center of mass
         rcm = np.zeros(3)
         total_mass = 0
-        #import pdb; pdb.set_trace()
         for i in xrange(0, self.number_of_atoms):
             total_mass += masses[i]
             rcm += positions[i] * masses[i]
@@ -132,22 +144,26 @@ class Isotopologue(object):
                     bad_indices.extend([i1,i2])
                     bad_vectors.extend([v[:,i1], v[:,i2]])
         
-        vectors = [None for i in w]
+        if bad_indices:
+            print "Degenercies in eigenvalues. Assuming principal axes are not orthonormal and applying schmidt process."
+
+        principal_axes = [None for i in w]
         for i in xrange(len(w)):
             if i not in bad_indices:
-                vectors[i] = (v[:,i])
+                principal_axes[i] = (v[:,i])
+        
 
         adjusted_vectors = schmidt([], bad_vectors, len(bad_vectors))
+        for i,v_ in enumerate(adjusted_vectors):
+            principal_axes[bad_indices[i]] = v_
         
-        for av in adjusted_vectors:
-            
+        print vectors
+        print "Testing orthogonality of principal axes:"
+        test_orthogonality(principal_axes)
 
-
-        print "Orthogonality:"
-        for l in mat:
-            print l
-            
-        
+        print principal_axes
+        x = np.matrix.transpose(np.column_stack(principal_axes))
+        print x
 
         # from the gaussian document: d=0 => making d4, d=1 => making d5 etc. j=j
         for d in xrange(0,3):
@@ -156,8 +172,7 @@ class Isotopologue(object):
             for i in xrange(0, self.number_of_atoms):
                 v[3*i:3*i+3] = np.cross(np.dot(x,self.rcm_positions[i]), axis)
             vectors.append(v)
-
-
+            
         normalized_vectors = []
         zero_vectors = []
         for v in vectors:
@@ -170,16 +185,7 @@ class Isotopologue(object):
         for nv in normalized_vectors:
             print nv
         
-        mat = np.zeros(shape=(len(normalized_vectors),len(normalized_vectors)))
-        for i,u in enumerate(normalized_vectors):
-            for j,v in enumerate(normalized_vectors):
-                inner = np.inner(u,v)
-                if inner != 0.0 or inner != 1.0:
-                    mat[i][j] = inner
-        print "Orthogonality:"
-        for l in mat:
-            print l
-
+        test_orthogonality(normalized_vectors)
         return 0
 
         standard_basis = [np.array([1.0 if x == i else 0.0 for x in xrange(0,3*self.number_of_atoms)]) for i in xrange(0,3*self.number_of_atoms)]
