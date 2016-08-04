@@ -6,7 +6,7 @@ from constants import REPLACEMENTS, REPLACEMENTS_Z
 # Reads PyQuiver .config files.
 class Config(object):
     def __init__(self,filename):
-        expected_fields = "scaling temperature reference_isotopologue".split(" ")
+        expected_fields = "scaling temperature reference_isotopologue frequency_threshold".split(" ")
         config = { i : None for i in expected_fields }
         config["filename"] = filename
 
@@ -80,6 +80,9 @@ class Config(object):
         config["reference_isotopologue"] = int(config["reference_isotopologue"])
         if config["reference_isotopologue"] < 0 or config["reference_isotopologue"] > len(isotopologues):
             raise ValueError("check reference isotopologue is valid")
+        config["frequency_threshold"] = float(config["frequency_threshold"])
+        if config["frequency_threshold"] > 100.0:
+            raise ValueError("frequency threshold is too high")
  
         # store all the information in the object dictionary
         config["isotopologues"] = isotopologues
@@ -121,7 +124,8 @@ class Config(object):
 
     # convert to human-readable format
     def __str__(self):
-        to_string = "Config file: %s\nTemperature: %.1f\nScaling: %.3f\nReference Isotopologue: %d\n" % (self.filename, self.temperature, self.scaling, self.reference_isotopologue)
+        to_string = "Config file: %s\nTemperature: %.1f\nScaling: %.3f\nReference Isotopologue: %d\nFrequency threshold (cm-1): %d" % \
+                    (self.filename, self.temperature, self.scaling, self.reference_isotopologue, self.frequency_threshold)
         for i,isotopologue in enumerate(self.isotopologues):
             for j in range(len(isotopologue)):
                 to_string += "   Isotopologue %2d, replacement %1d: replace gs atom %3d and ts atom %3d with %3s\n" % (i+1, j+1, isotopologue[j][0], isotopologue[j][1], isotopologue[j][2])
