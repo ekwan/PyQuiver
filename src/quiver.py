@@ -5,6 +5,33 @@ import re
 from constants import DEFAULT_MASSES, PHYSICAL_CONSTANTS, REPLACEMENTS
 from config import Config
 
+
+def proj(u,v):
+    # project u onto v
+    return np.inner(v,u)/np.inner(u,u) * u
+
+def normalize(v):
+    norm=np.linalg.norm(v)
+    if norm < 1.0E-5: 
+       raise ValueError
+    return v/norm
+
+def schmidt(vectors, rest_vectors, dimension):
+    while len(vectors) < dimension:
+        test_vector = rest_vectors.pop()
+        for v in vectors:
+            test_vector -= proj(v, test_vector)
+            try:
+                vectors.append(normalize(test_vector))
+            except ValueError:
+                pass
+        if len(rest_vectors) < 0:
+            break
+    if len(vectors) < dimension:
+        raise ValueError("Could not fill the appropriate dimensional space")
+    else:
+        return vectors
+
 def _g09_triangle_serial(row,col):
     if col > row:
         return _g09_triangle_serial(col,row)
@@ -70,9 +97,15 @@ class Isotopologue(object):
                 mw_hessian[i,j] = hessian[i,j] / np.sqrt( masses3[i] * masses3[j] )
 
         return mw_hessian
-                
+        
 
     def calculate_internal_hessian(self, masses):
+        print "Masses:", masses
+        print "RCM:", self.rcm
+        print "Positions:", self.system.positions
+        print "RCM Positions:", self.rcm_positions
+        print "IITensor:", self.iitensor
+
         vectors = []
         for e in xrange(0,3):
             v = np.zeros(3*self.number_of_atoms)
@@ -82,37 +115,48 @@ class Isotopologue(object):
         
 
         # order concerns?
-        _,w = np.linalg.eig(self.iitensor)
-
+        w,v = np.linalg.eig(self.iitensor)
         # which one?
-        #x = np.vstack(w)
-        x = np.column_stack(w)
-        '''
-        for k in xrange(0,3):
-            v = []
-            for i in xrange(0, self.number_of_atoms):
-                di = np
-                v.extend(di)
-            vectors.append(np.array(v))
-        '''
+        print "Eigenvalues:", w
+        print "\"Eigenvectors\":", v
+        x = np.column_stack(v)
+        print "Stacked X matrix:", x
+
+        mat = np.zeros(shape=(len(x),len(x)))
+        
+        bad_indices = []
+        bad_vectors = []
+        for i1 in xrange(len(w)):
+            for i2 in xrange(i1+1, len(w)):
+                if np.abs(w[i1]-w[i2]) < 1.0E-10:
+                    bad_indices.extend([i1,i2])
+                    bad_vectors.extend([v[:,i1], v[:,i2]])
+        
+        vectors = [None for i in w]
+        for i in xrange(len(w)):
+            if i not in bad_indices:
+                vectors[i] = (v[:,i])
+
+        adjusted_vectors = schmidt([], bad_vectors, len(bad_vectors))
+        
+        for av in adjusted_vectors:
+            
+
+
+        print "Orthogonality:"
+        for l in mat:
+            print l
+            
+        
 
         # from the gaussian document: d=0 => making d4, d=1 => making d5 etc. j=j
         for d in xrange(0,3):
             v = np.zeros(3*self.number_of_atoms)
+            axis = [1.0 if k == d else 0.0 for k in xrange(0,3)]
             for i in xrange(0, self.number_of_atoms):
-                p = np.zeros(3)
-                for j in xrange(0,3):
-                    p[j] = np.inner(x[:, j], self.rcm_positions[i])
-
-                for j in xrange(0,3):
-                    v[3*i+j] = (p[(d+1)%3] * x[j][(d+2)%3] - p[(d+2)%3] * x[j][(d+1)%3])/np.sqrt(masses[i])
+                v[3*i:3*i+3] = np.cross(np.dot(x,self.rcm_positions[i]), axis)
             vectors.append(v)
 
-        def normalize(v):
-            norm=np.linalg.norm(v)
-            if norm==0: 
-               raise ValueError
-            return v/norm
 
         normalized_vectors = []
         zero_vectors = []
@@ -121,29 +165,25 @@ class Isotopologue(object):
                 normalized_vectors.append(normalize(v))
             except ValueError:
                 zero_vectors.append(v)
+        print "Number of Zero Vectors:", len(zero_vectors)
+        print "D Vectors:"
+        for nv in normalized_vectors:
+            print nv
+        
+        mat = np.zeros(shape=(len(normalized_vectors),len(normalized_vectors)))
+        for i,u in enumerate(normalized_vectors):
+            for j,v in enumerate(normalized_vectors):
+                inner = np.inner(u,v)
+                if inner != 0.0 or inner != 1.0:
+                    mat[i][j] = inner
+        print "Orthogonality:"
+        for l in mat:
+            print l
 
-        for u in normalized_vectors:
-            for v in normalized_vectors:
-                pass
-                #print np.inner(u,v)
-
-        #print normalized_vectors
-
-        def proj(u,v):
-            # project u onto v
-            #print np.inner(v,u)/np.inner(u,u)
-            return np.inner(v,u)/np.inner(u,u) * u
+        return 0
 
         standard_basis = [np.array([1.0 if x == i else 0.0 for x in xrange(0,3*self.number_of_atoms)]) for i in xrange(0,3*self.number_of_atoms)]
-        while len(normalized_vectors) + len(zero_vectors) < 3*self.number_of_atoms:
-            test_vector = standard_basis.pop()
-            for v in normalized_vectors:
-                test_vector -= proj(v, test_vector)
-            try:
-                normalized_vectors.append(normalize(test_vector))
-            except ValueError:
-                pass
-        
+        normalized_vectors = scmidt(normalized_vectors, standard_basis, 3*self.number_of_atoms)
         # tiny residuals left over but otherwise good
         '''
         for u in normalized_vectors:
@@ -181,7 +221,7 @@ class Isotopologue(object):
             frequencies.append(imag_flag * np.sqrt(lam)/(2*np.pi*PHYSICAL_CONSTANTS['c']))
         frequencies = np.array(frequencies)
         frequencies.sort()
-        #print frequencies
+        print frequencies
         return int_hessian
         
     def calculate_rpfr(self):
@@ -275,9 +315,13 @@ def make_isotopologues(config, gs_system, ts_system, verbose=False):
     return pairs
 
 if __name__ == "__main__":
+    gs = System("../test/claisen_gs.out")
+    gsiso = Isotopologue(gs, gs.masses)
+'''
     gs_system = System("../test/claisen_gs.out")
     ts_system = System("../test/claisen_ts.out")
     config = Config("test.config")
     print config
     isotopologues = make_isotopologues(config, gs_system, ts_system, verbose=True)
+'''
 #gsiso = Isotopologue(gs, gs.masses)
