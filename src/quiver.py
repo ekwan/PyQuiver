@@ -68,7 +68,8 @@ class Isotopologue(object):
         self.rcm, self.rcm_positions, self.iitensor = self.calculate_inertia_tensor(masses, system.positions)
         self.mw_hessian = self.calculate_mw_hessian(self.masses3)
         self.int_hessian = self.calculate_internal_hessian(masses)
-        #self.frequencies = self.calculate_frequencies()
+        self.frequencies = self.calculate_frequencies()
+        print self.frequencies
 
     
     def calculate_inertia_tensor(self, masses, positions):
@@ -185,6 +186,7 @@ class Isotopologue(object):
         test_orthogonality(normalized_vectors)
 
         standard_basis = [np.array([1.0 if x == i else 0.0 for x in xrange(0,3*self.number_of_atoms)]) for i in xrange(0,3*self.number_of_atoms)]
+        print normalized_vectors
         normalized_vectors = schmidt(normalized_vectors, standard_basis, 3*self.number_of_atoms)
         # tiny residuals left over but otherwise good
         '''
@@ -207,7 +209,7 @@ class Isotopologue(object):
     def calculate_frequencies(self, method="projected hessian"):
         if method == "projected hessian":
             # need to detect if linear!!! TODO
-            projected_hessian = self.int_hessian[np.ix_(range(6,3*self.number_of_atoms),range(6,3*self.number_of_atoms))]
+            projected_hessian = self.int_hessian[np.ix_(range(5,3*self.number_of_atoms),range(5,3*self.number_of_atoms))]
             #projected_hessian = int_hessian[np.ix_(range(0,len(zero_vectors)) + range(6,3*self.number_of_atoms),range(0,len(zero_vectors)) + range(6,3*self.number_of_atoms))]
 
             #np.savetxt("int.csv", int_hessian, delimiter=",")
@@ -331,7 +333,7 @@ def make_isotopologues(config, gs_system, ts_system, verbose=False):
     return pairs
 
 if __name__ == "__main__":
-    gs = System("../test/claisen_gs.out")
+    gs = System("../test/co2.out")
     gsiso = Isotopologue(gs, gs.masses)
 '''
     gs_system = System("../test/claisen_gs.out")
