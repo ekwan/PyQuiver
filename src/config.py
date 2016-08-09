@@ -14,7 +14,7 @@ class Config(object):
         # each entry is a list of tuples
         # each tuple is (from_atom_number, to_atom_number, replacement_isotope)
         # this format allows for multiple replacements in one isotopologue
-        isotopologues = []
+        isotopologues = {}
         
         # read file
         for line in open(filename, "r"):
@@ -38,22 +38,18 @@ class Config(object):
                 # parse isotopologues, checking for sanity
                 if len(fields) != 5:
                     raise ValueError("unexpected number of fields for isotopologue in config file:\n%s" % line)
-                isotopologue_number, from_atom_number, to_atom_number, replacement = int(fields[1]), int(fields[2]), int(fields[3]), str(fields[4])
+                isotopologue_id, from_atom_number, to_atom_number, replacement = str(fields[1]), int(fields[2]), int(fields[3]), str(fields[4])
                 if from_atom_number < 1 or to_atom_number < 1:
                     raise ValueError("check atom numbers:\n%s" % line)
                 if replacement not in REPLACEMENTS.keys():
                     raise ValueError("invalid isotopic replacement:\n%s" % line)
 
                 # allows for the fact that isotopologues can make multiple replacements
-                if isotopologue_number == len(isotopologues) + 1:
-                    # this is a new isotopologue
-                    isotopologues.append([(from_atom_number, to_atom_number, replacement)])
-                elif isotopologue_number == len(isotopologues):
-                    # this is an additional replacement
-                    isotopologues[-1].append((from_atom_number, to_atom_number, replacement))
-                else:
-                    # this is not allowed
-                    raise ValueError("isotopologues must be numbered in ascending order:\n%s" % line)
+                try:
+                    isotopologues[isotopologue_id].append((from_atom_number, to_atom_number, replacement))
+                except KeyError:
+                    isotopologues[isotopologue_id] = [(from_atom_number, to_atom_number, replacement)]
+
             elif len(fields) == 2:
                 # read regular configuration fields that have only one entry
                 fields = [ str(i) for i in fields ]
@@ -77,9 +73,13 @@ class Config(object):
         config["scaling"] = float(config["scaling"])
         if config["scaling"] < 0.5 or config["scaling"] > 1.5:
             raise ValueError("check scaling factor")
-        config["reference_isotopologue"] = int(config["reference_isotopologue"])
-        if config["reference_isotopologue"] < 0 or config["reference_isotopologue"] > len(isotopologues):
+
+        config["reference_isotopologue"] = str(config["reference_isotopologue"])
+        try:
+            config["reference_isotopologue"]
+        except KeyError:
             raise ValueError("check reference isotopologue is valid")
+
         config["frequency_threshold"] = float(config["frequency_threshold"])
         if config["frequency_threshold"] > 100.0:
             raise ValueError("frequency threshold is too high")
@@ -96,8 +96,7 @@ class Config(object):
         
         # check that the isotopic replacements make sense
         isotopologues = self.isotopologues
-        for i,isotopologue in enumerate(isotopologues):
-            isotopologue_number = i+1
+        for i,isotopologue in isotopologues.iteritems():
             for j in range(len(isotopologue)):
                 # this replacement changes gs atom number from_atom
                 # and ts atom number to_atom
@@ -105,7 +104,7 @@ class Config(object):
                 from_atom = isotopologue[j][0]
                 to_atom = isotopologue[j][1]
                 replacement = isotopologue[j][2]
-                replacement_string = "%d %d %d %s" % (i+1, from_atom, to_atom, replacement)
+                replacement_string = "%s %d %d %s" % (i, from_atom, to_atom, replacement)
 
                 # get the atomic numbers of from_atom and to_atom
                 # must subtract one to convert from atom numbers to indices
@@ -124,11 +123,11 @@ class Config(object):
 
     # convert to human-readable format
     def __str__(self):
-        to_string = "Config file: %s\nTemperature: %.1f\nScaling: %.3f\nReference Isotopologue: %d\nFrequency threshold (cm-1): %d" % \
+        to_string = "Config file: %s\nTemperature: %.1f\nScaling: %.3f\nReference Isotopologue: %s\nFrequency threshold (cm-1): %d" % \
                     (self.filename, self.temperature, self.scaling, self.reference_isotopologue, self.frequency_threshold)
-        for i,isotopologue in enumerate(self.isotopologues):
+        for i,isotopologue in self.isotopologues.iteritems():
             for j in range(len(isotopologue)):
-                to_string += "   Isotopologue %2d, replacement %1d: replace gs atom %3d and ts atom %3d with %3s\n" % (i+1, j+1, isotopologue[j][0], isotopologue[j][1], isotopologue[j][2])
+                to_string += "   Isotopologue %s, replacement %1d: replace gs atom %3d and ts atom %3d with %3s\n" % (i, j+1, isotopologue[j][0], isotopologue[j][1], isotopologue[j][2])
         return to_string[:-1]
 
 #print config.__dict__

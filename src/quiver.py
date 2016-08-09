@@ -2,7 +2,7 @@ import numpy  as np
 import pandas as pd
 import re
 
-from constants import DEFAULT_MASSES, PHYSICAL_CONSTANTS, REPLACEMENTS
+from constants import DEFAULT_MASSES, PHYSICAL_CONSTANTS
 from config import Config
 
 def proj(u,v):
@@ -54,10 +54,11 @@ def _g09_triangle_serial(row,col):
 
 # represents a geometric arrangement of atoms with specific masses
 class Isotopologue(object):
-    def __init__(self, system, masses):
+    def __init__(self, id_, system, masses):
+        self.name = id_
         self.system = system
         self.masses = masses
-
+        self.frequencies = None
         # create vector of masses with each entry repeated three times for convenience
         masses3_list = []
         for m in masses:
@@ -67,10 +68,11 @@ class Isotopologue(object):
         self.number_of_atoms = system.number_of_atoms
         self.rcm, self.rcm_positions, self.iitensor = self.calculate_inertia_tensor(masses, system.positions)
         self.mw_hessian = self.calculate_mw_hessian(self.masses3)
+        return
         self.int_hessian = self.calculate_internal_hessian(masses)
-        self.frequencies = self.calculate_frequencies()
-        print self.frequencies
+        
 
+        #self.frequencies = self.calculate_frequencies()
     
     def calculate_inertia_tensor(self, masses, positions):
         # calculate cartesian center of mass to find intertia tensor relative to center of mass
@@ -188,12 +190,6 @@ class Isotopologue(object):
         standard_basis = [np.array([1.0 if x == i else 0.0 for x in xrange(0,3*self.number_of_atoms)]) for i in xrange(0,3*self.number_of_atoms)]
         print normalized_vectors
         normalized_vectors = schmidt(normalized_vectors, standard_basis, 3*self.number_of_atoms)
-        # tiny residuals left over but otherwise good
-        '''
-        for u in normalized_vectors:
-            for v in normalized_vectors:
-                print np.inner(u,v)
-        '''
 
         # costly step
         #print len(zero_vectors)
@@ -206,7 +202,12 @@ class Isotopologue(object):
         int_hessian = np.dot(np.matrix.transpose(d_matrix), np.dot(self.mw_hessian, d_matrix)) * conv_factor
         return int_hessian
 
-    def calculate_frequencies(self, method="projected hessian"):
+    def calculate_frequencies(self, threshold, method="mass weighted hessian"):
+        # short circuit if frequencies have already been calculated
+        print self.frequencies
+        if self.frequencies is not None:
+            return self.frequencies
+
         if method == "projected hessian":
             # need to detect if linear!!! TODO
             projected_hessian = self.int_hessian[np.ix_(range(5,3*self.number_of_atoms),range(5,3*self.number_of_atoms))]
@@ -230,20 +231,26 @@ class Isotopologue(object):
             frequencies.sort()
             return frequencies
         if method == "mass weighted hessian":
+            imaginary_freqs = []
+            small_freqs = []
+            freqs = []
+
             v,w = np.linalg.eig(self.mw_hessian)
             frequencies = []
             for lam in v:
-                imag_flag = 1
-                if lam < 0:
-                    imag_flag = -1
-                lam = np.abs(lam)
-                frequencies.append(imag_flag * np.sqrt(lam)/(2*np.pi*PHYSICAL_CONSTANTS['c']))
+                print lam
+                freq = np.sqrt(np.abs(lam))/(2*np.pi*PHYSICAL_CONSTANTS['c'])
+                if np.linalg.norm(lam) < threshold:
+                    small_freqs.append(freq)
+                elif lam < 0: 
+                    imaginary_freqs.append(-1 * freq)
+                else:
+                    freqs.append(freq)
+                        
             frequencies = np.array(frequencies)
             frequencies.sort()
-            return frequencies[6:]
-
-    def calculate_rpfr(self):
-        pass
+            self.frequencies = (small_freqs, imaginary_freqs, freqs)
+            return self.frequencies
 
 
 class System(object):
@@ -272,7 +279,6 @@ class System(object):
                     raw_geom_line = filter(None, l.split(' '))
                     center_number = int(raw_geom_line[0]) - 1
                     atomic_numbers[center_number] = int(raw_geom_line[1])
-                    masses[center_number] = DEFAULT_MASSES[atomic_numbers[center_number]]
                     for e in xrange(0,3):
                         positions[center_number][e] = raw_geom_line[3+e]
                 
@@ -304,45 +310,9 @@ class System(object):
                 fcm[i,j] = raw_fcm[_g09_triangle_serial(i,j)]
         return fcm
 
-# make the requested isotopic substitutions
-# returns a list of tuples of the form (gs_isotopologue, ts_isotopologue, description)
-def make_isotopologues(config, gs_system, ts_system, verbose=False):
-    # sanity checks
-    if not isinstance(config, Config):
-        raise ValueError("check config type")
-    if not isinstance(gs_system, System) or not isinstance(ts_system, System):
-        raise ValueError("check system types")
-    config.check(gs_system, ts_system)
-
-    # construct pairs of Isotopologues
-    pairs = []
-    for i,isotopologue in enumerate(config.isotopologues): # note that these are lists of instructions to make Isotopologues, not the isotopologues themselves
-        # construct isotopologues with default masses
-        gs_isotopologue = Isotopologue(gs_system, gs_system.masses)
-        ts_isotopologue = Isotopologue(ts_system, ts_system.masses)
-        description = ""
-        if verbose:
-            print "Isotopomer %d" % (i+1)
-        for replacement in isotopologue:      # each isotopologue is a list of replacement instructions
-            gs_atom_number, ts_atom_number, replacement_label = replacement
-            replacement_mass = REPLACEMENTS[replacement_label]
-            gs_isotopologue.masses[gs_atom_number-1] = replacement_mass
-            ts_isotopologue.masses[ts_atom_number-1] = replacement_mass
-            if verbose:
-                print "   Replaced gs atom %d and ts atom %d with %s (%.4f amu)." % (gs_atom_number, ts_atom_number, replacement_label, replacement_mass)
-            description += "%s,%s : %s, " % replacement
-        pairs.append((gs_isotopologue,ts_isotopologue,description[:-2]))
-
-    return pairs
-
 if __name__ == "__main__":
-    gs = System("../test/co2.out")
-    gsiso = Isotopologue(gs, gs.masses)
-'''
-    gs_system = System("../test/claisen_gs.out")
-    ts_system = System("../test/claisen_ts.out")
-    config = Config("test.config")
-    print config
-    isotopologues = make_isotopologues(config, gs_system, ts_system, verbose=True)
-'''
+    #gs = System("../test/co2.out")
+    #gsiso = Isotopologue(gs, gs.masses)
+    from kie import KIE_Calculation
+    KIE_Calculation("test.config", "../test/claisen_gs.out", "../test/claisen_ts.out")
 #gsiso = Isotopologue(gs, gs.masses)
