@@ -17,9 +17,10 @@ class KIE_Calculation(object):
         
         self.config = Config(config_file)
 
+        print self.config.temperature
         for p in self.make_isotopologues():
             gs_tuple, ts_tuple = p
-            kie = KIE(gs_tuple[0].name, gs_tuple, ts_tuple, self.config.temperature, self.config)
+            kie = KIE(gs_tuple[1].name, gs_tuple, ts_tuple, self.config.temperature, self.config)
             print kie
             #print p[0][0].name
             #print "Sub masses:", p[0][0].masses
@@ -86,8 +87,8 @@ class KIE_Calculation(object):
                 ts_masses = self.apply_mass_rules(ref_ts_masses, ts_rules)
                 sub_gs = Isotopologue(id_, gs_system, gs_masses)
                 sub_ts = Isotopologue(id_, ts_system, ts_masses)
-                
-                yield ((sub_gs, ref_gs), (sub_ts, ref_ts))
+                yield ((ref_gs, sub_gs), (ref_ts, sub_ts))
+                #yield ((sub_gs, ref_gs), (sub_ts, ref_ts))
                 
 
 class KIE(object):
@@ -113,29 +114,52 @@ class KIE(object):
         print "Light frequencies:", freqs_light
         temperature = self.temperature
         components = []
+
         for wavenumber_light, wavenumber_heavy in zip(freqs_light, freqs_heavy):
             product_factor = wavenumber_heavy/wavenumber_light
             u_light = u(wavenumber_light, temperature)
             u_heavy = u(wavenumber_heavy, temperature)
             excitation_factor = (1.0-np.exp(-u_light))/(1.0-np.exp(-u_heavy))
             ZPE_factor = np.exp(0.5*(u_light-u_heavy))
-            components.append(product_factor*excitation_factor*ZPE_factor)
+            components.append([product_factor,excitation_factor,ZPE_factor])
         return np.array(components)
 
     # how should scaling factor be used?
+    # tup is a tuple of a form 
     def calculate_rpfr(self, tup):
         # calculate_frequencies gives tuples of the form (small_freqs, imaginary_freqs, freqs)
-        light_freqs = tup[0].calculate_frequencies(self.freq_threshold)[2]
-        heavy_freqs = tup[1].calculate_frequencies(self.freq_threshold)[2]
-        
-        return self.partition_components(heavy_freqs, light_freqs)
+        #print "Frequency threshold:", self.freq_threshold
+        _, light_imag_freqs, light_freqs = tup[0].calculate_frequencies(self.freq_threshold, scaling=self.config.scaling)
+        _, heavy_imag_freqs, heavy_freqs = tup[1].calculate_frequencies(self.freq_threshold, scaling=self.config.scaling)
+        imag_ratio = None
+        try:
+            imag_ratio = light_imag_freqs[0]/heavy_imag_freqs[0]
+            print light_imag_freqs[0], heavy_imag_freqs[0]
+            print "IMAGINARY RATIO:", imag_ratio
+        except:
+            pass
+            #print "No imaginary frequencies."
+        '''
+        print "Small frequencies:"
+        print tup[0].frequencies[0]
+        print tup[1].frequencies[0]
+        print "Imaginary frequencies:"
+        print tup[0].frequencies[1]
+        print tup[1].frequencies[1]
+        '''
+        partition_factors = self.partition_components(heavy_freqs, light_freqs)
+        print "Product Factor | Excitation Factor | ZPE Factor" 
+        print np.prod(partition_factors, axis=0)
+        return (np.prod(partition_factors), imag_ratio)
+        return (self.partition_components(heavy_freqs, light_freqs), imag_ratio)
 
     def calculate_kie(self):
 
-        rpfr_gs = self.calculate_rpfr(self.gs_tuple)
-        rpfr_ts = self.calculate_rpfr(self.ts_tuple)
-
-        kie = np.prod(rpfr_gs)/np.prod(rpfr_ts)
+        rpfr_gs, gs_imag_ratio = self.calculate_rpfr(self.gs_tuple)
+        print "rpfr_gs:", np.prod(rpfr_gs)
+        rpfr_ts, ts_imag_ratio = self.calculate_rpfr(self.ts_tuple)
+        print "rpfr_ts:", np.prod(rpfr_ts)
+        kie = ts_imag_ratio * rpfr_gs/rpfr_ts
         return kie
 
     def __str__(self):

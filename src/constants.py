@@ -7,7 +7,7 @@ import re
 # Physical Constants
 
 PHYSICAL_CONSTANTS = {
-    'h'  : 6.626070E-27, # Planck's constants in J * s
+    'h'  : 6.626070E-34, # Planck's constants in J * s
     'c'  : 2.997925E+10, # speed of light in units of cm/s
     'Eh' : 4.359745E-18, # energy of a hartree in units of J = kg m^2/s^2
     'a0' : 5.291772E-11, # bohr radius in m

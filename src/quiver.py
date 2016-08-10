@@ -202,9 +202,8 @@ class Isotopologue(object):
         int_hessian = np.dot(np.matrix.transpose(d_matrix), np.dot(self.mw_hessian, d_matrix)) * conv_factor
         return int_hessian
 
-    def calculate_frequencies(self, threshold, method="mass weighted hessian"):
+    def calculate_frequencies(self, threshold, scaling=1.0, method="mass weighted hessian"):
         # short circuit if frequencies have already been calculated
-        print self.frequencies
         if self.frequencies is not None:
             return self.frequencies
 
@@ -221,6 +220,7 @@ class Isotopologue(object):
             #v,w = np.linalg.eig(int_hessian)
             # retrieve frequencies in units 1/cm
             frequencies = []
+
             for lam in v:
                 imag_flag = 1
                 if lam < 0:
@@ -230,25 +230,29 @@ class Isotopologue(object):
             frequencies = np.array(frequencies)
             frequencies.sort()
             return frequencies
+
         if method == "mass weighted hessian":
             imaginary_freqs = []
             small_freqs = []
+            conv_factor = PHYSICAL_CONSTANTS['Eh']/(PHYSICAL_CONSTANTS['a0']**2 * PHYSICAL_CONSTANTS['amu'])
+            v,w = np.linalg.eig(self.mw_hessian*conv_factor)
             freqs = []
 
-            v,w = np.linalg.eig(self.mw_hessian)
-            frequencies = []
             for lam in v:
-                print lam
-                freq = np.sqrt(np.abs(lam))/(2*np.pi*PHYSICAL_CONSTANTS['c'])
-                if np.linalg.norm(lam) < threshold:
+                freq = np.sqrt(np.abs(lam))/(2*np.pi*PHYSICAL_CONSTANTS['c'])*(scaling)
+                if np.linalg.norm(freq) < threshold:
                     small_freqs.append(freq)
                 elif lam < 0: 
                     imaginary_freqs.append(-1 * freq)
                 else:
                     freqs.append(freq)
-                        
-            frequencies = np.array(frequencies)
-            frequencies.sort()
+
+            imaginary_freqs.sort()
+            freqs.sort()
+            small_freqs.sort()
+            if len(imaginary_freqs) > 1:
+                print "WARNING: more than one imaginary frequency detected. Taking mode with largest norm."
+                imaginary_freqs = [imaginary_freqs[-1]]
             self.frequencies = (small_freqs, imaginary_freqs, freqs)
             return self.frequencies
 
