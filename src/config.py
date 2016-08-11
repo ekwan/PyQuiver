@@ -92,26 +92,24 @@ class Config(object):
 
     # checks if this config file is compatible with a pair of ground and transition state systems
     def check(self, gs, ts, verbose=False):
-        from quiver import System
         n_gs_atoms = len(gs.atomic_numbers)
         n_ts_atoms = len(ts.atomic_numbers)
-        
         # check that the isotopic replacements make sense
         isotopologues = self.isotopologues
         for i,isotopologue in isotopologues.iteritems():
-            for j in range(len(isotopologue)):
+            for r in range(len(isotopologue)):
                 # this replacement changes gs atom number from_atom
                 # and ts atom number to_atom
                 # to replacement (like "2D")
-                from_atom = isotopologue[j][0]
-                to_atom = isotopologue[j][1]
-                replacement = isotopologue[j][2]
+                from_atom = isotopologue[r][0]
+                to_atom = isotopologue[r][1]
+                replacement = isotopologue[r][2]
                 replacement_string = "%s %d %d %s" % (i, from_atom, to_atom, replacement)
 
                 # get the atomic numbers of from_atom and to_atom
                 # must subtract one to convert from atom numbers to indices
                 from_atomZ = gs.atomic_numbers[from_atom-1]
-                to_atomZ = gs.atomic_numbers[to_atom-1]
+                to_atomZ = ts.atomic_numbers[to_atom-1]
                 replacementZ = REPLACEMENTS_Z[replacement]
                 if from_atomZ != replacementZ:
                     raise ValueError("gs atomic number and replacement atomic number do not match for\n" % replacement_string)

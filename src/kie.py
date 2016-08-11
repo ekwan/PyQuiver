@@ -31,10 +31,6 @@ class KIE_Calculation(object):
                 if self.config.reference_isotopologue != "default":
                     k.apply_reference(KIES[self.config.reference_isotopologue])
                 print k
-            #print p[0][0].name
-            #print "Sub masses:", p[0][0].masses
-            #print p[0][1].name
-            #print "Ref masses:", p[0][1].masses
         
     def build_reference_masses(self):
         config = self.config
@@ -80,7 +76,7 @@ class KIE_Calculation(object):
         config = self.config
         gs_system = self.gs_system
         ts_system = self.ts_system
-        #config.check(gs_system, ts_system)
+        config.check(gs_system, ts_system)
 
         default_gs_masses = self.build_default_masses(self.gs_system)
         default_ts_masses = self.build_default_masses(self.ts_system)
@@ -97,12 +93,12 @@ class KIE_Calculation(object):
             yield ((default_gs, sub_gs), (default_ts, sub_ts))
             #yield ((sub_gs, ref_gs), (sub_ts, ref_ts))
                 
-
 class KIE(object):
     # the constructor expects a tuple of the form yielded by make_isotopologue
     def __init__(self, name, gs_tuple, ts_tuple, temperature, config):
         # copy fields
         # the associated calculation object useful for pulling config fields etc.
+        self.eie_flag = -1
         self.name = name
         self.freq_threshold = config.frequency_threshold
         self.config = config
@@ -155,23 +151,70 @@ class KIE(object):
         print tup[1].frequencies[1]
         '''
         partition_factors = self.partition_components(heavy_freqs, light_freqs)
-        #print "Product Factor | Excitation Factor | ZPE Factor" 
-        #print np.prod(partition_factors, axis=0)
-        return (np.prod(partition_factors), imag_ratio)
-        return (self.partition_components(heavy_freqs, light_freqs), imag_ratio)
+        return (np.prod(partition_factors), imag_ratio, heavy_freqs, light_freqs)
 
     def calculate_kie(self):
 
-        rpfr_gs, gs_imag_ratio = self.calculate_rpfr(self.gs_tuple)
+        rpfr_gs, gs_imag_ratio, gs_heavy_freqs, gs_light_freqs = self.calculate_rpfr(self.gs_tuple)
         #print "rpfr_gs:", np.prod(rpfr_gs)
-        rpfr_ts, ts_imag_ratio = self.calculate_rpfr(self.ts_tuple)
+        rpfr_ts, ts_imag_ratio, ts_heavy_freqs, ts_light_freqs = self.calculate_rpfr(self.ts_tuple)
         #print "rpfr_ts:", np.prod(rpfr_ts)
-        kie = ts_imag_ratio * rpfr_gs/rpfr_ts
-        return kie
-    
+
+        if ts_imag_ratio:
+            if self.eie_flag == -1:
+                self.eie_flag = 0
+            else:
+                raise ValueError("quiver attempted to run a KIE calculation after an EIE calculation. Check the frequency threshold.")
+
+            uncorrected_kie = ts_imag_ratio * rpfr_gs/rpfr_ts
+            wigner_corrected = self.wigner(uncorrected_kie, ts_light_freqs, ts_heavy_freqs, self.config.temperature)
+            bell_corrected = self.bell(uncorrected_kie, ts_light_freqs, ts_heavy_freqs)
+            kie = np.array([uncorrected_kie, wigner_corrected, bell_corrected])
+            return kie
+        else:
+            if self.eie_flag == -1:
+                self.eie_flag = 1
+            else:
+                raise ValueError("quiver attempted to run a KIE calculation after an EIE calculation. Check the frequency threshold.")
+            
+            eie = rpfr_gs/rpfr_ts
+            return eie
+
     def apply_reference(self, reference_kie):
         self.value /= reference_kie.value
         return self.value
+
+    # calculates the Wigner tunnelling correction
+    # multiplies the KIE by a factor of (1+u_H^2/24)/(1+u_D^2/24)
+    # assumes the frequencies are sorted in ascending order
+    def wigner(self, raw_KIE, ts_frequencies_light, ts_frequencies_heavy, temperature):
+        # calculate correction factor
+        wavenumber_light = ts_frequencies_light[0]
+        wavenumber_heavy = ts_frequencies_heavy[0]
+        if wavenumber_light < 0.0 and wavenumber_heavy < 0.0:
+            u_H = u(wavenumber_light, temperature)
+            u_D = u(wavenumber_heavy, temperature)
+            correction_factor = (1.0 + u_H**2 / 24.0) / (1.0 + u_D**2 / 24.0)
+        else:
+            correction_factor = 1.0
+        return raw_KIE * correction_factor
+
+    # calculates the Bell infinite parabola tunnelling correction
+    # multiplies the KIE by a factor of (u_H/u_D)*(sin(u_D/2)/sin(u_H/2))
+    # assumes the frequencies are sorted in ascending order
+    def bell(self, raw_KIEs, ts_frequencies_light, ts_frequencies_heavy):
+        # calculate correction factor
+        wavenumber_light = ts_frequencies_light[0]
+        wavenumber_heavy = ts_frequencies_heavy[0]
+        if wavenumber_light < 0.0 and wavenumber_heavy < 0.0:
+            u_H = u(wavenumber_light, temperature)
+            u_D = u(wavenumber_heavy, temperature)
+            correction_factor = (u_H/u_D)*(np.sin(u_D/2.0)/np.sin(u_H/2.0))
+        else:
+            correction_factor = 1.0
+        return raw_KIEs * correction_factor
+
+
 
     def __str__(self):
         return "isotopomer {0} {1}".format(self.name, self.value)
@@ -185,34 +228,4 @@ class KIE(object):
 # u = hcw/kT, with c in cm/s
 def u(wavenumber, temperature):
     return h*c*wavenumber/(kB*temperature)
-
-# calculates the Wigner tunnelling correction
-# multiplies the KIE by a factor of (1+u_H^2/24)/(1+u_D^2/24)
-# assumes the frequencies are sorted in ascending order
-def wigner(raw_KIEs, ts_frequencies_light, ts_frequencies_heavy, temperature):
-    # calculate correction factor
-    wavenumber_light = ts_frequencies_light[0]
-    wavenumber_heavy = ts_frequencies_heavy[0]
-    if wavenumber_light < 0.0 and wavenumber_heavy < 0.0:
-        u_H = u(wavenumber_light, temperature)
-        u_D = u(wavenumber_heavy, temperature)
-        correction_factor = (1.0 + u_H**2 / 24.0) / (1.0 + u_D**2 / 24.0)
-    else:
-        correction_factor = 1.0
-    return raw_KIEs * correction_factor
-
-# calculates the Bell infinite parabola tunnelling correction
-# multiplies the KIE by a factor of (u_H/u_D)*(sin(u_D/2)/sin(u_H/2))
-# assumes the frequencies are sorted in ascending order
-def bell(raw_KIEs, ts_frequencies_light, ts_frequencies_heavy):
-    # calculate correction factor
-    wavenumber_light = ts_frequencies_light[0]
-    wavenumber_heavy = ts_frequencies_heavy[0]
-    if wavenumber_light < 0.0 and wavenumber_heavy < 0.0:
-        u_H = u(wavenumber_light, temperature)
-        u_D = u(wavenumber_heavy, temperature)
-        correction_factor = (u_H/u_D)*(np.sin(u_D/2.0)/np.sin(u_H/2.0))
-    else:
-        correction_factor = 1.0
-    return raw_KIEs * correction_factor
 
