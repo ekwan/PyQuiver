@@ -18,10 +18,19 @@ class KIE_Calculation(object):
         self.config = Config(config_file)
 
         print self.config.temperature
+        KIES = {}
         for p in self.make_isotopologues():
             gs_tuple, ts_tuple = p
-            kie = KIE(gs_tuple[1].name, gs_tuple, ts_tuple, self.config.temperature, self.config)
-            print kie
+            name = gs_tuple[1].name
+            print name
+            kie = KIE(name, gs_tuple, ts_tuple, self.config.temperature, self.config)
+            KIES[name] = kie
+        
+        for name,k in KIES.iteritems():
+            if name != self.config.reference_isotopologue:
+                if self.config.reference_isotopologue != "default":
+                    k.apply_reference(KIES[self.config.reference_isotopologue])
+                print k
             #print p[0][0].name
             #print "Sub masses:", p[0][0].masses
             #print p[0][1].name
@@ -71,24 +80,22 @@ class KIE_Calculation(object):
         config = self.config
         gs_system = self.gs_system
         ts_system = self.ts_system
-        config.check(gs_system, ts_system)
+        #config.check(gs_system, ts_system)
 
-        ref_gs_masses, ref_ts_masses = self.build_reference_masses()
+        default_gs_masses = self.build_default_masses(self.gs_system)
+        default_ts_masses = self.build_default_masses(self.ts_system)
 
-        ref_gs = Isotopologue(self.config.reference_isotopologue, gs_system, ref_gs_masses)
-        ref_ts = Isotopologue(self.config.reference_isotopologue, ts_system, ref_ts_masses)
+        default_gs = Isotopologue("default", gs_system, default_gs_masses)
+        default_ts = Isotopologue("default", ts_system, default_ts_masses)
 
         for id_,iso in config.isotopologues.iteritems():
-            if id_ == config.reference_isotopologue:
-                pass
-            else:
-                gs_rules, ts_rules = self.compile_mass_rules(iso)
-                gs_masses = self.apply_mass_rules(ref_gs_masses, gs_rules)
-                ts_masses = self.apply_mass_rules(ref_ts_masses, ts_rules)
-                sub_gs = Isotopologue(id_, gs_system, gs_masses)
-                sub_ts = Isotopologue(id_, ts_system, ts_masses)
-                yield ((ref_gs, sub_gs), (ref_ts, sub_ts))
-                #yield ((sub_gs, ref_gs), (sub_ts, ref_ts))
+            gs_rules, ts_rules = self.compile_mass_rules(iso)
+            gs_masses = self.apply_mass_rules(default_gs_masses, gs_rules)
+            ts_masses = self.apply_mass_rules(default_ts_masses, ts_rules)
+            sub_gs = Isotopologue(id_, gs_system, gs_masses)
+            sub_ts = Isotopologue(id_, ts_system, ts_masses)
+            yield ((default_gs, sub_gs), (default_ts, sub_ts))
+            #yield ((sub_gs, ref_gs), (sub_ts, ref_ts))
                 
 
 class KIE(object):
@@ -110,8 +117,8 @@ class KIE(object):
     # returns 1 x n array of the partition function ratios, where n is the number of frequencies
     # frequencies below frequency_threshold will be ignored and will not be included in the array
     def partition_components(self, freqs_heavy, freqs_light):
-        print "Heavy frequencies:", freqs_heavy
-        print "Light frequencies:", freqs_light
+        #print "Heavy frequencies:", freqs_heavy
+        #print "Light frequencies:", freqs_light
         temperature = self.temperature
         components = []
 
@@ -134,8 +141,8 @@ class KIE(object):
         imag_ratio = None
         try:
             imag_ratio = light_imag_freqs[0]/heavy_imag_freqs[0]
-            print light_imag_freqs[0], heavy_imag_freqs[0]
-            print "IMAGINARY RATIO:", imag_ratio
+            #print light_imag_freqs[0], heavy_imag_freqs[0]
+            #print "IMAGINARY RATIO:", imag_ratio
         except:
             pass
             #print "No imaginary frequencies."
@@ -148,62 +155,28 @@ class KIE(object):
         print tup[1].frequencies[1]
         '''
         partition_factors = self.partition_components(heavy_freqs, light_freqs)
-        print "Product Factor | Excitation Factor | ZPE Factor" 
-        print np.prod(partition_factors, axis=0)
+        #print "Product Factor | Excitation Factor | ZPE Factor" 
+        #print np.prod(partition_factors, axis=0)
         return (np.prod(partition_factors), imag_ratio)
         return (self.partition_components(heavy_freqs, light_freqs), imag_ratio)
 
     def calculate_kie(self):
 
         rpfr_gs, gs_imag_ratio = self.calculate_rpfr(self.gs_tuple)
-        print "rpfr_gs:", np.prod(rpfr_gs)
+        #print "rpfr_gs:", np.prod(rpfr_gs)
         rpfr_ts, ts_imag_ratio = self.calculate_rpfr(self.ts_tuple)
-        print "rpfr_ts:", np.prod(rpfr_ts)
+        #print "rpfr_ts:", np.prod(rpfr_ts)
         kie = ts_imag_ratio * rpfr_gs/rpfr_ts
         return kie
+    
+    def apply_reference(self, reference_kie):
+        self.value /= reference_kie.value
+        return self.value
 
     def __str__(self):
         return "isotopomer {0} {1}".format(self.name, self.value)
 
-'''
-# calculates the EIE or KIE for the specified systems
-# returns a KIECalculation
-def calculate_KIE(config, gs_system, ts_system):
-    # get fields
-    temperature = config.temperature
-    scaling = config.scaling
-    frequency_threshold = config.frequency_threshold
-    reference_isotopologue = config.reference_isotopologue
-    
-    # generate isotopologues
-    isotopologues = make_isotopologues(config, gs_system, ts_system)
 
-    # calculate isotope effects
-    for gs_isotopologue, ts_isotopologue, description in isotopologues:
-
-
-    # construct result
-
-
-# calculates the uncorrected EIE/KIE for a pair of isotopologues
-# assumes the frequencies are sorted in ascending order
-def uncorrected_KIE(gs_isotopologue_light, gs_isotopologue_heavy, ts_isotopologue_light, ts_isotopologue_heavy, \
-                    temperature, frequency_threshold, frequency_method="mass weighted hessian"):
-    # get the frequencies
-    gs_freqs_light = gs_isotopologue
-
-    if ( gs_frequencies[0] < 0.0 and ts_frequencies[0] < 0.0):
-        # do a KIE calculation
-
-        # add the tunnelling corrections
-
-        # return result
-    else:
-        # do an EIE calculation
-        partition_function_
-
-        # return result
-'''
 # utility function to calculate u terms
 # u = hv/kT where h = Planck's constant, v = frequency, kB = Boltzmann's constant, T = temperature
 # if using v in wavenumber, w

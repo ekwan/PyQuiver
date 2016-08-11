@@ -39,6 +39,8 @@ class Config(object):
                 if len(fields) != 5:
                     raise ValueError("unexpected number of fields for isotopologue in config file:\n%s" % line)
                 isotopologue_id, from_atom_number, to_atom_number, replacement = str(fields[1]), int(fields[2]), int(fields[3]), str(fields[4])
+                if isotopologue_id == "default":
+                    raise ValueError("name default is reserved.")
                 if from_atom_number < 1 or to_atom_number < 1:
                     raise ValueError("check atom numbers:\n%s" % line)
                 if replacement not in REPLACEMENTS.keys():

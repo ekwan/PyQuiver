@@ -1,6 +1,9 @@
-import numpy  as np
-import pandas as pd
+import sys
 import re
+
+import numpy  as np
+#import pandas as pd
+
 
 from constants import DEFAULT_MASSES, PHYSICAL_CONSTANTS
 from config import Config
@@ -235,7 +238,7 @@ class Isotopologue(object):
             imaginary_freqs = []
             small_freqs = []
             conv_factor = PHYSICAL_CONSTANTS['Eh']/(PHYSICAL_CONSTANTS['a0']**2 * PHYSICAL_CONSTANTS['amu'])
-            v,w = np.linalg.eig(self.mw_hessian*conv_factor)
+            v,w = np.linalg.eigh(self.mw_hessian*conv_factor)
             freqs = []
 
             for lam in v:
@@ -315,8 +318,8 @@ class System(object):
         return fcm
 
 if __name__ == "__main__":
-    #gs = System("../test/co2.out")
-    #gsiso = Isotopologue(gs, gs.masses)
+    if len(sys.argv) != 4:
+        print "Usage: python quiver.py configuration_file ground_state_file transition_state_file"
+
     from kie import KIE_Calculation
-    KIE_Calculation("test.config", "../test/claisen_gs.out", "../test/claisen_ts.out")
-#gsiso = Isotopologue(gs, gs.masses)
+    KIE_Calculation(sys.argv[1], sys.argv[2], sys.argv[3])
