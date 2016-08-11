@@ -11,9 +11,9 @@ c  = PHYSICAL_CONSTANTS["c"]  # in cm . s
 kB = PHYSICAL_CONSTANTS["kB"] # in J/K
 
 class KIE_Calculation(object):
-    def __init__(self, config_file, gs_file, ts_file):
-        self.gs_system = System(gs_file)
-        self.ts_system = System(ts_file)
+    def __init__(self, config_file, gs_file, ts_file, style="g09"):
+        self.gs_system = System(gs_file, style=style)
+        self.ts_system = System(ts_file, style=style)
         
         self.config = Config(config_file)
 

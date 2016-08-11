@@ -2,58 +2,10 @@ import sys
 import re
 
 import numpy  as np
-#import pandas as pd
 
-
+from utility import proj, normalize, test_orthogonality, schmidt
 from constants import DEFAULT_MASSES, PHYSICAL_CONSTANTS
 from config import Config
-
-def proj(u,v):
-    # project u onto v
-    return np.inner(v,u)/np.inner(u,u) * u
-
-def normalize(v):
-    norm=np.linalg.norm(v)
-    if norm < 1.0E-5: 
-       raise ValueError
-    return v/norm
-
-def test_orthogonality(vectors):
-    mat = np.zeros(shape=(len(vectors),len(vectors)))
-    for i,u in enumerate(vectors):
-        for j,v in enumerate(vectors):
-            inner = np.inner(u,v)
-            if inner != 0.0 or inner != 1.0:
-                mat[i][j] = inner
-    print "Orthogonality:"
-    for l in mat:
-        print l
-
-def schmidt(seed_vectors, rest_vectors, dimension):
-    vectors = list(seed_vectors)
-    test_vectors = list(rest_vectors)
-    while len(vectors) < dimension:
-        try:
-            test_vector = test_vectors.pop()
-            for v in vectors:
-                test_vector -= proj(v, test_vector)
-            try:
-                vectors.append(normalize(test_vector))
-            except ValueError:
-                pass
-
-        except IndexError:
-            raise ValueError("Could not fill the appropriate dimensional space")            
-    if len(vectors) < dimension:
-        raise ValueError("Could not fill the appropriate dimensional space")
-    else:
-        return vectors
-
-def _g09_triangle_serial(row,col):
-    if col > row:
-        return _g09_triangle_serial(col,row)
-    triangle = lambda n: n*(n+1)/2
-    return triangle(row) + col
 
 # represents a geometric arrangement of atoms with specific masses
 class Isotopologue(object):
@@ -74,9 +26,6 @@ class Isotopologue(object):
         return
         self.int_hessian = self.calculate_internal_hessian(masses)
         
-
-        #self.frequencies = self.calculate_frequencies()
-    
     def calculate_inertia_tensor(self, masses, positions):
         # calculate cartesian center of mass to find intertia tensor relative to center of mass
         rcm = np.zeros(3)
@@ -113,126 +62,10 @@ class Isotopologue(object):
 
         return mw_hessian
         
-
-    def calculate_internal_hessian(self, masses):
-        print "Masses:", masses
-        print "RCM:", self.rcm
-        print "Positions:", self.system.positions
-        print "RCM Positions:", self.rcm_positions
-        print "IITensor:", self.iitensor
-
-        vectors = []
-        for e in xrange(0,3):
-            v = np.zeros(3*self.number_of_atoms)
-            for i in xrange(0, self.number_of_atoms):
-                v[3*i:3*i+3] = np.array([1.0 if x == e else 0.0 for x in xrange(0,3)]) * np.sqrt(masses[i])
-            vectors.append(v)
-        
-
-        # order concerns?
-        w,v = np.linalg.eig(self.iitensor)
-        # which one?
-        print "Eigenvalues:", w
-        print "\"Eigenvectors\":", v
-        x = np.column_stack(v)
-        print "Stacked X matrix:", x
-
-        mat = np.zeros(shape=(len(x),len(x)))
-        
-        bad_indices = []
-        bad_vectors = []
-        for i1 in xrange(len(w)):
-            for i2 in xrange(i1+1, len(w)):
-                if np.abs(w[i1]-w[i2]) < 1.0E-10:
-                    bad_indices.extend([i1,i2])
-                    bad_vectors.extend([v[:,i1], v[:,i2]])
-        
-        if bad_indices:
-            print "Degenercies in eigenvalues. Assuming principal axes are not orthonormal and applying schmidt process."
-
-        principal_axes = [None for i in w]
-        for i in xrange(len(w)):
-            if i not in bad_indices:
-                principal_axes[i] = (v[:,i])
-        
-
-        adjusted_vectors = schmidt([], bad_vectors, len(bad_vectors))
-        for i,v_ in enumerate(adjusted_vectors):
-            principal_axes[bad_indices[i]] = v_
-        
-        print vectors
-        print "Testing orthogonality of principal axes:"
-        test_orthogonality(principal_axes)
-
-        print principal_axes
-        x = np.matrix.transpose(np.column_stack(principal_axes))
-        print x
-
-        # from the gaussian document: d=0 => making d4, d=1 => making d5 etc. j=j
-        for d in xrange(0,3):
-            v = np.zeros(3*self.number_of_atoms)
-            axis = [1.0 if k == d else 0.0 for k in xrange(0,3)]
-            for i in xrange(0, self.number_of_atoms):
-                v[3*i:3*i+3] = np.cross(np.dot(x,self.rcm_positions[i]), axis)
-            vectors.append(v)
-            
-        normalized_vectors = []
-        zero_vectors = []
-        for v in vectors:
-            try:
-                normalized_vectors.append(normalize(v))
-            except ValueError:
-                zero_vectors.append(v)
-        print "Number of Zero Vectors:", len(zero_vectors)
-        print "D Vectors:"
-        for nv in normalized_vectors:
-            print nv
-        
-        test_orthogonality(normalized_vectors)
-
-        standard_basis = [np.array([1.0 if x == i else 0.0 for x in xrange(0,3*self.number_of_atoms)]) for i in xrange(0,3*self.number_of_atoms)]
-        print normalized_vectors
-        normalized_vectors = schmidt(normalized_vectors, standard_basis, 3*self.number_of_atoms)
-
-        # costly step
-        #print len(zero_vectors)
-        d_matrix = np.matrix(np.column_stack(zero_vectors + normalized_vectors))
-        
-        # conversion factor to take hartree/(bohr^2 * amu) to units 1/s^2
-        conv_factor = PHYSICAL_CONSTANTS['Eh']/(PHYSICAL_CONSTANTS['a0']**2 * PHYSICAL_CONSTANTS['amu'])
-        
-        # calculate the internal hessian in appropriate units
-        int_hessian = np.dot(np.matrix.transpose(d_matrix), np.dot(self.mw_hessian, d_matrix)) * conv_factor
-        return int_hessian
-
     def calculate_frequencies(self, threshold, scaling=1.0, method="mass weighted hessian"):
         # short circuit if frequencies have already been calculated
         if self.frequencies is not None:
             return self.frequencies
-
-        if method == "projected hessian":
-            # need to detect if linear!!! TODO
-            projected_hessian = self.int_hessian[np.ix_(range(5,3*self.number_of_atoms),range(5,3*self.number_of_atoms))]
-            #projected_hessian = int_hessian[np.ix_(range(0,len(zero_vectors)) + range(6,3*self.number_of_atoms),range(0,len(zero_vectors)) + range(6,3*self.number_of_atoms))]
-
-            #np.savetxt("int.csv", int_hessian, delimiter=",")
-            #np.savetxt("proj.csv", projected_hessian, delimiter=",")
-
-            v,w = np.linalg.eig(projected_hessian)
-            #v,w = np.linalg.eig(self.mw_hessian*conv_factor)
-            #v,w = np.linalg.eig(int_hessian)
-            # retrieve frequencies in units 1/cm
-            frequencies = []
-
-            for lam in v:
-                imag_flag = 1
-                if lam < 0:
-                    imag_flag = -1
-                lam = np.abs(lam)
-                frequencies.append(imag_flag * np.sqrt(lam)/(2*np.pi*PHYSICAL_CONSTANTS['c']))
-            frequencies = np.array(frequencies)
-            frequencies.sort()
-            return frequencies
 
         if method == "mass weighted hessian":
             imaginary_freqs = []
@@ -262,10 +95,17 @@ class Isotopologue(object):
 
 class System(object):
     def __init__(self, outfile, style="g09"):
-        print "Reading data from %s..." % outfile
+        valid_styles = ["g09", "pyquiver"]
+        if style not in valid_styles:
+            raise ValueError("specified style, {0}, not supported".format(style))
+
+        print "Reading data from {0}... with style {1}".format(outfile, style)
         self.filename = outfile
         with open(outfile, 'r') as f:
             out_data = f.read()
+            if style == "pyquiver":
+                pass
+
             if style == "g09":
                 # read in the number of atoms
                 m = re.search("NAtoms\= +([0-9]+)", out_data)
@@ -297,11 +137,15 @@ class System(object):
 
         self.positions_angstrom = positions
         self.positions = positions/PHYSICAL_CONSTANTS['atb']
-        #print self.positions_angstrom[0]
-        #print self.positions[0]
 
         self.masses = masses
         self.atomic_numbers = atomic_numbers
+
+    def _g09_triangle_serial(self,row,col):
+        if col > row:
+            return self._g09_triangle_serial(col,row)
+        triangle = lambda n: n*(n+1)/2
+        return triangle(row) + col
 
     def _parse_g09_hessian(self, data):
         m = re.search("NImag\=(.+?)\@", data, re.DOTALL)
@@ -314,12 +158,19 @@ class System(object):
         fcm = np.zeros(shape=(3*self.number_of_atoms, 3*self.number_of_atoms))
         for i in xrange(0, 3*self.number_of_atoms):
             for j in xrange(0, 3*self.number_of_atoms):
-                fcm[i,j] = raw_fcm[_g09_triangle_serial(i,j)]
+                fcm[i,j] = raw_fcm[self._g09_triangle_serial(i,j)]
         return fcm
 
 if __name__ == "__main__":
+    input_style = None
+    print sys.argv
+    if len(sys.argv) == 5:
+        input_style = sys.argv.pop()
     if len(sys.argv) != 4:
         print "Usage: python quiver.py configuration_file ground_state_file transition_state_file"
 
     from kie import KIE_Calculation
-    KIE_Calculation(sys.argv[1], sys.argv[2], sys.argv[3])
+    if input_style:
+        KIE_Calculation(sys.argv[1], sys.argv[2], sys.argv[3], style=input_style)
+    else:
+        KIE_Calculation(sys.argv[1], sys.argv[2], sys.argv[3])
