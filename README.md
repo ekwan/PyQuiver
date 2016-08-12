@@ -2,35 +2,54 @@
 
 ## Contents
   - [Introduction](#introduction)
+    - [Features](#features)
     - [Installation](#installation)
-	- [Features](#features)
+
   - [Tutorial](#tutorial)
-    - [Interfaces](#interfaces)
-	- [.config Files](#.config-files)
-	- [Input Files](#input-files)
+
+  - [Technical Details](#technical-details)
+   - [Interfaces](#interfaces)
+   - [.config Files](#.config-files)
+   - [Input Files](#input-files)
+   - [Defining Masses](#masses)
+   - [Math](#math)
+   - [Notes](#notes)
+
+  - [Fine Print](#fine-print)
+   - [References](#references)
+   - [Authors](#authors)
+   - [License](#license)
   
 ## Introduction
 
-*PyQuiver* is an open-source Python package for calculating Kinetic Isotope Effects (KIEs) and Equilibrium Isotope Effects (EIEs) based on the output of electronic structure programs. *PyQuiver* reads the Hessian matrix and geometry of a chemical system to calculate partition function ratios and thereby determine isotope effects according to established mathematical methods.
-
-### Installation
-
-This package is written entirely in Python 2.7 and depends only on `numpy` - a standard Python package for scientific computing. If you do not already have Python installed, you should download the appropriate [Python installer](https://www.python.org/download/releases/2.7/). To install `numpy`, you should use [`pip install numpy`](https://pip.pypa.io/en/stable/installing/).
-
-To install *PyQuiver* simply `git clone` the repository.
+*PyQuiver* is an open-source Python program for calculating kinetic isotope effects (KIEs) and equilibrium isotope effects (EIEs) using harmonic frequencies and the Bigeleisen-Mayer equation.  *PyQuiver* takes the Cartesian Hessian matrix and geometry of a chemical system and calculates the isotope effects at a given temperature given a set of isotopic substitutions.
 
 ### Features
 
-* parse [`g09`](http://www.gaussian.com/g_prod/g09.htm) frequency job output files.
-* calculate frequencies from the mass-weighted Hessian.
-* calculate Reduced Partition Function Ratios (RPFRs) for isotopically substituted molecules.
-* calculate KIEs and EIEs for isotopically substituted chemical systems (including the appropriate temperature dependent effects).
-* correct KIEs for tunneling using Wigner tunneling corrections and Bell infinite parabola corrections.
+* calculate KIEs or EIEs
+* automatically read frequencies from [`g09`](http://www.gaussian.com/g_prod/g09.htm) output files
+* excellent performance for larger systems
+* highly customizable isotopic substitutions
+* arbitrary temperature
+* tunnelling corrections: Wigner and Bell infinite parabola
+* run via command line or simple Python API
+
+### Installation
+
+*PyQuiver* is written in pure Python 2.7.  Its only dependency is  `numpy`, a standard Python package for scientific computing that is included in virtually every Python distribution.
+
+1. Install [Python](https://www.continuum.io/downloads) if necesary.
+2. Install `numpy` if necessary: [`pip install numpy`](https://pip.pypa.io/en/stable/installing/)
+3. Install [git](https://git-scm.com/downloads).  git comes pre-installed on most Linux distributions and Macs.
+4. Clone the repository: `git clone https://github.com/ekwan/PyQuiver.git`
+
+For those who do not want to deal with git, click on the green "clone or download" button on this github repository page and click on "Download ZIP" to receive an archive.
+
+Other than downloading the source code, there is nothing to configure, compile, or fiddle with to get *PyQuiver* to run.
+
 
 ## Tutorial
 *PyQuiver* supports many types of inputs and offers two interfaces for general use: the command line and an [IPython Notebook](https://ipython.org/notebook.html).
-
-### Interfaces
 
 To run *PyQuiver* from the command line, simply move to the `src/` directory and input the following command:
 
@@ -39,6 +58,12 @@ To run *PyQuiver* from the command line, simply move to the `src/` directory and
 This command will calculate the KIEs or EIEs associated with the isotopic substitutions specified in the configuration file.
 
 To use the IPython Notebook interface, move to the `src/` directory and run the command `ipython notebook`. Then open the `quiver.ipynb` notebook file. To run a calculation replace the arguments for the `KIE_Calculation()` object as described in detail in the notebook.
+
+## Technical Details
+
+### Interfaces
+
+
 
 ### .config Files
 
@@ -70,8 +95,10 @@ The PyQuiver Standard is outlined as follows:
 
 ## Technical Details
 
+## References
+
 ## Authors
-*PyQuiver* was written by Thayer Anderson and Eugene Kwan in the Department of Chemistry and Chemical Biology at Harvard University.
+*PyQuiver* was written by Thayer Anderson and Eugene Kwan at the Department of Chemistry and Chemical Biology at Harvard University.  Please email `ekwan@fas.harvard.edu` with any questions.
 
 ## License
 
