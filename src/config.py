@@ -6,7 +6,7 @@ from constants import REPLACEMENTS, REPLACEMENTS_Z
 # Reads PyQuiver .config files.
 class Config(object):
     def __init__(self,filename):
-        expected_fields = "scaling temperature unsubstituted_isotopologue reference_isotopologue frequency_threshold".split(" ")
+        expected_fields = "scaling temperature mass_override_isotopologue reference_isotopologue frequency_threshold".split(" ")
         config = { i : None for i in expected_fields }
         config["filename"] = filename
 
@@ -34,8 +34,8 @@ class Config(object):
                 fields[0] = "isotopologue"
             elif fields[0] == "reference_isotopomer":
                 fields[0] = "reference_isotopologue"
-            elif fields[0] == "unsubstituted_isotopomer":
-                fields[0] = "unsubstituted_isotopologue"
+            elif fields[0] == "mass_override_isotopomer":
+                fields[0] = "mass_override_isotopologue"
 
 
             # parse
@@ -88,10 +88,10 @@ class Config(object):
         config["reference_isotopologue"] = str(config["reference_isotopologue"])
 
         try:
-            config["unsubstituted_isotopologue"]
+            config["mass_override_isotopologue"]
         except KeyError:
             raise ValueError("check reference isotopologue is valid")
-        config["unsubstituted_isotopologue"] = str(config["unsubstituted_isotopologue"])
+        config["mass_override_isotopologue"] = str(config["mass_override_isotopologue"])
 
         config["frequency_threshold"] = float(config["frequency_threshold"])
         if config["frequency_threshold"] > 100.0:

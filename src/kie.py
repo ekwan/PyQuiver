@@ -10,7 +10,7 @@ h  = PHYSICAL_CONSTANTS["h"]  # in J . s
 c  = PHYSICAL_CONSTANTS["c"]  # in cm . s
 kB = PHYSICAL_CONSTANTS["kB"] # in J/K
 
-DEBUG = True
+DEBUG = False
 
 class KIE_Calculation(object):
     def __init__(self, config, gs, ts, style="g09"):
@@ -64,9 +64,27 @@ class KIE_Calculation(object):
 
         self.KIES = KIES
 
-        print self
+    def get_row(self):
+        title_row = ""
+        row = ""
+        keys = self.KIES.keys()
+        if self.config.reference_isotopologue != "default":
+            keys.remove(self.config.reference_isotopologue)
 
-    def build_unsubstituted_masses(self):
+        if self.config.mass_override_isotopologue != "default":
+            keys.remove(self.config.mass_override_isotopologue)
+
+        keys.sort()
+        for name in keys:
+            title_row += "{0},".format(name)
+            if self.eie_flag == 0:
+                row += "{0:.3f},".format(self.KIES[name].value[-1])
+            else:
+                row += "{0:.3f},".format(self.KIES[name].value)
+
+        return (title_row, row, self.eie_flag)
+
+    def build_mass_override_masses(self):
         config = self.config
         gs_system = self.gs_system
         ts_system = self.ts_system
@@ -74,8 +92,8 @@ class KIE_Calculation(object):
         gs_masses = self.build_default_masses(gs_system)
         ts_masses = self.build_default_masses(ts_system)
 
-        if config.unsubstituted_isotopologue != "default":
-            iso = self.config.isotopologues[config.unsubstituted_isotopologue]
+        if config.mass_override_isotopologue != "default":
+            iso = self.config.isotopologues[config.mass_override_isotopologue]
             gs_rules, ts_rules = self.compile_mass_rules(iso)
 
             gs_masses = self.apply_mass_rules(gs_masses, gs_rules)
@@ -113,16 +131,16 @@ class KIE_Calculation(object):
         ts_system = self.ts_system
         config.check(gs_system, ts_system)
 
-        unsubstituted_gs_masses, unsubstituted_ts_masses = self.build_unsubstituted_masses()
+        mass_override_gs_masses, mass_override_ts_masses = self.build_mass_override_masses()
 
-        default_gs = Isotopologue("default", gs_system, unsubstituted_gs_masses)
-        default_ts = Isotopologue("default", ts_system, unsubstituted_ts_masses)
+        default_gs = Isotopologue("default", gs_system, mass_override_gs_masses)
+        default_ts = Isotopologue("default", ts_system, mass_override_ts_masses)
 
         for id_,iso in config.isotopologues.iteritems():
-            if id_ != config.unsubstituted_isotopologue:
+            if id_ != config.mass_override_isotopologue:
                 gs_rules, ts_rules = self.compile_mass_rules(iso)
-                gs_masses = self.apply_mass_rules(unsubstituted_gs_masses, gs_rules)
-                ts_masses = self.apply_mass_rules(unsubstituted_ts_masses, ts_rules)
+                gs_masses = self.apply_mass_rules(mass_override_gs_masses, gs_rules)
+                ts_masses = self.apply_mass_rules(mass_override_ts_masses, ts_rules)
                 sub_gs = Isotopologue(id_, gs_system, gs_masses)
                 sub_ts = Isotopologue(id_, ts_system, ts_masses)
                 yield ((default_gs, sub_gs), (default_ts, sub_ts))
@@ -138,13 +156,12 @@ class KIE_Calculation(object):
         keys = self.KIES.keys()
         if self.config.reference_isotopologue != "default":
             keys.remove(self.config.reference_isotopologue)
+        if self.config.mass_override_isotopologue != "default":
+            keys.remove(self.config.mass_override_isotopologue)
         keys.sort()
         for name in keys:
-            if name != self.config.reference_isotopologue:
-                string += "\n" + str(self.KIES[name])
-
+            string += "\n" + str(self.KIES[name])
         return string
-        
 
             
 class KIE(object):

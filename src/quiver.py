@@ -43,7 +43,8 @@ class Isotopologue(object):
             imaginary_freqs = []
             small_freqs = []
             conv_factor = PHYSICAL_CONSTANTS['Eh']/(PHYSICAL_CONSTANTS['a0']**2 * PHYSICAL_CONSTANTS['amu'])
-            v,w = np.linalg.eigh(self.mw_hessian*conv_factor)
+            #v,w = np.linalg.eigh(self.mw_hessian*conv_factor)
+            v = np.linalg.eigvalsh(self.mw_hessian*conv_factor)
             freqs = []
 
             for lam in v:
@@ -144,13 +145,15 @@ class System(object):
         return triangle(row) + col
 
     def _parse_g09_hessian(self, data):
-        m = re.search("NImag\=(.+?)\@", data, re.DOTALL)
+        raw_archive = re.findall(".*l9999.exe(.+?)\@", data, re.DOTALL)[-1]
+        raw_archive = re.sub('[\s+]', '', raw_archive) + "@"
+        m = re.search("NImag\=(.+?)\@", raw_archive, re.DOTALL)
         if m:
-            raw_archive = re.sub('[\s+]', '', m.group(0))
+            pass
         else:
             raise AttributeError("No frequency job detected.")
 
-        raw_fcm = raw_archive.split('\\')[2].split(',')
+        raw_fcm = m.group(0).split('\\')[2].split(',')
         fcm = self._parse_serial_lower_hessian(raw_fcm)
         return fcm
 
@@ -178,7 +181,7 @@ class System(object):
         return serial
 
 
-    def dump_pyquiver_input_file(self, extension=".pyq"):
+    def dump_pyquiver_input_file(self, extension=".qin"):
         path = os.path.splitext(self.filename)[0] + extension
         serial = str(self.number_of_atoms) + "\n"
         serial += self._make_serial_geometry()
@@ -200,6 +203,7 @@ if __name__ == "__main__":
     else:
         from kie import KIE_Calculation
         if input_style:
-            KIE_Calculation(sys.argv[1], sys.argv[2], sys.argv[3], style=input_style)
+            calc = KIE_Calculation(sys.argv[1], sys.argv[2], sys.argv[3], style=input_style)
         else:
-            KIE_Calculation(sys.argv[1], sys.argv[2], sys.argv[3])
+            calc = KIE_Calculation(sys.argv[1], sys.argv[2], sys.argv[3])
+        print calc
