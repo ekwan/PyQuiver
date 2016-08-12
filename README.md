@@ -34,6 +34,8 @@
 * tunnelling corrections: Wigner and Bell infinite parabola
 * run via command line or simple Python API
 
+The development of *PyQuiver* was inspired by the orignal fortran program [QUIVER](https://github.com/ekwan/quiver), written by Keith Laidig. *PyQuiver* is designed to be as compatible as possible with the QUIVER program, but to clarify some ambiguity in choice of masses, configuration files need to updated for use with *PyQuiver*. See the [Configuration](#config-files) section for detail.
+
 ### Installation
 
 *PyQuiver* is written in pure Python 2.7.  Its only dependency is  `numpy`, a standard Python package for scientific computing that is included in virtually every Python distribution.
@@ -98,7 +100,8 @@ Valid configuration files have all of the following directives:
 * `scaling`: a linear factor by which to scale the frequencies. Recommended value: 1.0
 * `frequency_threshold`: the threshold (in units cm^-1) that defines the cutoff between the small frequencies (corresponding to translation and rotation) and the normal vibrational mode frequencies. Recommended value: 50
 * `temperature`: the temperature in Kelvin at which to model the calculation.
-* `reference_isoto[pomer/logue]`: the name of an isotologue to use as the reference for KIE calculations. The name "default" is specially reserved for use here. If the name "default" is specified, then the KIEs are not referenced and are calculated absolutely.
+* `reference_isoto[pomer/logue]`: the name of an isotopologue to use as the reference for KIE calculations. The name "default" is specially reserved for use here. If the name "default" is specified, then the KIEs are not referenced and are calculated absolutely.
+* `unsubstitued_isot[pomer/logue]`: the name of an isotopologue to replace the default mass behaviour of PyQuiver. If for some reason you wish to override the default mass assignments made by PyQuiver, then the specified isotopologue will be used for masses in both the heavy and light isotopomers in addition to any replacements made to calculate KIEs. If the name "default" is specified, then the masses are assigned using the default behaviour.
 * `isoto[pomer/logue]`: the rule used for isotopic substitution. The expected fields are `name ground_state_atom_number transition_state_atom_number substitution`. The final field, `substitution` must correspond to a valid substitution weight. These weights are specified in `weights.dat`. Examples include `13C`, `18O`, and `2D`.
 
 ### Input Files
@@ -115,7 +118,7 @@ The PyQuiver Standard is outlined as follows:
 * Plain text input files.
 * The first line of a ground-state or transition-state input file should have the form `NumberOfAtoms`.
 * The next `n` lines, where `n` is the number of atoms specified in the first line define the geometry. Each line should be of the form `CenterNumber,AtomicNumber,XPosition,YPosition,ZPosition`. The positions should be provided in units of Angstroms. The center number simply refers to a numbered label of the atom ranging between `0` and `n-1` (inclusive).
-* The next line should contain the serialized upper-right triangular Hessian matrix defined in the usual fashion. In particular, if `H` is the Hessian matrix with `H_(ij)` corresponding to moving
+* The next line should contain the serialized upper-right triangular Cartesian Hessian matrix defined in the usual fashion. In particular, if `H` is the Hessian matrix then `H_(3p+i,3q+j)` corresponds to taking derivatives with respect to atom `p` moving in the `i`th coordinate and atom `q` moving in the `j`th coordinate (`i` and `j` run across the three cartesian coordinates). The entries in the serialized form should be separated by commas.
 
 
 ## References

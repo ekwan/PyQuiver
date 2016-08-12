@@ -6,7 +6,7 @@ from constants import REPLACEMENTS, REPLACEMENTS_Z
 # Reads PyQuiver .config files.
 class Config(object):
     def __init__(self,filename):
-        expected_fields = "scaling temperature reference_isotopologue frequency_threshold".split(" ")
+        expected_fields = "scaling temperature unsubstituted_isotopologue reference_isotopologue frequency_threshold".split(" ")
         config = { i : None for i in expected_fields }
         config["filename"] = filename
 
@@ -34,6 +34,9 @@ class Config(object):
                 fields[0] = "isotopologue"
             elif fields[0] == "reference_isotopomer":
                 fields[0] = "reference_isotopologue"
+            elif fields[0] == "unsubstituted_isotopomer":
+                fields[0] = "unsubstituted_isotopologue"
+
 
             # parse
             if fields[0] == "isotopologue":
@@ -78,11 +81,17 @@ class Config(object):
         if config["scaling"] < 0.5 or config["scaling"] > 1.5:
             raise ValueError("check scaling factor")
 
-        config["reference_isotopologue"] = str(config["reference_isotopologue"])
         try:
             config["reference_isotopologue"]
         except KeyError:
             raise ValueError("check reference isotopologue is valid")
+        config["reference_isotopologue"] = str(config["reference_isotopologue"])
+
+        try:
+            config["unsubstituted_isotopologue"]
+        except KeyError:
+            raise ValueError("check reference isotopologue is valid")
+        config["unsubstituted_isotopologue"] = str(config["unsubstituted_isotopologue"])
 
         config["frequency_threshold"] = float(config["frequency_threshold"])
         if config["frequency_threshold"] > 100.0:
@@ -125,27 +134,22 @@ class Config(object):
 
     # convert to human-readable format
     def __str__(self):
-        to_string = "Config file: %s\nTemperature: %.1f\nScaling: %.3f\nReference Isotopologue: %s\nFrequency threshold (cm-1): %d\n" % \
+        to_string = "Config file: %s\nTemperature: %.1f K\nScaling: %.3f\nReference Isotopologue: %s\nFrequency threshold (cm-1): %d\n" % \
                     (self.filename, self.temperature, self.scaling, self.reference_isotopologue, self.frequency_threshold)
 
         keys = self.isotopologues.keys()
         if self.reference_isotopologue != "default":
             keys.remove(self.reference_isotopologue)
         keys.sort()
-        keys = [self.reference_isotopologue] + keys
-        print keys
+
+        if self.reference_isotopologue == "default":
+            to_string += "   Reference isotopologue is default.\n"
+        else:
+            keys = [self.reference_isotopologue] + keys
         for i in keys:
             isotopologue = self.isotopologues[i]
 
             for j in range(len(isotopologue)):
                 to_string += "   Isotopologue {0: >10s}, replacement {1: >2d}: replace gs atom {2: ^3d} and ts atom {3: ^3d} with {4: >3s}\n".format(i, j+1, isotopologue[j][0], isotopologue[j][1], isotopologue[j][2])
+
         return to_string[:-1]
-
-#print config.__dict__
-
-#gs = System("../test/claisen_gs.out")
-#ts = System("../test/claisen_ts.out")
-#config = Config("test.config")
-#print config
-#config.check(gs, ts, verbose=True)
-

@@ -46,19 +46,20 @@ class KIE_Calculation(object):
 
         print self
 
-    def build_reference_masses(self):
+    def build_unsubstituted_masses(self):
         config = self.config
         gs_system = self.gs_system
         ts_system = self.ts_system
 
-        iso = self.config.isotopologues[config.reference_isotopologue]
-        gs_rules, ts_rules = self.compile_mass_rules(iso)
-
         gs_masses = self.build_default_masses(gs_system)
         ts_masses = self.build_default_masses(ts_system)
 
-        gs_masses = self.apply_mass_rules(gs_masses, gs_rules)
-        ts_masses = self.apply_mass_rules(ts_masses, ts_rules)
+        if config.unsubstituted_isotopologue != "default":
+            iso = self.config.isotopologues[config.unsubstituted_isotopologue]
+            gs_rules, ts_rules = self.compile_mass_rules(iso)
+
+            gs_masses = self.apply_mass_rules(gs_masses, gs_rules)
+            ts_masses = self.apply_mass_rules(ts_masses, ts_rules)
 
         return gs_masses, ts_masses
 
@@ -92,20 +93,19 @@ class KIE_Calculation(object):
         ts_system = self.ts_system
         config.check(gs_system, ts_system)
 
-        default_gs_masses = self.build_default_masses(self.gs_system)
-        default_ts_masses = self.build_default_masses(self.ts_system)
+        unsubstituted_gs_masses, unsubstituted_ts_masses = self.build_unsubstituted_masses()
 
-        default_gs = Isotopologue("default", gs_system, default_gs_masses)
-        default_ts = Isotopologue("default", ts_system, default_ts_masses)
+        default_gs = Isotopologue("default", gs_system, unsubstituted_gs_masses)
+        default_ts = Isotopologue("default", ts_system, unsubstituted_ts_masses)
 
         for id_,iso in config.isotopologues.iteritems():
-            gs_rules, ts_rules = self.compile_mass_rules(iso)
-            gs_masses = self.apply_mass_rules(default_gs_masses, gs_rules)
-            ts_masses = self.apply_mass_rules(default_ts_masses, ts_rules)
-            sub_gs = Isotopologue(id_, gs_system, gs_masses)
-            sub_ts = Isotopologue(id_, ts_system, ts_masses)
-            yield ((default_gs, sub_gs), (default_ts, sub_ts))
-            #yield ((sub_gs, ref_gs), (sub_ts, ref_ts))
+            if id_ != config.unsubstituted_isotopologue:
+                gs_rules, ts_rules = self.compile_mass_rules(iso)
+                gs_masses = self.apply_mass_rules(unsubstituted_gs_masses, gs_rules)
+                ts_masses = self.apply_mass_rules(unsubstituted_ts_masses, ts_rules)
+                sub_gs = Isotopologue(id_, gs_system, gs_masses)
+                sub_ts = Isotopologue(id_, ts_system, ts_masses)
+                yield ((default_gs, sub_gs), (default_ts, sub_ts))
                
     def __str__(self):
         string = "\n=== PY-QUIVER ANALYSIS ===\n"
