@@ -254,7 +254,7 @@ class KIE(object):
     def __str__(self):
         if self.value is not None:
             if self.eie_flag == 1:
-                return "Isotopologue {0} {1:.5}".format(self.name, self.value)
+                return "Isotopologue {1: >10s} {0: >33s} {2: ^12.3f} ".format("", self.name, self.value)
             else:
                 return "Isotopologue {1: >10s} {0: >33s} {2: ^12.3f} {3: ^14.3f} {4: ^17.3f}".format("", self.name, self.value[0], self.value[1], self.value[2])
         else:
