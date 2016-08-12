@@ -9,7 +9,7 @@
 
   - [Technical Details](#technical-details)
    - [Interfaces](#interfaces)
-   - [.config Files](#.config-files)
+   - [.config Files](#config-files)
    - [Input Files](#input-files)
    - [Defining Masses](#masses)
    - [Math](#math)
@@ -74,6 +74,14 @@ To use the IPython Notebook interface, move to the `src/` directory and run the 
 
 ## Technical Details
 
+   - [Interfaces](#interfaces)
+   - [.config Files](#config-files)
+   - [Input Files](#input-files)
+   - [Defining Masses](#masses)
+   - [Math](#math)
+   - [Notes](#notes)
+
+
 ### Interfaces
 
 
@@ -104,6 +112,10 @@ Currently, *PyQuiver* can automatically read output files from the following ele
 If you require *PyQuiver* to support any other program, simply email the authors with an example frequency job output associated with that program, and the parsing will be implemented as soon as possible.
 
 The PyQuiver Standard is outlined as follows:
+* Plain text input files.
+* The first line of a ground-state or transition-state input file should have the form `NumberOfAtoms`.
+* The next `n` lines, where `n` is the number of atoms specified in the first line define the geometry. Each line should be of the form `CenterNumber,AtomicNumber,XPosition,YPosition,ZPosition`. The positions should be provided in units of Angstroms. The center number simply refers to a numbered label of the atom ranging between `0` and `n-1` (inclusive).
+* The next line should contain the serialized upper-right triangular Hessian matrix defined in the usual fashion. In particular, if `H` is the Hessian matrix with `H_(ij)` corresponding to moving
 
 
 ## References
