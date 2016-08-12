@@ -17,7 +17,9 @@ class KIE_Calculation(object):
         
         self.config = Config(config_file)
 
-        print self.config.temperature
+        self.eie_flag = -1
+
+        print self.config
         KIES = {}
         for p in self.make_isotopologues():
             gs_tuple, ts_tuple = p
@@ -28,9 +30,22 @@ class KIE_Calculation(object):
         for name,k in KIES.iteritems():
             if name != self.config.reference_isotopologue:
                 if self.config.reference_isotopologue != "default":
+                    if self.eie_flag == -1:
+                        eie_flag_iso = name
+                        self.eie_flag = k.eie_flag
+                    else:
+                        if self.eie_flag != k.eie_flag:
+                            if eie_flag == 1:
+                                raise ValueError("quiver attempted to run a KIE calculation (isotopomer {0}) after an EIE calculation (isotopomer {1}). Check the frequency threshold.".format(name, eie_flag_iso))
+                            else:
+                                raise ValueError("quiver attempted to run an EIE calculation (isotopomer {0}) after a KIE calculation (isotopomer {1}). Check the frequency threshold.".format(name, eie_flag_iso))
+
                     k.apply_reference(KIES[self.config.reference_isotopologue])
-                print k
-        
+
+        self.KIES = KIES
+
+        print self
+
     def build_reference_masses(self):
         config = self.config
         gs_system = self.gs_system
@@ -91,7 +106,27 @@ class KIE_Calculation(object):
             sub_ts = Isotopologue(id_, ts_system, ts_masses)
             yield ((default_gs, sub_gs), (default_ts, sub_ts))
             #yield ((sub_gs, ref_gs), (sub_ts, ref_ts))
-                
+               
+    def __str__(self):
+        string = "\n=== PY-QUIVER ANALYSIS ===\n"
+        if self.eie_flag == 0:
+            string += "Isotopologue                                              uncorrected      Widmer     infinite parabola\n"
+            string += "                                                              KIE           KIE              KIE"
+        else:
+            string += "Isotopologue                                                  EIE"
+            
+        keys = self.KIES.keys()
+        if self.config.reference_isotopologue != "default":
+            keys.remove(self.config.reference_isotopologue)
+        keys.sort()
+        for name in keys:
+            if name != self.config.reference_isotopologue:
+                string += "\n" + str(self.KIES[name])
+
+        return string
+        
+
+            
 class KIE(object):
     # the constructor expects a tuple of the form yielded by make_isotopologue
     def __init__(self, name, gs_tuple, ts_tuple, temperature, config):
@@ -218,7 +253,10 @@ class KIE(object):
 
     def __str__(self):
         if self.value is not None:
-            return "isotopomer {0} {1}".format(self.name, self.value)
+            if self.eie_flag == 1:
+                return "Isotopologue {0} {1:.5}".format(self.name, self.value)
+            else:
+                return "Isotopologue {1: >10s} {0: >33s} {2: ^12.3f} {3: ^14.3f} {4: ^17.3f}".format("", self.name, self.value[0], self.value[1], self.value[2])
         else:
             "KIE Object for isotopomer {0}. No value has been calculated yet.".format(self.name)
 

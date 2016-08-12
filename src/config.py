@@ -10,6 +10,8 @@ class Config(object):
         config = { i : None for i in expected_fields }
         config["filename"] = filename
 
+        print "\nReading configuration from {0}".format(filename)
+
         # a list of isotopologues
         # each entry is a list of tuples
         # each tuple is (from_atom_number, to_atom_number, replacement_isotope)
@@ -123,11 +125,20 @@ class Config(object):
 
     # convert to human-readable format
     def __str__(self):
-        to_string = "Config file: %s\nTemperature: %.1f\nScaling: %.3f\nReference Isotopologue: %s\nFrequency threshold (cm-1): %d" % \
+        to_string = "Config file: %s\nTemperature: %.1f\nScaling: %.3f\nReference Isotopologue: %s\nFrequency threshold (cm-1): %d\n" % \
                     (self.filename, self.temperature, self.scaling, self.reference_isotopologue, self.frequency_threshold)
-        for i,isotopologue in self.isotopologues.iteritems():
+
+        keys = self.isotopologues.keys()
+        if self.reference_isotopologue != "default":
+            keys.remove(self.reference_isotopologue)
+        keys.sort()
+        keys = [self.reference_isotopologue] + keys
+        print keys
+        for i in keys:
+            isotopologue = self.isotopologues[i]
+
             for j in range(len(isotopologue)):
-                to_string += "   Isotopologue %s, replacement %1d: replace gs atom %3d and ts atom %3d with %3s\n" % (i, j+1, isotopologue[j][0], isotopologue[j][1], isotopologue[j][2])
+                to_string += "   Isotopologue {0: >10s}, replacement {1: >2d}: replace gs atom {2: ^3d} and ts atom {3: ^3d} with {4: >3s}\n".format(i, j+1, isotopologue[j][0], isotopologue[j][1], isotopologue[j][2])
         return to_string[:-1]
 
 #print config.__dict__
