@@ -11,12 +11,30 @@ c  = PHYSICAL_CONSTANTS["c"]  # in cm . s
 kB = PHYSICAL_CONSTANTS["kB"] # in J/K
 
 class KIE_Calculation(object):
-    def __init__(self, config_file, gs_file, ts_file, style="g09"):
-        self.gs_system = System(gs_file, style=style)
-        self.ts_system = System(ts_file, style=style)
-        
-        self.config = Config(config_file)
+    def __init__(self, config, gs, ts, style="g09"):
+        # check the types of config, gs, and ts parsing files if necessary and copying fields if not
+        if type(config) is str:
+            self.config = Config(config)
+        elif type(config) is Config:
+            self.config = Config
+        else:
+            raise TypeError("config argument must be either a filepath or Config object.")
 
+        if type(gs) is str:
+            self.gs_system = System(gs, style=style)
+        elif type(gs) is System:
+            self.gs_system = gs
+        else:
+            raise TypeError("gs argument must be either a filepath or System object.")
+
+        if type(ts) is str:
+            self.ts_system = System(ts, style=style)
+        elif type(ts) is System:
+            self.ts_system = ts
+        else:
+            raise TypeError("ts argument must be either a filepath or System object.")
+
+        # set the eie_flag to the recognized unitialized value (used for checking if there are inconsistent calculation types
         self.eie_flag = -1
 
         print self.config

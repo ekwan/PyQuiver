@@ -1,5 +1,6 @@
 import sys
 import re
+import os
 
 import numpy  as np
 
@@ -75,8 +76,34 @@ class System(object):
         with open(outfile, 'r') as f:
             out_data = f.read()
             if style == "pyquiver":
-                pass
+                lines = out_data.split("\n")
+                try:
+                    number_of_atoms = int(lines[0])
+                except ValueError:
+                    raise ValueError("first line must contain integer number of atoms.")
+                self.number_of_atoms = number_of_atoms
 
+
+                atomic_numbers = [0 for i in xrange(number_of_atoms)]
+                positions = np.zeros(shape=(number_of_atoms,3))
+                
+                for l in lines[1:number_of_atoms+1]:
+                    fields = l.split(',')
+                    try:
+                        center_number, atomic_number, x, y, z = fields
+                    except ValueError:
+                        raise ValueError("the following line in the geometry did not have the appropriate number of fields: {0}".format(l))
+                    center_number = int(center_number)
+                    atomic_number = int(atomic_number)
+
+                    atomic_numbers[center_number] = atomic_number
+                    positions[center_number][0] = x
+                    positions[center_number][1] = y
+                    positions[center_number][2] = z
+                
+                fcm_fields = lines[number_of_atoms+1].split(',')
+                hessian = self._parse_serial_lower_hessian(fcm_fields)
+                    
             if style == "g09":
                 # read in the number of atoms
                 m = re.search("NAtoms\= +([0-9]+)", out_data)
@@ -89,7 +116,6 @@ class System(object):
                 # read in the last geometry (assumed cartesian coordinates)
                 atomic_numbers = [0 for i in xrange(number_of_atoms)]
                 positions = np.zeros(shape=(number_of_atoms,3))
-                masses = np.zeros(number_of_atoms)
                 for m in re.finditer("Standard orientation:(.+?)Rotational constants \(GHZ\)", out_data, re.DOTALL):
                     pass
                 
@@ -109,12 +135,11 @@ class System(object):
         self.positions_angstrom = positions
         self.positions = positions/PHYSICAL_CONSTANTS['atb']
 
-        self.masses = masses
         self.atomic_numbers = atomic_numbers
 
-    def _g09_triangle_serial(self,row,col):
+    def _lower_triangle_serial_triangle(self,row,col):
         if col > row:
-            return self._g09_triangle_serial(col,row)
+            return self._lower_triangle_serial_triangle(col,row)
         triangle = lambda n: n*(n+1)/2
         return triangle(row) + col
 
@@ -126,22 +151,55 @@ class System(object):
             raise AttributeError("No frequency job detected.")
 
         raw_fcm = raw_archive.split('\\')[2].split(',')
+        fcm = self._parse_serial_lower_hessian(raw_fcm)
+        return fcm
+
+    def _parse_serial_lower_hessian(self, fields):
         fcm = np.zeros(shape=(3*self.number_of_atoms, 3*self.number_of_atoms))
         for i in xrange(0, 3*self.number_of_atoms):
             for j in xrange(0, 3*self.number_of_atoms):
-                fcm[i,j] = raw_fcm[self._g09_triangle_serial(i,j)]
+                fcm[i,j] = fields[self._lower_triangle_serial_triangle(i,j)]
         return fcm
+
+    def _make_serial_hessian(self):
+        serial = ""
+        print self.hessian
+        print self.hessian[1]
+        for i in xrange(self.number_of_atoms*3):
+            for j in xrange(0,i+1):
+                #print self.hessian[i,j]
+                serial += str(self.hessian[i,j]) + ","
+        return serial
+
+    def _make_serial_geometry(self):
+        serial = ""
+        for i in xrange(self.number_of_atoms):
+            serial += "{0},{1},{2},{3},{4}\n".format(i, self.atomic_numbers[i], self.positions_angstrom[i,0], self.positions_angstrom[i,1], self.positions_angstrom[i,2])
+        return serial
+
+
+    def dump_pyquiver_input_file(self, extension=".pyq"):
+        path = os.path.splitext(self.filename)[0] + extension
+        serial = str(self.number_of_atoms) + "\n"
+        serial += self._make_serial_geometry()
+        serial += self._make_serial_hessian()
+
+        with open(path, 'w') as f:
+            f.write(serial)
+        
+        return serial
 
 if __name__ == "__main__":
     input_style = None
     print sys.argv
     if len(sys.argv) == 5:
         input_style = sys.argv.pop()
+
     if len(sys.argv) != 4:
         print "Usage: python quiver.py configuration_file ground_state_file transition_state_file"
-
-    from kie import KIE_Calculation
-    if input_style:
-        KIE_Calculation(sys.argv[1], sys.argv[2], sys.argv[3], style=input_style)
     else:
-        KIE_Calculation(sys.argv[1], sys.argv[2], sys.argv[3])
+        from kie import KIE_Calculation
+        if input_style:
+            KIE_Calculation(sys.argv[1], sys.argv[2], sys.argv[3], style=input_style)
+        else:
+            KIE_Calculation(sys.argv[1], sys.argv[2], sys.argv[3])
