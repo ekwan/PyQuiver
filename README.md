@@ -22,7 +22,7 @@
   
 ## Introduction
 
-*PyQuiver* is an open-source Python program for calculating kinetic isotope effects (KIEs) and equilibrium isotope effects (EIEs) using harmonic frequencies and the Bigeleisen-Mayer equation.  *PyQuiver* takes the Cartesian Hessian matrix and geometry of a chemical system and calculates the isotope effects at a given temperature given a set of isotopic substitutions.
+*PyQuiver* is an open-source Python program for calculating kinetic isotope effects (KIEs) and equilibrium isotope effects (EIEs) using harmonic frequencies and the Bigeleisen-Mayer equation.  *PyQuiver* requires the Cartesian Hessian matrix, which can be calculated using any electronic structure program. 
 
 ### Features
 
@@ -49,6 +49,19 @@ Other than downloading the source code, there is nothing to configure, compile, 
 
 
 ## Tutorial
+
+what is an isotopologue
+
+roughly speaking how is a KIE calculated
+
+how do you call up quiver
+
+config files lite
+
+running the demo
+
+understanding the results
+
 *PyQuiver* supports many types of inputs and offers two interfaces for general use: the command line and an [IPython Notebook](https://ipython.org/notebook.html).
 
 To run *PyQuiver* from the command line, simply move to the `src/` directory and input the following command:
@@ -92,8 +105,6 @@ If you require *PyQuiver* to support any other program, simply email the authors
 
 The PyQuiver Standard is outlined as follows:
 
-
-## Technical Details
 
 ## References
 
