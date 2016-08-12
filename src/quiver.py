@@ -21,37 +21,8 @@ class Isotopologue(object):
         self.masses3 = np.array(masses3_list)
 
         self.number_of_atoms = system.number_of_atoms
-        self.rcm, self.rcm_positions, self.iitensor = self.calculate_inertia_tensor(masses, system.positions)
         self.mw_hessian = self.calculate_mw_hessian(self.masses3)
-        return
-        self.int_hessian = self.calculate_internal_hessian(masses)
         
-    def calculate_inertia_tensor(self, masses, positions):
-        # calculate cartesian center of mass to find intertia tensor relative to center of mass
-        rcm = np.zeros(3)
-        total_mass = 0
-        for i in xrange(0, self.number_of_atoms):
-            total_mass += masses[i]
-            rcm += positions[i] * masses[i]
-
-        rcm = rcm / total_mass
-
-        # calculate cartesian moment of inertia tensor
-        iitensor = np.zeros(shape=(3,3))
-        # center to rcm and convert to atomic units
-        rcm_positions = positions - rcm
-
-        for e1 in xrange(0,3):
-            for e2 in xrange(0,3):
-                for i in xrange(0, self.number_of_atoms):
-                    if e1 == e2:
-                        iitensor[e1,e2] += masses[i] * ((rcm_positions[i,(e1+1)%3])**2
-                                                      + (rcm_positions[i,(e1+2)%3])**2)
-                    else:
-                        iitensor[e1,e2] += -1 * masses[i] * (rcm_positions[i,e1]) * (rcm_positions[i,e2])
-
-        return rcm, rcm_positions, iitensor
-
     def calculate_mw_hessian(self, masses3):
         hessian = self.system.hessian
         mw_hessian = np.zeros_like(hessian)
