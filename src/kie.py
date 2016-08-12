@@ -10,6 +10,8 @@ h  = PHYSICAL_CONSTANTS["h"]  # in J . s
 c  = PHYSICAL_CONSTANTS["c"]  # in cm . s
 kB = PHYSICAL_CONSTANTS["kB"] # in J/K
 
+DEBUG = True
+
 class KIE_Calculation(object):
     def __init__(self, config, gs, ts, style="g09"):
         # check the types of config, gs, and ts parsing files if necessary and copying fields if not
@@ -157,6 +159,8 @@ class KIE(object):
         self.gs_tuple, self.ts_tuple = gs_tuple, ts_tuple
         self.temperature = temperature
 
+        if DEBUG:
+            print "Calculating KIE for isotopologue {0}.".format(name)
         self.value = self.calculate_kie()
 
     # calculates the reduced isotopic function ratio for a species (Wolfsberg eqn 4.79)
@@ -169,7 +173,6 @@ class KIE(object):
         #print "Light frequencies:", freqs_light
         temperature = self.temperature
         components = []
-
         for wavenumber_light, wavenumber_heavy in zip(freqs_light, freqs_heavy):
             product_factor = wavenumber_heavy/wavenumber_light
             u_light = u(wavenumber_light, temperature)
@@ -210,14 +213,25 @@ class KIE(object):
         print tup[1].frequencies[1]
         '''
         partition_factors = self.partition_components(heavy_freqs, light_freqs)
+        
+        if DEBUG:
+            factors = np.prod(partition_factors, axis=0)
+            print "{3: ^8}Product Factor: {0}\n{3: ^8}Excitation Factor: {1}\n{3: ^8}ZPE Factor: {2}".format(factors[0], factors[1], factors[2], "")
+
         return (np.prod(partition_factors), imag_ratios, heavy_freqs, light_freqs)
 
     def calculate_kie(self):
-
+        if DEBUG:
+            print "  Calculating Reduced Partition Function Ratio for Ground State."        
         rpfr_gs, gs_imag_ratios, gs_heavy_freqs, gs_light_freqs = self.calculate_rpfr(self.gs_tuple)
-        #print "rpfr_gs:", np.prod(rpfr_gs)
+        if DEBUG:
+            print "    rpfr_gs:", np.prod(rpfr_gs)
+        if DEBUG:
+            print "  Calculating Reduced Partition Function Ratio for Transition State."
+
         rpfr_ts, ts_imag_ratios, ts_heavy_freqs, ts_light_freqs = self.calculate_rpfr(self.ts_tuple)
-        #print "rpfr_ts:", np.prod(rpfr_ts)
+        if DEBUG:
+            print "    rpfr_ts:", np.prod(rpfr_ts)
 
         if ts_imag_ratios is not None:
             if self.eie_flag == -1:
