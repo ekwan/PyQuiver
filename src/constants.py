@@ -1,7 +1,8 @@
 # This file holds physical constants and reads atomic weights.
 import sys
 import re
-
+import os
+import inspect
 ###############
 
 # Physical Constants
@@ -94,7 +95,10 @@ class Element(object):
 
 # read in atomic weight data
 elements = []
-for line in open("weights.dat", "r"):
+
+root = os.path.split(os.path.abspath(__file__))[0]
+
+for line in open(root + "/weights.dat", "r"):
     # ignore comments and blank lines
     line = line.strip()
     if len(line) == 0 or line[0] == "#":
