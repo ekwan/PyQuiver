@@ -10,10 +10,9 @@ h  = PHYSICAL_CONSTANTS["h"]  # in J . s
 c  = PHYSICAL_CONSTANTS["c"]  # in cm . s
 kB = PHYSICAL_CONSTANTS["kB"] # in J/K
 
-DEBUG = False
-
 class KIE_Calculation(object):
-    def __init__(self, config, gs, ts, style="g09"):
+    def __init__(self, config, gs, ts, style="g09", debug=False):
+        self.debug=debug
         # check the types of config, gs, and ts parsing files if necessary and copying fields if not
         if type(config) is str:
             self.config = Config(config)
@@ -44,7 +43,7 @@ class KIE_Calculation(object):
         for p in self.make_isotopologues():
             gs_tuple, ts_tuple = p
             name = gs_tuple[1].name
-            kie = KIE(name, gs_tuple, ts_tuple, self.config.temperature, self.config)
+            kie = KIE(name, gs_tuple, ts_tuple, self.config.temperature, self.config, debug=self.debug)
             KIES[name] = kie
         
         for name,k in KIES.iteritems():
@@ -78,6 +77,7 @@ class KIE_Calculation(object):
         for name in keys:
             title_row += "{0},".format(name)
             if self.eie_flag == 0:
+                print "KIE calculation detected using {0}th tunneling correction".format(len(self.KIES[name].value))
                 row += "{0:.3f},".format(self.KIES[name].value[-1])
             else:
                 row += "{0:.3f},".format(self.KIES[name].value)
@@ -166,9 +166,10 @@ class KIE_Calculation(object):
             
 class KIE(object):
     # the constructor expects a tuple of the form yielded by make_isotopologue
-    def __init__(self, name, gs_tuple, ts_tuple, temperature, config):
+    def __init__(self, name, gs_tuple, ts_tuple, temperature, config, debug=False):
         # copy fields
         # the associated calculation object useful for pulling config fields etc.
+        self.debug = debug
         self.eie_flag = -1
         self.name = name
         self.freq_threshold = config.frequency_threshold
@@ -176,7 +177,7 @@ class KIE(object):
         self.gs_tuple, self.ts_tuple = gs_tuple, ts_tuple
         self.temperature = temperature
 
-        if DEBUG:
+        if self.debug:
             print "Calculating KIE for isotopologue {0}.".format(name)
         self.value = self.calculate_kie()
 
@@ -231,23 +232,23 @@ class KIE(object):
         '''
         partition_factors = self.partition_components(heavy_freqs, light_freqs)
         
-        if DEBUG:
+        if self.debug:
             factors = np.prod(partition_factors, axis=0)
             print "{3: ^8}Product Factor: {0}\n{3: ^8}Excitation Factor: {1}\n{3: ^8}ZPE Factor: {2}".format(factors[0], factors[1], factors[2], "")
 
         return (np.prod(partition_factors), imag_ratios, heavy_freqs, light_freqs)
 
     def calculate_kie(self):
-        if DEBUG:
+        if self.debug:
             print "  Calculating Reduced Partition Function Ratio for Ground State."        
         rpfr_gs, gs_imag_ratios, gs_heavy_freqs, gs_light_freqs = self.calculate_rpfr(self.gs_tuple)
-        if DEBUG:
+        if self.debug:
             print "    rpfr_gs:", np.prod(rpfr_gs)
-        if DEBUG:
+        if self.debug:
             print "  Calculating Reduced Partition Function Ratio for Transition State."
 
         rpfr_ts, ts_imag_ratios, ts_heavy_freqs, ts_light_freqs = self.calculate_rpfr(self.ts_tuple)
-        if DEBUG:
+        if self.debug:
             print "    rpfr_ts:", np.prod(rpfr_ts)
 
         if ts_imag_ratios is not None:

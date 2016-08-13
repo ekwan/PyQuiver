@@ -1,3 +1,4 @@
+import argparse
 import sys
 import re
 import os
@@ -193,17 +194,15 @@ class System(object):
         return serial
 
 if __name__ == "__main__":
-    input_style = None
-    print sys.argv
-    if len(sys.argv) == 5:
-        input_style = sys.argv.pop()
+    parser = argparse.ArgumentParser(description="A program that calculates KIEs and EIEs based on a ground and transition state file.")
+    parser.add_argument('-v', '--verbose', dest="debug", help='when the verbose flag is set debug information is printed', action='store_true')
+    parser.add_argument('-s', '--style', dest="style", default='g09', help='style of input files')
+    parser.add_argument('config', help='configuration file path')
+    parser.add_argument('gs', help='ground state file path')
+    parser.add_argument('ts', help='transition state file path')
 
-    if len(sys.argv) != 4:
-        print "Usage: python quiver.py configuration_file ground_state_file transition_state_file"
-    else:
-        from kie import KIE_Calculation
-        if input_style:
-            calc = KIE_Calculation(sys.argv[1], sys.argv[2], sys.argv[3], style=input_style)
-        else:
-            calc = KIE_Calculation(sys.argv[1], sys.argv[2], sys.argv[3])
-        print calc
+    args = parser.parse_args()
+
+    from kie import KIE_Calculation
+    calc = KIE_Calculation(args.config, args.gs, args.ts, style=args.style, debug=args.debug)
+    print calc
