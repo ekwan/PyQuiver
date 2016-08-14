@@ -24,7 +24,7 @@ class Isotopologue(object):
 
         self.number_of_atoms = system.number_of_atoms
         self.mw_hessian = self.calculate_mw_hessian(self.masses3)
-        
+
     def calculate_mw_hessian(self, masses3):
         hessian = self.system.hessian
         mw_hessian = np.zeros_like(hessian)
@@ -85,7 +85,6 @@ class System(object):
                     raise ValueError("first line must contain integer number of atoms.")
                 self.number_of_atoms = number_of_atoms
 
-
                 atomic_numbers = [0 for i in xrange(number_of_atoms)]
                 positions = np.zeros(shape=(number_of_atoms,3))
                 
@@ -113,21 +112,38 @@ class System(object):
                     number_of_atoms = int(m.group(1))
                 else:
                     raise AttributeError("Number of atoms not detected.")
+                m = None
                 self.number_of_atoms = number_of_atoms
-                
+                print number_of_atoms
                 # read in the last geometry (assumed cartesian coordinates)
                 atomic_numbers = [0 for i in xrange(number_of_atoms)]
                 positions = np.zeros(shape=(number_of_atoms,3))
-                for m in re.finditer("Standard orientation:(.+?)Rotational constants \(GHZ\)", out_data, re.DOTALL):
+                for m in re.finditer("Standard orientation(.+?)Rotational constants \(GHZ\)", out_data, re.DOTALL):
                     pass
-                
-                for l in m.group(1).split('\n')[5:-2]:
+
+                if not m:
+                    raise AttributeError("Geometry table not detected.")
+
+                def valid_geom_line_p(split_line):
+                    if len(split_line) == 6:
+                        try:
+                            int(split_line[0])
+                            int(split_line[1])
+                            int(split_line[2])
+                            return True
+                        except ValueError:
+                            return False
+                    return False
+
+                for l in m.group(1).split('\n'):
+                    raw_geom_line = l.split()
                     raw_geom_line = filter(None, l.split(' '))
-                    center_number = int(raw_geom_line[0]) - 1
-                    atomic_numbers[center_number] = int(raw_geom_line[1])
-                    for e in xrange(0,3):
-                        positions[center_number][e] = raw_geom_line[3+e]
-                
+                    if valid_geom_line_p(raw_geom_line):
+                        center_number = int(raw_geom_line[0]) - 1
+                        atomic_numbers[center_number] = int(raw_geom_line[1])
+                        for e in xrange(0,3):
+                            positions[center_number][e] = raw_geom_line[3+e]
+
                 # units = hartrees/bohr^2 ?
                 hessian = self._parse_g09_hessian(out_data)
 

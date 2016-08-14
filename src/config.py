@@ -116,16 +116,15 @@ class Config(object):
                 to_atom = isotopologue[r][1]
                 replacement = isotopologue[r][2]
                 replacement_string = "%s %d %d %s" % (i, from_atom, to_atom, replacement)
-
                 # get the atomic numbers of from_atom and to_atom
                 # must subtract one to convert from atom numbers to indices
                 from_atomZ = gs.atomic_numbers[from_atom-1]
                 to_atomZ = ts.atomic_numbers[to_atom-1]
                 replacementZ = REPLACEMENTS_Z[replacement]
                 if from_atomZ != replacementZ:
-                    raise ValueError("gs atomic number and replacement atomic number do not match for\n" % replacement_string)
+                    raise ValueError("gs atomic number and replacement atomic number do not match for {0}\n".format(replacement_string))
                 if to_atomZ != replacementZ:
-                    raise ValueError("ts atomic number and replacement atomic number do not match for\n" % replacement_string)
+                    raise ValueError("ts atomic number and replacement atomic number do not match for {0}\n".format(replacement_string))
                 if (from_atomZ != to_atomZ):
                     raise ValueError("gs and ts atomic number do not match for\n" % replacement_string)
 
