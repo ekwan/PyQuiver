@@ -48,17 +48,17 @@ class KIE_Calculation(object):
         
         for name,k in KIES.iteritems():
             if name != self.config.reference_isotopologue:
-                if self.config.reference_isotopologue != "default":
-                    if self.eie_flag == -1:
-                        eie_flag_iso = name
-                        self.eie_flag = k.eie_flag
-                    else:
-                        if self.eie_flag != k.eie_flag:
-                            if eie_flag == 1:
-                                raise ValueError("quiver attempted to run a KIE calculation (isotopomer {0}) after an EIE calculation (isotopomer {1}). Check the frequency threshold.".format(name, eie_flag_iso))
-                            else:
-                                raise ValueError("quiver attempted to run an EIE calculation (isotopomer {0}) after a KIE calculation (isotopomer {1}). Check the frequency threshold.".format(name, eie_flag_iso))
+                if self.eie_flag == -1:
+                    eie_flag_iso = name
+                    self.eie_flag = k.eie_flag
+                else:
+                    if self.eie_flag != k.eie_flag:
+                        if eie_flag == 1:
+                            raise ValueError("quiver attempted to run a KIE calculation (isotopomer {0}) after an EIE calculation (isotopomer {1}). Check the frequency threshold.".format(name, eie_flag_iso))
+                        else:
+                            raise ValueError("quiver attempted to run an EIE calculation (isotopomer {0}) after a KIE calculation (isotopomer {1}). Check the frequency threshold.".format(name, eie_flag_iso))
 
+                if self.config.reference_isotopologue != "default":
                     k.apply_reference(KIES[self.config.reference_isotopologue])
 
         self.KIES = KIES
@@ -287,7 +287,7 @@ class KIE(object):
 
         return correction_factor
 
-    # calculates the Bell infinite parabola tunnelling correction
+    # calculates the Bell infinite parabola tunneling correction
     # multiplies the KIE by a factor of (u_H/u_D)*(sin(u_D/2)/sin(u_H/2))
     # assumes the frequencies are sorted in ascending order
     def bell(self, ts_imag_heavy, ts_imag_light):

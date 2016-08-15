@@ -138,6 +138,7 @@ class System(object):
                 for l in m.group(1).split('\n'):
                     raw_geom_line = l.split()
                     raw_geom_line = filter(None, l.split(' '))
+                    #print raw_geom_line
                     if valid_geom_line_p(raw_geom_line):
                         center_number = int(raw_geom_line[0]) - 1
                         atomic_numbers[center_number] = int(raw_geom_line[1])
