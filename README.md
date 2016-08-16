@@ -194,18 +194,17 @@ Valid configuration files have all of the following directives:
 
 ### Input Files
 
-*PyQuiver* defaults to the assumption that the ground state file and transition state file are the outputs of a Gaussian09 `freq` job. To change this assumption *PyQuiver* can accept an additional command-line argument corresponding to the input file style.
+*PyQuiver* assumes that the ground state file and transition state file are the outputs of a Gaussian09 `freq` job. To change this assumption *PyQuiver* can accept an additional command-line argument corresponding to the input file style.
 
-Currently, *PyQuiver* can automatically read output files from the following electronic structure programs:
+Currently, *PyQuiver* can automatically read output files from the following formats:
 * Gaussian 2009. Style name: `g09`
 * PyQuiver Standard. Style name: `pyquiver`
 
-If you require *PyQuiver* to support any other program, simply email the authors with an example frequency job output associated with that program, and the parsing will be implemented as soon as possible.
+If you require *PyQuiver* to support any other program, we'd be pleased to offer some advice on how to implement.
 
-The *PyQuiver* Standard is outlined as follows:
-* Plain text input files.
-* The first line of a ground-state or transition-state input file should have the form `NumberOfAtoms`.
-* The next `n` lines, where `n` is the number of atoms specified in the first line define the geometry. Each line should be of the form `CenterNumber,AtomicNumber,XPosition,YPosition,ZPosition`. The positions should be provided in units of Angstroms. The center number simply refers to a numbered label of the atom ranging between `0` and `n-1` (inclusive).
+The *PyQuiver* Standard is a generic format for the output of an electronic structure program in plain-text outlined as follows:
+* The first line of a file should be of the form `NumberOfAtoms` (Ex. `11` would be a valid first line of a file with 11 atoms).
+* The next *n* lines, where *n* is the number of atoms specified in the first line define the geometry. Each line should be of the form `CenterNumber,AtomicNumber,XPosition,YPosition,ZPosition`. The positions should be provided in units of Angstroms. The center number simply refers to a numbered label of the atom ranging between 0 and *n-1* (inclusive).
 * The next line should contain the serialized lower-right triangular Cartesian Hessian matrix defined in the usual fashion. In particular, if `H` is the Hessian matrix then `H_(3p+i,3q+j)` corresponds to taking derivatives with respect to atom `p` moving in the `i`th coordinate and atom `q` moving in the `j`th coordinate (`i` and `j` run across the three cartesian coordinates). The entries in the serialized form should be separated by commas. The serialization should occur by stringing together the rows (truncated at the main diagonal).
 * Example *PyQuiver* standard input files are available in the `test/` directory. The files `claisen_gs.qin` and `claisen_ts.qin` are *PyQuiver* input files corresponding to the example Claisen system discussed in the tutorial.
 
