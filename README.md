@@ -181,7 +181,7 @@ To use the IPython Notebook, move to the `src/` directory and run the command `i
 Calculations performed in *PyQuiver* require a configuration file to specify the parameters (such as scaling factor and temperature) and isotopologue substitution rules.
 
 Each configuration file is a plain text file with the following properties:
-* blank lines and lines starting with "#" are ignored. All other lines must correspond to valid directives
+* blank lines and lines starting with `#` are ignored. All other lines must correspond to valid directives. (Furthermore `#` begins a comment within a line).
 * fields in directives are separated by spaces.
 
 Valid configuration files have all of the following directives:
