@@ -161,8 +161,14 @@ class KIE_Calculation(object):
         keys.sort()
         for name in keys:
             string += "\n" + str(self.KIES[name])
-        return string
 
+        if self.config.reference_isotopologue != "default":
+            string += "\nKIEs referenced to isotopolouge {0}:".format(self.config.reference_isotopologue)
+            string += "\n" + str(self.KIES[self.config.reference_isotopologue])
+        else:
+            string += "\n KIEs calculated absolutely with no reference."
+
+        return string
             
 class KIE(object):
     # the constructor expects a tuple of the form yielded by make_isotopologue
@@ -219,17 +225,6 @@ class KIE(object):
             bell_imag_ratio = raw_imag_ratio * self.bell(heavy_imag_freqs[0], light_imag_freqs[0])
             imag_ratios = np.array([raw_imag_ratio, wigner_imag_ratio, bell_imag_ratio])
             
-            #print light_imag_freqs[0], heavy_imag_freqs[0]
-            #print "IMAGINARY RATIO:", imag_ratio
-
-        '''
-        print "Small frequencies:"
-        print tup[0].frequencies[0]
-        print tup[1].frequencies[0]
-        print "Imaginary frequencies:"
-        print tup[0].frequencies[1]
-        print tup[1].frequencies[1]
-        '''
         partition_factors = self.partition_components(heavy_freqs, light_freqs)
         
         if self.debug:

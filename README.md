@@ -89,19 +89,16 @@ Read atomic weight data for 30 elements.
 
 Reading configuration from ./claisen_demo.config
 Reading data from claisen_gs.out... with style g09
-14
 Reading data from claisen_ts.out... with style g09
-14
 Config file: ./claisen_demo.config
 Temperature: 393.0 K
 Scaling: 0.961
-Reference Isotopologue: reference
+Reference Isotopologue: C5
 Frequency threshold (cm-1): 50
-   Isotopologue  reference, replacement  1: replace gs atom  5  and ts atom  5  with 13C
+   Isotopologue         C5, replacement  1: replace gs atom  5  and ts atom  5  with 13C
    Isotopologue         C1, replacement  1: replace gs atom  1  and ts atom  1  with 13C
    Isotopologue         C2, replacement  1: replace gs atom  2  and ts atom  2  with 13C
    Isotopologue         C4, replacement  1: replace gs atom  4  and ts atom  4  with 13C
-   Isotopologue         C5, replacement  1: replace gs atom  5  and ts atom  5  with 13C
    Isotopologue         C6, replacement  1: replace gs atom  6  and ts atom  6  with 13C
    Isotopologue        H/D, replacement  1: replace gs atom  7  and ts atom  7  with  2D
    Isotopologue        H/D, replacement  2: replace gs atom  8  and ts atom  8  with  2D
@@ -113,10 +110,11 @@ Isotopologue                                              uncorrected      Widme
 Isotopologue         C1                                      1.011         1.012            1.013      
 Isotopologue         C2                                      1.000         1.000            1.000      
 Isotopologue         C4                                      1.028         1.031            1.031      
-Isotopologue         C5                                      1.000         1.000            1.000      
 Isotopologue         C6                                      1.013         1.015            1.015      
 Isotopologue        H/D                                      0.953         0.954            0.955      
-Isotopologue         O3                                      1.017         1.018            1.019  
+Isotopologue         O3                                      1.017         1.018            1.019      
+KIEs referenced to isotopolouge C5:
+Isotopologue         C5                                      1.002         1.002            1.002      
 ```
 
 

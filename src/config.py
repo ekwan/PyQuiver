@@ -25,7 +25,6 @@ class Config(object):
             if len(line) == 0 or line[0] == "#":
                 continue
             line = line.split("#", 1)[0]
-            print line
 
             # read space-delimited data
             fields = filter(None, line.encode("ascii","ignore").split(" "))
