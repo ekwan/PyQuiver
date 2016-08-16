@@ -185,7 +185,7 @@ Each configuration file is a plain text file with the following properties:
 * fields in directives are separated by spaces.
 
 Valid configuration files have all of the following directives:
-* `scaling`: a linear factor by which to scale the frequencies. Recommended value: 1.0
+* `scaling`: a linear factor by which to scale the frequencies. 
 * `frequency_threshold`: the threshold (in units cm^-1) that defines the cutoff between the small frequencies (corresponding to translation and rotation) and the normal vibrational mode frequencies. Typical value: 50. (Tests show that projecting out rotations and translations have no effect on the KIE).
 * `temperature`: the temperature in Kelvin at which to model the calculation.
 * `reference_isoto[pomer/logue]`: possible values are "default" or the name of an isotopologue. If "default" is specified, the absolute KIEs will be reported. If the name of an isotopologue is specified, all KIEs will be divided the KIE values for this isotopologue.
@@ -220,10 +220,11 @@ The math behind a quiver calculation is detailed in the PDF `doc/technical_detai
 ## References
 
 1. **Bigeleisen-Mayer theory:**
-  * J. Chem. Phys.*  **1947**, *15*, 261.
-  * Wolfsberg, M.  *Acc. Chem. Res.* **1972**, *5*, 225.
+  * Bigeleisen, J.; Mayer, M.G. *J. Chem. Phys.*  **1947**, *15*, 261.
+  * Wolfsberg, M.  *Acc. Chem. Res.*, **1972**, *5*, 225.
+  * <span style="text-decoration:underline">Isotope Effects in the Chemical, Geological, and Bio Sciences</span>  
 2. **QUIVER:**
-  * Saunders, M.; Laidig, K.E. Wolfsberg, M.  *JACS* **19898*, *111*, 8989.
+  * Saunders, M.; Laidig, K.E. Wolfsberg, M.  *J. Am. Chem. Soc.*, **1988**, *111*, 8989.
 3. **Scaling Factors:**
   * Wong.  *Chem. Phys. Lett.* **1996**, *256*, 391-399.
   * Radom.  *J Phys. Chem.* **1996**, *100*, 16502.
