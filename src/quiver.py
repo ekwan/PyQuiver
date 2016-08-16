@@ -114,7 +114,6 @@ class System(object):
                     raise AttributeError("Number of atoms not detected.")
                 m = None
                 self.number_of_atoms = number_of_atoms
-                print number_of_atoms
                 # read in the last geometry (assumed cartesian coordinates)
                 atomic_numbers = [0 for i in xrange(number_of_atoms)]
                 positions = np.zeros(shape=(number_of_atoms,3))
