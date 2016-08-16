@@ -52,6 +52,8 @@ Other than downloading the source code, there is nothing to configure, compile, 
 
 ## Tutorial
 
+Picture and table references from paper for claisen reaction
+
 This tutorial will walk through an example KIE calculation while explaining the components in broad terms. More detailed and sophisticated techniques are exposed in the form of the underlying Python objects, but the simple command line interface should suffice for most use cases.
 
 All the files associated with this tutorial are available in the `test/` directory. In particular, the tutorial will reference the configuration file `claisen_demo.config` and the g09 output files `claisen_gs.out` and `claisen_ts.out` representing the ground and transition state frequency calculations, respectively.
@@ -71,14 +73,52 @@ isotopomer H/D 8 8 2D
 
 This defines an isotopomer named `H/D` that replaces hydrogens 7 and 8 in the ground and transition with deuterium.
 
-Once the substitutions are specified in the configuration file, *PyQuiver* will read in the cartesian Hessian/second derivative matrix/force constant matrix to calculate the appropriate KIE. The Bigeleisen-Mayer method for KIE calculation relates the KIEs to the normal modes of vibration of the molecule. In particular, the frequencies of the normal modes are used to calculate partition functions for the ground and transition state, which are then divided to find the KIE. 
+Once the substitutions are specified in the configuration file, *PyQuiver* will read in the cartesian Hessian/second derivative matrix/force constant matrix to calculate the appropriate KIE. The Bigeleisen-Mayer method for KIE calculation relates the KIEs to the normal modes of vibration of the molecule. In particular, the frequencies of the normal modes are used to calculate the reduced isotopic partition functions for the ground and transition state, which are then divided to find the KIE. 
 
 *PyQuiver* automates this procedure. To run a KIE calculation for the example system, move to the `src/` directory and run `quiver.py` from the command line:
 ```
 cd src/
 python quiver.py ../test/claisen_demo.config ../test/claisen_gs.out ../test/claisen_ts.out
 ```
-This command accepts (in order) the configuration file, the ground state file, and the transition state file. When run, the command will print a summary of the configuration file used (including all isotopic substitutions) and then calculated and print the KIEs corresponding to each isotopomer. For each KIE, three numbers are printed. These numbers correspond to the uncorrected KIE and two tunneling-corrected KIEs. In general, the infinite parabola KIE is most accurate.
+This command accepts (in order) the configuration file, the ground state file, and the transition state file. When run, the command will print a summary of the configuration file used (including all isotopic substitutions) and then calculated and print the KIEs corresponding to each isotopomer. For each KIE, three numbers are printed. These numbers correspond to the uncorrected KIE and two tunneling-corrected KIEs.
+
+The expected output of the claisen test case is as follows:
+
+```
+Read atomic weight data for 30 elements.
+
+Reading configuration from ./claisen_demo.config
+Reading data from claisen_gs.out... with style g09
+14
+Reading data from claisen_ts.out... with style g09
+14
+Config file: ./claisen_demo.config
+Temperature: 393.0 K
+Scaling: 0.961
+Reference Isotopologue: reference
+Frequency threshold (cm-1): 50
+   Isotopologue  reference, replacement  1: replace gs atom  5  and ts atom  5  with 13C
+   Isotopologue         C1, replacement  1: replace gs atom  1  and ts atom  1  with 13C
+   Isotopologue         C2, replacement  1: replace gs atom  2  and ts atom  2  with 13C
+   Isotopologue         C4, replacement  1: replace gs atom  4  and ts atom  4  with 13C
+   Isotopologue         C5, replacement  1: replace gs atom  5  and ts atom  5  with 13C
+   Isotopologue         C6, replacement  1: replace gs atom  6  and ts atom  6  with 13C
+   Isotopologue        H/D, replacement  1: replace gs atom  7  and ts atom  7  with  2D
+   Isotopologue        H/D, replacement  2: replace gs atom  8  and ts atom  8  with  2D
+   Isotopologue         O3, replacement  1: replace gs atom  3  and ts atom  3  with 17O
+
+=== PY-QUIVER ANALYSIS ===
+Isotopologue                                              uncorrected      Widmer     infinite parabola
+                                                              KIE           KIE              KIE
+Isotopologue         C1                                      1.011         1.012            1.013      
+Isotopologue         C2                                      1.000         1.000            1.000      
+Isotopologue         C4                                      1.028         1.031            1.031      
+Isotopologue         C5                                      1.000         1.000            1.000      
+Isotopologue         C6                                      1.013         1.015            1.015      
+Isotopologue        H/D                                      0.953         0.954            0.955      
+Isotopologue         O3                                      1.017         1.018            1.019  
+```
+
 
 ### Summary
 
@@ -100,7 +140,7 @@ The above captures the basic workflow of a *PyQuiver* calculation:
 ### Interfaces
 
 
-*PyQuiver* supports many types of inputs and offers two interfaces for general use: the command line and an [IPython Notebook](https://ipython.org/notebook.html).
+*PyQuiver* can be controlled from the command line or from an [IPython Notebook](https://ipython.org/notebook.html).
 
 To run *PyQuiver* from the command line, simply move to the `src/` directory and input the following command:
 
@@ -108,7 +148,26 @@ To run *PyQuiver* from the command line, simply move to the `src/` directory and
 python quiver.py config_file ground_state_file transition_state_file
 ```
 
-The command line interface accepts some standard and some custom flags for usage: `quiver.py [-h] [-v] [-s STYLE] config gs ts`. To see more details, run `python quiver.py -h` to display a help message.
+The command line interface accepts some standard and some custom flags for usage: `quiver.py [-h] [-v] [-s STYLE] config gs ts`. To see more details, run `python quiver.py -h` to display the following help message:
+
+```
+usage: quiver.py [-h] [-v] [-s STYLE] config gs ts
+
+A program that calculates KIEs and EIEs based on a ground and transition state
+file.
+
+positional arguments:
+  config                configuration file path
+  gs                    ground state file path
+  ts                    transition state file path
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --verbose         when the verbose flag is set debug information is
+                        printed
+  -s STYLE, --style STYLE
+                        style of input files
+```
 
 
 This command will calculate the KIEs or EIEs associated with the isotopic substitutions specified in the configuration file. For details, see the tutorial above.
