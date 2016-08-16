@@ -52,15 +52,19 @@ Other than downloading the source code, there is nothing to configure, compile, 
 
 ## Tutorial
 
-This tutorial wil walk through an example KIE calculation while explaining the components in broad terms. More detailed and sophisticated techniques are exposed in the form of the underlying Python objects, but the simple command line interface should suffice for most use cases.
+This tutorial will walk through an example KIE calculation while explaining the components in broad terms. More detailed and sophisticated techniques are exposed in the form of the underlying Python objects, but the simple command line interface should suffice for most use cases.
 
 All the files associated with this tutorial are available in the `test/` directory. In particular, the tutorial will reference the configuration file `claisen_demo.config` and the g09 output files `claisen_gs.out` and `claisen_ts.out` representing the ground and transition state frequency calculations, respectively.
 
-All KIEs (and EIEs) refer to some kind of isotopic substitution made in both the ground and transition state (or the exchanging systems for an EIE calculation). In the `claisen_demo.config` file, one line reads:
-`isotopomer C1 1 1 13C`
-This line provides the details of isotopic substitution necessary for *PyQuiver* to make the replacements. The keyword `isotopomer` lets *PyQuiver* know that the line will describe an isotopic substitution. The label `C1` defines the name of the isotopomer (substitution). This name has no syntactic significance - it can be any string without a space character. The numbers `1` and `1` tell *PyQuiver* which atom to replace in the ground and transition state respectively. The final entry, `13C`, defines the weight of the isotope used in the substitution. This weight must be drawn from `src/weights.dat` file. Examples include `13C` (for Carbon-13), `2D` (for Deuterium), and `18O` for (Oxygen-18). An isotopomer need not contain only a single replacement. KIEs can be calculated for systems where the heavy isotopomer has substitutions at multiple atoms. To make a multiple replacement, the label of the isotopomer is simply repeated (as seen at the end of the example configuration file):
-`isotopomer H/D 7 7 2D
-isotopomer H/D 8 8 2D`
+All KIEs (and EIEs) refer to an isotopic substitution made in both the ground and transition state (or the exchanging systems for an EIE calculation). In the `claisen_demo.config` file, one line reads:
+
+```isotopomer C1 1 1 13C```
+
+This line provides the details of isotopic substitution necessary for *PyQuiver* to make the replacements. The keyword `isotopomer` lets *PyQuiver* know that the line will describe an isotopic substitution. The label `C1` defines the name of the isotopomer (substitution). This name has no syntactic significance - it can be any string without a space character. The numbers `1` and `1` tell *PyQuiver* which atom to replace in the ground and transition state, respectively. The final entry, `13C`, defines the weight of the isotope used in the substitution. This weight must be drawn from `src/weights.dat` file. Examples include `13C` (for Carbon-13), `2D` (for Deuterium), and `18O` for (Oxygen-18). An isotopomer need not contain only a single replacement. KIEs can be calculated for systems where the heavy isotopomer has substitutions at multiple atoms. To make a multiple replacement, the label of the isotopomer is simply repeated (as seen at the end of the example configuration file):
+
+```isotopomer H/D 7 7 2D
+isotopomer H/D 8 8 2D```
+
 This defines an isotopomer named `H/D` that replaces hydrogens 7 and 8 in the ground and transition with deuterium.
 
 Once the substitutions are specified in the configuration file, *PyQuiver* will read in the cartesian Hessian/second derivative matrix/force constant matrix to calculate the appropriate KIE. The Bigeleisen-Mayer method for KIE calculation relates the KIEs to the normal modes of vibration of the molecule. In particular, the frequencies of the normal modes are used to calculate partition functions for the ground and transition state, which are then divided to find the KIE. 
@@ -68,9 +72,14 @@ Once the substitutions are specified in the configuration file, *PyQuiver* will 
 *PyQuiver* automates this procedure. To run a KIE calculation for the example system, move to the `src/` directory and run `quiver.py` from the command line:
 `cd src/`
 `python quiver.py ../test/claisen_demo.config ../test/claisen_gs.out ../test/claisen_ts.out`
-This command accepts (in order) the configuration file, the ground state file, and the transition state file. When run, the command will print a summary of the configuration file used (including all isotopic substitutions) and then calculated and print the KIEs corresponding to each isotopomer.
+This command accepts (in order) the configuration file, the ground state file, and the transition state file. When run, the command will print a summary of the configuration file used (including all isotopic substitutions) and then calculated and print the KIEs corresponding to each isotopomer. For each KIE, three numbers are printed. These numbers correspond to the uncorrected KIE and two tunneling-corrected KIEs. In general, the infinite parabola KIE is most accurate.
 
-understanding the results
+### Summary
+
+The above captures the basic workflow of a *PyQuiver* calculation:
+* run a frequency calculation and collect the output files.
+* write a configuration file specifying the desired isotopic substitutions. (Note that there are other necessary parts of a configuration file, see the [appropriate section](#config-files) for details).
+* run `python quiver.py` on the configuration, ground state, and transition state files to print the KIEs.
 
 ## Technical Details
 
