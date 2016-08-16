@@ -1,6 +1,7 @@
 # This calculates KIEs based on the Bigeleisen-Mayer equation.
 import numpy as np
-from quiver import System, Isotopologue
+#from quiver import System, Isotopologue, DEBUG
+import quiver
 from config import Config
 from constants import DEFAULT_MASSES
 
@@ -11,8 +12,7 @@ c  = PHYSICAL_CONSTANTS["c"]  # in cm . s
 kB = PHYSICAL_CONSTANTS["kB"] # in J/K
 
 class KIE_Calculation(object):
-    def __init__(self, config, gs, ts, style="g09", debug=False):
-        self.debug=debug
+    def __init__(self, config, gs, ts, style="g09"):
         # check the types of config, gs, and ts parsing files if necessary and copying fields if not
         if type(config) is str:
             self.config = Config(config)
@@ -22,18 +22,18 @@ class KIE_Calculation(object):
             raise TypeError("config argument must be either a filepath or Config object.")
 
         if type(gs) is str:
-            self.gs_system = System(gs, style=style)
-        elif type(gs) is System:
+            self.gs_system = quiver.System(gs, style=style)
+        elif type(gs) is quiver.System:
             self.gs_system = gs
         else:
-            raise TypeError("gs argument must be either a filepath or System object.")
+            raise TypeError("gs argument must be either a filepath or quiver.System object.")
 
         if type(ts) is str:
-            self.ts_system = System(ts, style=style)
-        elif type(ts) is System:
+            self.ts_system = quiver.System(ts, style=style)
+        elif type(ts) is quiver.System:
             self.ts_system = ts
         else:
-            raise TypeError("ts argument must be either a filepath or System object.")
+            raise TypeError("ts argument must be either a filepath or quiver.System object.")
 
         # set the eie_flag to the recognized unitialized value (used for checking if there are inconsistent calculation types
         self.eie_flag = -1
@@ -43,7 +43,7 @@ class KIE_Calculation(object):
         for p in self.make_isotopologues():
             gs_tuple, ts_tuple = p
             name = gs_tuple[1].name
-            kie = KIE(name, gs_tuple, ts_tuple, self.config.temperature, self.config, debug=self.debug)
+            kie = KIE(name, gs_tuple, ts_tuple, self.config.temperature, self.config, debug=quiver.DEBUG)
             KIES[name] = kie
         
         for name,k in KIES.iteritems():
@@ -133,22 +133,22 @@ class KIE_Calculation(object):
 
         mass_override_gs_masses, mass_override_ts_masses = self.build_mass_override_masses()
 
-        default_gs = Isotopologue("default", gs_system, mass_override_gs_masses)
-        default_ts = Isotopologue("default", ts_system, mass_override_ts_masses)
+        default_gs = quiver.Isotopologue("default", gs_system, mass_override_gs_masses)
+        default_ts = quiver.Isotopologue("default", ts_system, mass_override_ts_masses)
 
         for id_,iso in config.isotopologues.iteritems():
             if id_ != config.mass_override_isotopologue:
                 gs_rules, ts_rules = self.compile_mass_rules(iso)
                 gs_masses = self.apply_mass_rules(mass_override_gs_masses, gs_rules)
                 ts_masses = self.apply_mass_rules(mass_override_ts_masses, ts_rules)
-                sub_gs = Isotopologue(id_, gs_system, gs_masses)
-                sub_ts = Isotopologue(id_, ts_system, ts_masses)
+                sub_gs = quiver.Isotopologue(id_, gs_system, gs_masses)
+                sub_ts = quiver.Isotopologue(id_, ts_system, ts_masses)
                 yield ((default_gs, sub_gs), (default_ts, sub_ts))
                
     def __str__(self):
         string = "\n=== PY-QUIVER ANALYSIS ===\n"
         if self.eie_flag == 0:
-            string += "Isotopologue                                              uncorrected      Widmer     infinite parabola\n"
+            string += "Isotopologue                                              uncorrected      Wigner     infinite parabola\n"
             string += "                                                              KIE           KIE              KIE"
         else:
             string += "Isotopologue                                                  EIE"
@@ -163,7 +163,7 @@ class KIE_Calculation(object):
             string += "\n" + str(self.KIES[name])
 
         if self.config.reference_isotopologue != "default":
-            string += "\nKIEs referenced to isotopolouge {0}:".format(self.config.reference_isotopologue)
+            string += "\nKIEs referenced to isotopolouge {0}. Absolute KIES are:".format(self.config.reference_isotopologue)
             string += "\n" + str(self.KIES[self.config.reference_isotopologue])
         else:
             string += "\n KIEs calculated absolutely with no reference."
@@ -175,7 +175,7 @@ class KIE(object):
     def __init__(self, name, gs_tuple, ts_tuple, temperature, config, debug=False):
         # copy fields
         # the associated calculation object useful for pulling config fields etc.
-        self.debug = debug
+        quiver.DEBUG = debug
         self.eie_flag = -1
         self.name = name
         self.freq_threshold = config.frequency_threshold
@@ -183,7 +183,7 @@ class KIE(object):
         self.gs_tuple, self.ts_tuple = gs_tuple, ts_tuple
         self.temperature = temperature
 
-        if self.debug:
+        if quiver.DEBUG:
             print "Calculating KIE for isotopologue {0}.".format(name)
         self.value = self.calculate_kie()
 
@@ -192,10 +192,8 @@ class KIE(object):
     # uses the Teller-Redlich product rule
     # returns 1 x n array of the partition function ratios, where n is the number of frequencies
     # frequencies below frequency_threshold will be ignored and will not be included in the array
-    def partition_components(self, freqs_heavy, freqs_light):
-        #print "Heavy frequencies:", freqs_heavy
-        #print "Light frequencies:", freqs_light
-        temperature = self.temperature
+    @staticmethod
+    def partition_components(freqs_heavy, freqs_light, temperature):
         components = []
         for wavenumber_light, wavenumber_heavy in zip(freqs_light, freqs_heavy):
             product_factor = wavenumber_heavy/wavenumber_light
@@ -206,13 +204,13 @@ class KIE(object):
             components.append([product_factor,excitation_factor,ZPE_factor])
         return np.array(components)
 
-    # how should scaling factor be used?
-    # tup is a tuple of a form 
-    def calculate_rpfr(self, tup):
+    # tup is a tuple of a form (light_isotopologue, heavy_isotopologue)
+    @classmethod
+    def calculate_rpfr(cls, tup, freq_threshold, scaling, temperature):
         # calculate_frequencies gives tuples of the form (small_freqs, imaginary_freqs, freqs)
         #print "Frequency threshold:", self.freq_threshold
-        _, light_imag_freqs, light_freqs = tup[0].calculate_frequencies(self.freq_threshold, scaling=self.config.scaling)
-        _, heavy_imag_freqs, heavy_freqs = tup[1].calculate_frequencies(self.freq_threshold, scaling=self.config.scaling)
+        _, light_imag_freqs, light_freqs = tup[0].calculate_frequencies(freq_threshold, scaling=scaling)
+        _, heavy_imag_freqs, heavy_freqs = tup[1].calculate_frequencies(freq_threshold, scaling=scaling)
         raw_imag_ratio = None
         imag_ratios = None
         try:
@@ -221,29 +219,29 @@ class KIE(object):
             pass
 
         if raw_imag_ratio:
-            wigner_imag_ratio = raw_imag_ratio * self.wigner(heavy_imag_freqs[0], light_imag_freqs[0])
-            bell_imag_ratio = raw_imag_ratio * self.bell(heavy_imag_freqs[0], light_imag_freqs[0])
+            wigner_imag_ratio = raw_imag_ratio * cls.wigner(heavy_imag_freqs[0], light_imag_freqs[0], temperature)
+            bell_imag_ratio = raw_imag_ratio * cls.bell(heavy_imag_freqs[0], light_imag_freqs[0], temperature)
             imag_ratios = np.array([raw_imag_ratio, wigner_imag_ratio, bell_imag_ratio])
             
-        partition_factors = self.partition_components(heavy_freqs, light_freqs)
+        partition_factors = cls.partition_components(heavy_freqs, light_freqs, temperature)
         
-        if self.debug:
+        if quiver.DEBUG:
             factors = np.prod(partition_factors, axis=0)
             print "{3: ^8}Product Factor: {0}\n{3: ^8}Excitation Factor: {1}\n{3: ^8}ZPE Factor: {2}".format(factors[0], factors[1], factors[2], "")
 
         return (np.prod(partition_factors), imag_ratios, heavy_freqs, light_freqs)
 
     def calculate_kie(self):
-        if self.debug:
+        if quiver.DEBUG:
             print "  Calculating Reduced Partition Function Ratio for Ground State."        
-        rpfr_gs, gs_imag_ratios, gs_heavy_freqs, gs_light_freqs = self.calculate_rpfr(self.gs_tuple)
-        if self.debug:
+        rpfr_gs, gs_imag_ratios, gs_heavy_freqs, gs_light_freqs = self.calculate_rpfr(self.gs_tuple, self.config.frequency_threshold, self.config.scaling, self.config.temperature)
+        if quiver.DEBUG:
             print "    rpfr_gs:", np.prod(rpfr_gs)
-        if self.debug:
+        if quiver.DEBUG:
             print "  Calculating Reduced Partition Function Ratio for Transition State."
 
-        rpfr_ts, ts_imag_ratios, ts_heavy_freqs, ts_light_freqs = self.calculate_rpfr(self.ts_tuple)
-        if self.debug:
+        rpfr_ts, ts_imag_ratios, ts_heavy_freqs, ts_light_freqs = self.calculate_rpfr(self.ts_tuple, self.config.frequency_threshold, self.config.scaling, self.config.temperature)
+        if quiver.DEBUG:
             print "    rpfr_ts:", np.prod(rpfr_ts)
 
         if ts_imag_ratios is not None:
@@ -270,8 +268,8 @@ class KIE(object):
     # calculates the Wigner tunnelling correction
     # multiplies the KIE by a factor of (1+u_H^2/24)/(1+u_D^2/24)
     # assumes the frequencies are sorted in ascending order
-    def wigner(self, ts_imag_heavy, ts_imag_light):
-        temperature = self.config.temperature
+    @staticmethod
+    def wigner(ts_imag_heavy, ts_imag_light, temperature):
         # calculate correction factor
         if ts_imag_heavy < 0.0 and ts_imag_light < 0.0:
             u_H = u(ts_imag_light, temperature)
@@ -285,8 +283,8 @@ class KIE(object):
     # calculates the Bell infinite parabola tunneling correction
     # multiplies the KIE by a factor of (u_H/u_D)*(sin(u_D/2)/sin(u_H/2))
     # assumes the frequencies are sorted in ascending order
-    def bell(self, ts_imag_heavy, ts_imag_light):
-        temperature = self.config.temperature
+    @staticmethod
+    def bell(ts_imag_heavy, ts_imag_light, temperature):
         # calculate correction factor
         if ts_imag_heavy < 0.0 and ts_imag_light < 0.0:
             u_H = u(ts_imag_light, temperature)

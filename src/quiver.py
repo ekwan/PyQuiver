@@ -9,6 +9,8 @@ from utility import proj, normalize, test_orthogonality, schmidt
 from constants import DEFAULT_MASSES, PHYSICAL_CONSTANTS
 from config import Config
 
+DEBUG = False
+
 # represents a geometric arrangement of atoms with specific masses
 class Isotopologue(object):
     def __init__(self, id_, system, masses):
@@ -218,7 +220,8 @@ if __name__ == "__main__":
     parser.add_argument('ts', help='transition state file path')
 
     args = parser.parse_args()
+    DEBUG = args.debug
 
     from kie import KIE_Calculation
-    calc = KIE_Calculation(args.config, args.gs, args.ts, style=args.style, debug=args.debug)
+    calc = KIE_Calculation(args.config, args.gs, args.ts, style=args.style)
     print calc
