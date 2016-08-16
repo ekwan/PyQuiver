@@ -186,10 +186,10 @@ Each configuration file is a plain text file with the following properties:
 
 Valid configuration files have all of the following directives:
 * `scaling`: a linear factor by which to scale the frequencies. Recommended value: 1.0
-* `frequency_threshold`: the threshold (in units cm^-1) that defines the cutoff between the small frequencies (corresponding to translation and rotation) and the normal vibrational mode frequencies. Recommended value: 50
+* `frequency_threshold`: the threshold (in units cm^-1) that defines the cutoff between the small frequencies (corresponding to translation and rotation) and the normal vibrational mode frequencies. Typical value: 50. (Tests show that projecting out rotations and translations have no effect on the KIE).
 * `temperature`: the temperature in Kelvin at which to model the calculation.
-* `reference_isoto[pomer/logue]`: the name of an isotopologue to use as the reference for KIE calculations. The name "default" is specially reserved for use here. If the name "default" is specified, then the KIEs are not referenced and are calculated absolutely.
-* `mass_override_isot[pomer/logue]`: the name of an isotopologue to replace the default mass behaviour of PyQuiver. If for some reason you wish to override the default mass assignments made by PyQuiver, then the specified isotopologue will be used for masses in both the heavy and light isotopomers in addition to any replacements made to calculate KIEs. If the name "default" is specified, then the masses are assigned using the default behaviour.
+* `reference_isoto[pomer/logue]`: possible values are "default" or the name of an isotopologue. If "default" is specified, the absolute KIEs will be reported. If the name of an isotopologue is specified, all KIEs will be divided the KIE values for this isotopologue.
+* `mass_override_isot[pomer/logue]`: possible values are "default" or the name of an isotopologue. If the value "default" is specified, the default masses in `weights.dat`. If the name of an isotopolgoue is given, then that isotopologue is used to replace the default mass behaviour of PyQuiver. In particular, those substitutions are made in both the ground and transition state of both the heavy and light isotopologues for all KIE calculations. For example, if for some reason you wish for Carbon 5 to have the mass of 12.5, for whatever reason, you would specify such an isotopologue as the `mass_override_isotopologue`.
 * `isoto[pomer/logue]`: the rule used for isotopic substitution. The expected fields are `name ground_state_atom_number transition_state_atom_number substitution`. The final field, `substitution` must correspond to a valid substitution weight. These weights are specified in `weights.dat`. Examples include `13C`, `18O`, and `2D`.
 
 ### Input Files
@@ -218,6 +218,17 @@ If input files are provided in a known format other than the *PyQuiver* standard
 The math behind a quiver calculation is detailed in the PDF `doc/technical_details.pdf` generated from the TeX file `doc/technical_details.tex`.
 
 ## References
+
+1. **Bigeleisen-Mayer theory:**
+  * J. Chem. Phys.*  **1947**, *15*, 261.
+  * Wolfsberg, M.  *Acc. Chem. Res.* **1972**, *5*, 225.
+2. **QUIVER:**
+  * Saunders, M.; Laidig, K.E. Wolfsberg, M.  *JACS* **19898*, *111*, 8989.
+3. **Scaling Factors:**
+  * Wong.  *Chem. Phys. Lett.* **1996**, *256*, 391-399.
+  * Radom.  *J Phys. Chem.* **1996**, *100*, 16502.
+4. **Tunnelling Corrections:**
+  * Bell.  *Chem. Soc. Rev.*  **1974**, *3*, 513.
 
 ## Authors
 *PyQuiver* was written by Thayer Anderson and Eugene Kwan at the Department of Chemistry and Chemical Biology at Harvard University.  Please email `ekwan@fas.harvard.edu` with any questions.

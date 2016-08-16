@@ -24,10 +24,11 @@ class Config(object):
             line = line.strip()
             if len(line) == 0 or line[0] == "#":
                 continue
-            line = line.split("#",1)[0]
+            line = line.split("#", 1)[0]
+            print line
 
             # read space-delimited data
-            fields = line.encode("ascii","ignore").split(" ")
+            fields = filter(None, line.encode("ascii","ignore").split(" "))
             
             # for backwards compatibility with quiver
             if fields[0] == "isotopomer":
