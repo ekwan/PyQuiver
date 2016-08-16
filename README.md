@@ -70,7 +70,7 @@ This defines an isotopomer named `H/D` that replaces hydrogens 7 and 8 in the gr
 Once the substitutions are specified in the configuration file, *PyQuiver* will read in the cartesian Hessian/second derivative matrix/force constant matrix to calculate the appropriate KIE. The Bigeleisen-Mayer method for KIE calculation relates the KIEs to the normal modes of vibration of the molecule. In particular, the frequencies of the normal modes are used to calculate partition functions for the ground and transition state, which are then divided to find the KIE. 
 
 *PyQuiver* automates this procedure. To run a KIE calculation for the example system, move to the `src/` directory and run `quiver.py` from the command line:
-`cd src/`
+```cd src/```
 `python quiver.py ../test/claisen_demo.config ../test/claisen_gs.out ../test/claisen_ts.out`
 This command accepts (in order) the configuration file, the ground state file, and the transition state file. When run, the command will print a summary of the configuration file used (including all isotopic substitutions) and then calculated and print the KIEs corresponding to each isotopomer. For each KIE, three numbers are printed. These numbers correspond to the uncorrected KIE and two tunneling-corrected KIEs. In general, the infinite parabola KIE is most accurate.
 
@@ -98,11 +98,16 @@ The above captures the basic workflow of a *PyQuiver* calculation:
 
 To run *PyQuiver* from the command line, simply move to the `src/` directory and input the following command:
 
-`python quiver.py config_file ground_state_file transition_state_file`
+```python quiver.py config_file ground_state_file transition_state_file```
 
-This command will calculate the KIEs or EIEs associated with the isotopic substitutions specified in the configuration file.
+The command line interface accepts some standard and some custom flags for usage: `quiver.py [-h] [-v] [-s STYLE] config gs ts`. To see more details, run `python quiver.py -h` to display a help message.
 
-To use the IPython Notebook interface, move to the `src/` directory and run the command `ipython notebook`. Then open the `quiver.ipynb` notebook file. To run a calculation replace the arguments for the `KIE_Calculation()` object as described in detail in the notebook.
+
+This command will calculate the KIEs or EIEs associated with the isotopic substitutions specified in the configuration file. For details, see the tutorial above.
+
+*PyQuiver* also offers an IPython Notebook interface. This advantage of this interface is that it exposes the underlying Python objects. This allows you to run custom calculations, automate routine calculations, and inspect the internal data directly.
+
+To use the IPython Notebook, move to the `src/` directory and run the command `ipython notebook`. Then open the `quiver.ipynb` notebook file. To run a calculation replace the arguments for the `KIE_Calculation()` object as described in detail in the notebook.
 
 ### .config Files
 
