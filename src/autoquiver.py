@@ -2,7 +2,9 @@ import sys
 import os
 import re
 import subprocess
+import argparse
 
+import quiver
 from kie import KIE_Calculation
 
 import pandas as pd
@@ -61,4 +63,16 @@ def auto_quiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extensio
                 f.write(table)
 
 if __name__ == "__main__":
-    auto_quiver(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+    parser = argparse.ArgumentParser(description="A program to automatically run PyQuiver on a config file and all ground state and transition states matching certain constraints.")
+    parser.add_argument('-v', '--verbose', dest="debug", help='when the verbose flag is set debug information is printed', action='store_true')
+    parser.add_argument('-s', '--style', dest="style", default='g09', help='style of input files')
+    parser.add_argument('-e', '--extension', dest="ext", default='.out', help='extension of input files')
+    parser.add_argument('config', help='configuration file path')
+    parser.add_argument('target', help='target directory file path (where the ground and transition state files live')
+    parser.add_argument('gs_p', help='substring in ground state files')
+    parser.add_argument('ts_p', help='substring in transition state files')
+    parser.add_argument('delimiter', help='delimiter used to match ground and transition state files (all fields separated by the delimiter after the first must match)')
+
+    args = parser.parse_args()
+    quiver.DEBUG = args.debug
+    auto_quiver(args.target, args.config, args.gs_p, args.ts_p, args.delimiter, style=args.style, input_extension=args.ext)

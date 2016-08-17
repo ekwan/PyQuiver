@@ -6,6 +6,8 @@
     - [Installation](#installation)
 
   - [Tutorial](#tutorial)
+   - [Summary](#summary)
+   - [`autoquiver.py`](#autoquiver)
 
   - [Technical Details](#technical-details)
    - [Interfaces](#interfaces)
@@ -124,6 +126,62 @@ The above captures the basic workflow of a *PyQuiver* calculation:
 * run a frequency calculation and collect the output files.
 * write a configuration file specifying the desired isotopic substitutions. (Note that there are other necessary parts of a configuration file, see the [appropriate section](#config-files) for details).
 * run `python quiver.py` on the configuration, ground state, and transition state files to print the KIEs.
+
+### `autoquiver.py`
+
+A common use case of `PyQuiver` is to calculate KIEs over a large amount of candidate ground state and transition state files, while making the same substitutions in each pair. The `autoquiver` module accomplishes this.
+
+The module has additional functionality when used through a Python interface (read the IPython Notebook if interested) but also offers a simple command line interface.
+
+Suppose we have a directory, `auto`, with the following files:
+```
+substitutions.config
+gs-type1.output    ts-type1.output
+gs-type2.output    ts-type2.output
+gs-type3.output    ts-type3.output
+gs-type4.output    ts-type4.output
+```
+We might want to run `PyQuier` using the `substitutions.config` file on all ground states and transitions states of matching type (commonly the type will be a theory level or basis set, etc.) To accomplish this we run `autoquiver.py` as follows:
+```
+python src/autoquiver.py -e .output auto/ auto/substitutions.config gs ts -
+```
+The arguments get interpreted as follows:
+* `-e .output`: a flag to look for files with the extension `.output` as the frequency jobs for the ground and transitions states.
+* `auto/`: look for files in the `auto/` directory.
+* `auto/substitutions.config`: use `auto/substitutions.config` as the configuration file.
+* `gs`: use the string "gs" to find ground state files. All files with the appropriate extension that contain the substring "gs" will be treated as ground state files.
+* `ts`: use the string "ts" to find transition state files.
+* `-`: use the field delimiter "-" to test if a ground state and transition states match. All fields after the first "-" must be identical. This means that `gs-type1.output` and `ts-type1.output` will match but `gs-type1.output` and `ts-type2.output` won't.
+
+For more information the output of `python autoquiver.py -h` has been reproduced below:
+
+```
+usage: autoquiver.py [-h] [-v] [-s STYLE] [-e EXT]
+                     config target gs_p ts_p delimiter
+
+A program to automatically run PyQuiver on a config file and all ground state
+and transition states matching certain constraints.
+
+positional arguments:
+  config                configuration file path
+  target                target directory file path (where the ground and
+                        transition state files live
+  gs_p                  substring in ground state files
+  ts_p                  substring in transition state files
+  delimiter             delimiter used to match ground and transition state
+                        files (all fields separated by the delimiter after the
+                        first must match)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --verbose         when the verbose flag is set debug information is
+                        printed
+  -s STYLE, --style STYLE
+                        style of input files
+  -e EXT, --extension EXT
+                        extension of input files
+```
+
 
 ## Technical Details
 
