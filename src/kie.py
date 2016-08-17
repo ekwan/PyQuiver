@@ -43,7 +43,7 @@ class KIE_Calculation(object):
         for p in self.make_isotopologues():
             gs_tuple, ts_tuple = p
             name = gs_tuple[1].name
-            kie = KIE(name, gs_tuple, ts_tuple, self.config.temperature, self.config, debug=quiver.DEBUG)
+            kie = KIE(name, gs_tuple, ts_tuple, self.config.temperature, self.config.scaling, self.config.frequency_threshold)
             KIES[name] = kie
         
         for name,k in KIES.iteritems():
@@ -172,75 +172,30 @@ class KIE_Calculation(object):
             
 class KIE(object):
     # the constructor expects a tuple of the form yielded by make_isotopologue
-    def __init__(self, name, gs_tuple, ts_tuple, temperature, config, debug=False):
+    def __init__(self, name, gs_tuple, ts_tuple, temperature, scaling, frequency_threshold):
         # copy fields
         # the associated calculation object useful for pulling config fields etc.
-        quiver.DEBUG = debug
         self.eie_flag = -1
         self.name = name
-        self.freq_threshold = config.frequency_threshold
-        self.config = config
+        self.freq_threshold = frequency_threshold
         self.gs_tuple, self.ts_tuple = gs_tuple, ts_tuple
         self.temperature = temperature
+        self.scaling = scaling
 
         if quiver.DEBUG:
             print "Calculating KIE for isotopologue {0}.".format(name)
         self.value = self.calculate_kie()
 
-    # calculates the reduced isotopic function ratio for a species (Wolfsberg eqn 4.79)
-    # assuming the symmetry ratio is 1/1
-    # uses the Teller-Redlich product rule
-    # returns 1 x n array of the partition function ratios, where n is the number of frequencies
-    # frequencies below frequency_threshold will be ignored and will not be included in the array
-    @staticmethod
-    def partition_components(freqs_heavy, freqs_light, temperature):
-        components = []
-        for wavenumber_light, wavenumber_heavy in zip(freqs_light, freqs_heavy):
-            product_factor = wavenumber_heavy/wavenumber_light
-            u_light = u(wavenumber_light, temperature)
-            u_heavy = u(wavenumber_heavy, temperature)
-            excitation_factor = (1.0-np.exp(-u_light))/(1.0-np.exp(-u_heavy))
-            ZPE_factor = np.exp(0.5*(u_light-u_heavy))
-            components.append([product_factor,excitation_factor,ZPE_factor])
-        return np.array(components)
-
-    # tup is a tuple of a form (light_isotopologue, heavy_isotopologue)
-    @classmethod
-    def calculate_rpfr(cls, tup, freq_threshold, scaling, temperature):
-        # calculate_frequencies gives tuples of the form (small_freqs, imaginary_freqs, freqs)
-        #print "Frequency threshold:", self.freq_threshold
-        _, light_imag_freqs, light_freqs = tup[0].calculate_frequencies(freq_threshold, scaling=scaling)
-        _, heavy_imag_freqs, heavy_freqs = tup[1].calculate_frequencies(freq_threshold, scaling=scaling)
-        raw_imag_ratio = None
-        imag_ratios = None
-        try:
-            raw_imag_ratio = light_imag_freqs[0]/heavy_imag_freqs[0]
-        except IndexError:
-            pass
-
-        if raw_imag_ratio:
-            wigner_imag_ratio = raw_imag_ratio * cls.wigner(heavy_imag_freqs[0], light_imag_freqs[0], temperature)
-            bell_imag_ratio = raw_imag_ratio * cls.bell(heavy_imag_freqs[0], light_imag_freqs[0], temperature)
-            imag_ratios = np.array([raw_imag_ratio, wigner_imag_ratio, bell_imag_ratio])
-            
-        partition_factors = cls.partition_components(heavy_freqs, light_freqs, temperature)
-        
-        if quiver.DEBUG:
-            factors = np.prod(partition_factors, axis=0)
-            print "{3: ^8}Product Factor: {0}\n{3: ^8}Excitation Factor: {1}\n{3: ^8}ZPE Factor: {2}".format(factors[0], factors[1], factors[2], "")
-
-        return (np.prod(partition_factors), imag_ratios, heavy_freqs, light_freqs)
-
     def calculate_kie(self):
         if quiver.DEBUG:
             print "  Calculating Reduced Partition Function Ratio for Ground State."        
-        rpfr_gs, gs_imag_ratios, gs_heavy_freqs, gs_light_freqs = self.calculate_rpfr(self.gs_tuple, self.config.frequency_threshold, self.config.scaling, self.config.temperature)
+        rpfr_gs, gs_imag_ratios, gs_heavy_freqs, gs_light_freqs = calculate_rpfr(self.gs_tuple, self.freq_threshold, self.scaling, self.temperature)
         if quiver.DEBUG:
             print "    rpfr_gs:", np.prod(rpfr_gs)
         if quiver.DEBUG:
             print "  Calculating Reduced Partition Function Ratio for Transition State."
 
-        rpfr_ts, ts_imag_ratios, ts_heavy_freqs, ts_light_freqs = self.calculate_rpfr(self.ts_tuple, self.config.frequency_threshold, self.config.scaling, self.config.temperature)
+        rpfr_ts, ts_imag_ratios, ts_heavy_freqs, ts_light_freqs = calculate_rpfr(self.ts_tuple, self.freq_threshold, self.scaling, self.temperature)
         if quiver.DEBUG:
             print "    rpfr_ts:", np.prod(rpfr_ts)
 
@@ -265,35 +220,6 @@ class KIE(object):
         self.value /= reference_kie.value
         return self.value
 
-    # calculates the Wigner tunnelling correction
-    # multiplies the KIE by a factor of (1+u_H^2/24)/(1+u_D^2/24)
-    # assumes the frequencies are sorted in ascending order
-    @staticmethod
-    def wigner(ts_imag_heavy, ts_imag_light, temperature):
-        # calculate correction factor
-        if ts_imag_heavy < 0.0 and ts_imag_light < 0.0:
-            u_H = u(ts_imag_light, temperature)
-            u_D = u(ts_imag_heavy, temperature)
-            correction_factor = (1.0 + u_H**2 / 24.0) / (1.0 + u_D**2 / 24.0)
-        else:
-            raise ValueError("imaginary frequency passed to Wigner correction was real")
-
-        return correction_factor
-
-    # calculates the Bell infinite parabola tunneling correction
-    # multiplies the KIE by a factor of (u_H/u_D)*(sin(u_D/2)/sin(u_H/2))
-    # assumes the frequencies are sorted in ascending order
-    @staticmethod
-    def bell(ts_imag_heavy, ts_imag_light, temperature):
-        # calculate correction factor
-        if ts_imag_heavy < 0.0 and ts_imag_light < 0.0:
-            u_H = u(ts_imag_light, temperature)
-            u_D = u(ts_imag_heavy, temperature)
-            correction_factor = (u_H/u_D)*(np.sin(u_D/2.0)/np.sin(u_H/2.0))
-        else:
-            raise ValueError("imaginary frequency passed to Bell correction was real")
-        return correction_factor
-
     def __str__(self):
         if self.value is not None:
             if self.eie_flag == 1:
@@ -312,3 +238,71 @@ class KIE(object):
 def u(wavenumber, temperature):
     return h*c*wavenumber/(kB*temperature)
 
+# calculates the reduced isotopic function ratio for a species (Wolfsberg eqn 4.79)
+# assuming the symmetry ratio is 1/1
+# uses the Teller-Redlich product rule
+# returns 1 x n array of the partition function ratios, where n is the number of frequencies
+# frequencies below frequency_threshold will be ignored and will not be included in the array
+def partition_components(freqs_heavy, freqs_light, temperature):
+    components = []
+    for wavenumber_light, wavenumber_heavy in zip(freqs_light, freqs_heavy):
+        product_factor = wavenumber_heavy/wavenumber_light
+        u_light = u(wavenumber_light, temperature)
+        u_heavy = u(wavenumber_heavy, temperature)
+        excitation_factor = (1.0-np.exp(-u_light))/(1.0-np.exp(-u_heavy))
+        ZPE_factor = np.exp(0.5*(u_light-u_heavy))
+        components.append([product_factor,excitation_factor,ZPE_factor])
+    return np.array(components)
+
+# tup is a tuple of a form (light_isotopologue, heavy_isotopologue)
+def calculate_rpfr(tup, freq_threshold, scaling, temperature):
+    # calculate_frequencies gives tuples of the form (small_freqs, imaginary_freqs, freqs)
+    #print "Frequency threshold:", self.freq_threshold
+    _, light_imag_freqs, light_freqs = tup[0].calculate_frequencies(freq_threshold, scaling=scaling)
+    _, heavy_imag_freqs, heavy_freqs = tup[1].calculate_frequencies(freq_threshold, scaling=scaling)
+    raw_imag_ratio = None
+    imag_ratios = None
+    try:
+        raw_imag_ratio = light_imag_freqs[0]/heavy_imag_freqs[0]
+    except IndexError:
+        pass
+
+    if raw_imag_ratio:
+        wigner_imag_ratio = raw_imag_ratio * wigner(heavy_imag_freqs[0], light_imag_freqs[0], temperature)
+        bell_imag_ratio = raw_imag_ratio * bell(heavy_imag_freqs[0], light_imag_freqs[0], temperature)
+        imag_ratios = np.array([raw_imag_ratio, wigner_imag_ratio, bell_imag_ratio])
+
+    partition_factors = partition_components(heavy_freqs, light_freqs, temperature)
+
+    if quiver.DEBUG:
+        factors = np.prod(partition_factors, axis=0)
+        print "{3: ^8}Product Factor: {0}\n{3: ^8}Excitation Factor: {1}\n{3: ^8}ZPE Factor: {2}".format(factors[0], factors[1], factors[2], "")
+
+    return (np.prod(partition_factors), imag_ratios, np.array(heavy_freqs), np.array(light_freqs))
+
+# calculates the Wigner tunnelling correction
+# multiplies the KIE by a factor of (1+u_H^2/24)/(1+u_D^2/24)
+# assumes the frequencies are sorted in ascending order
+def wigner(ts_imag_heavy, ts_imag_light, temperature):
+    # calculate correction factor
+    if ts_imag_heavy < 0.0 and ts_imag_light < 0.0:
+        u_H = u(ts_imag_light, temperature)
+        u_D = u(ts_imag_heavy, temperature)
+        correction_factor = (1.0 + u_H**2 / 24.0) / (1.0 + u_D**2 / 24.0)
+    else:
+        raise ValueError("imaginary frequency passed to Wigner correction was real")
+
+    return correction_factor
+
+# calculates the Bell infinite parabola tunneling correction
+# multiplies the KIE by a factor of (u_H/u_D)*(sin(u_D/2)/sin(u_H/2))
+# assumes the frequencies are sorted in ascending order
+def bell(ts_imag_heavy, ts_imag_light, temperature):
+    # calculate correction factor
+    if ts_imag_heavy < 0.0 and ts_imag_light < 0.0:
+        u_H = u(ts_imag_light, temperature)
+        u_D = u(ts_imag_heavy, temperature)
+        correction_factor = (u_H/u_D)*(np.sin(u_D/2.0)/np.sin(u_H/2.0))
+    else:
+        raise ValueError("imaginary frequency passed to Bell correction was real")
+    return correction_factor
