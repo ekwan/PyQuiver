@@ -10,7 +10,7 @@ from kie import KIE_Calculation
 import pandas as pd
 import glob
 
-def auto_quiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension='.snip', style='g09'):
+def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension='.out', style='g09'):
     if type(gs_p) is str:
         gs_str = gs_p
         gs_p = lambda x: (gs_str in x)
@@ -75,4 +75,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     quiver.DEBUG = args.debug
-    auto_quiver(args.target, args.config, args.gs_p, args.ts_p, args.delimiter, style=args.style, input_extension=args.ext)
+    autoquiver(args.target, args.config, args.gs_p, args.ts_p, args.delimiter, style=args.style, input_extension=args.ext)

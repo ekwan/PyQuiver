@@ -7,7 +7,7 @@
 
   - [Tutorial](#tutorial)
    - [Summary](#summary)
-   - [`autoquiver.py`](#autoquiver)
+   - [`autoquiver.py`](#autoquiverpy)
 
   - [Technical Details](#technical-details)
    - [Interfaces](#interfaces)
