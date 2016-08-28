@@ -14,7 +14,6 @@
    - [Interfaces](#interfaces)
    - [.config Files](#config-files)
    - [Input Files](#input-files)
-   - [Defining Masses](#masses)
    - [Math](#math)
    - [Notes](#notes)
 
@@ -144,11 +143,10 @@ If EIEs are desired, simply replace the transition state with the equilibrium st
 
 ### `autoquiver.py`
 
-A common use case of `PyQuiver` is to calculate KIEs over a large amount of candidate ground state and transition state files, while making the same substitutions in each pair. The `autoquiver` module accomplishes this.
+`autoquiver` allows KIEs to be calculated over many ground state and transition state files that share a common set of desired isotopic substitutions.  (The `autoquiver` module has additional functionality when used through a Python interface (read the `src/quiver.ipynb` if interested) but the command line interface should suffice for most purposes.)
 
-The module has additional functionality when used through a Python interface (read the IPython Notebook if interested) but also offers a simple command line interface.
+Suppose we have a directory, `auto/`, with the following files:
 
-Suppose we have a directory, `auto`, with the following files:
 ```
 substitutions.config
 gs-type1.output    ts-type1.output
@@ -156,11 +154,17 @@ gs-type2.output    ts-type2.output
 gs-type3.output    ts-type3.output
 gs-type4.output    ts-type4.output
 ```
-We might want to run `PyQuier` using the `substitutions.config` file on all ground states and transitions states of matching type (commonly the type will be a theory level or basis set, etc.) To accomplish this we run `autoquiver.py` as follows:
+
+We might want to run *PyQuiver* using the `substitutions.config` file on all pairs of ground states and transition states.  For example, these pairs may be the same calculation run at many levels of theory.  Note that it is crucial that all files have a consistent atom numbering scheme.
+
+To accomplish this we run `autoquiver.py` as follows:
+
 ```
 python src/autoquiver.py -e .output auto/ auto/substitutions.config gs ts -
 ```
-The arguments get interpreted as follows:
+
+The arguments are:
+
 * `-e .output`: a flag to look for files with the extension `.output` as the frequency jobs for the ground and transitions states.
 * `auto/`: look for files in the `auto/` directory.
 * `auto/substitutions.config`: use `auto/substitutions.config` as the configuration file.
@@ -197,7 +201,6 @@ optional arguments:
                         extension of input files
 ```
 
-
 ## Technical Details
 
    - [Interfaces](#interfaces)
@@ -207,19 +210,17 @@ optional arguments:
    - [Math](#math)
    - [Notes](#notes)
 
-
 ### Interfaces
 
+*PyQuiver* can be controlled from the command line or its Python API.
 
-*PyQuiver* can be controlled from the command line or from an [IPython Notebook](https://ipython.org/notebook.html).
-
-To run *PyQuiver* from the command line, simply move to the `src/` directory and input the following command:
+To run *PyQuiver* from the command line, issue the following command from the `src/` directory:
 
 ```
 python quiver.py config_file ground_state_file transition_state_file
 ```
 
-The command line interface accepts some standard and some custom flags for usage: `quiver.py [-h] [-v] [-s STYLE] config gs ts`. To see more details, run `python quiver.py -h` to display the following help message:
+For more details, run `python quiver.py -h` to display the following help message:
 
 ```
 usage: quiver.py [-h] [-v] [-s STYLE] config gs ts
@@ -240,28 +241,30 @@ optional arguments:
                         style of input files
 ```
 
-
 This command will calculate the KIEs or EIEs associated with the isotopic substitutions specified in the configuration file. For details, see the tutorial above.
 
-*PyQuiver* also offers an IPython Notebook interface. This advantage of this interface is that it exposes the underlying Python objects. This allows you to run custom calculations, automate routine calculations, and inspect the internal data directly.
+*PyQuiver* also has a Python API. The advantage of this interface is that it exposes the underlying Python objects. This allows you to run custom calculations, automate routine calculations, and inspect the internal data directly.
 
-To use the IPython Notebook, move to the `src/` directory and run the command `ipython notebook`. Then open the `quiver.ipynb` notebook file. To run a calculation replace the arguments for the `KIE_Calculation()` object as described in detail in the notebook.
+An IPython Notebook is provided as a demonstration.  To try it out, move to the `src/` directory and run the command `ipython notebook`. Then open the `quiver.ipynb` notebook file.
 
 ### .config Files
 
 Calculations performed in *PyQuiver* require a configuration file to specify the parameters (such as scaling factor and temperature) and isotopologue substitution rules.
 
 Each configuration file is a plain text file with the following properties:
-* blank lines and lines starting with `#` are ignored. All other lines must correspond to valid directives. (Furthermore `#` begins a comment within a line).
+
+* blank lines and lines starting with `#` are ignored
+* anything after `#` within a line is assumed to be a comment
 * fields in directives are separated by spaces.
 
 Valid configuration files have all of the following directives:
-* `scaling`: a linear factor by which to scale the frequencies. 
-* `frequency_threshold`: the threshold (in units cm^-1) that defines the cutoff between the small frequencies (corresponding to translation and rotation) and the normal vibrational mode frequencies. Typical value: 50. (Tests show that projecting out rotations and translations have no effect on the KIE).
-* `temperature`: the temperature in Kelvin at which to model the calculation.
+
+* `scaling`: a linear factor by which to scale the frequencies
+* `frequency_threshold`: the threshold (in units cm^-1) that defines the cutoff between the small frequencies (corresponding to translation and rotation) and the normal vibrational mode frequencies (typical value: 50; tests show that projecting out rotations and translations have a negligible effect on the predictions.)
+* `temperature`: the temperature in Kelvin
 * `reference_isoto[pomer/logue]`: possible values are "default" or the name of an isotopologue. If "default" is specified, the absolute KIEs will be reported. If the name of an isotopologue is specified, all KIEs will be divided the KIE values for this isotopologue.
-* `mass_override_isot[pomer/logue]`: possible values are "default" or the name of an isotopologue. If the value "default" is specified, the default masses in `weights.dat`. If the name of an isotopolgoue is given, then that isotopologue is used to replace the default mass behaviour of PyQuiver. In particular, those substitutions are made in both the ground and transition state of both the heavy and light isotopologues for all KIE calculations. For example, if for some reason you wish for Carbon 5 to have the mass of 12.5, for whatever reason, you would specify such an isotopologue as the `mass_override_isotopologue`.
-* `isoto[pomer/logue]`: the rule used for isotopic substitution. The expected fields are `name ground_state_atom_number transition_state_atom_number substitution`. The final field, `substitution` must correspond to a valid substitution weight. These weights are specified in `weights.dat`. Examples include `13C`, `18O`, and `2D`.
+* `mass_override_isot[pomer/logue]`: possible values are "default" or the name of an isotopologue. If the value "default" is specified, the masses of the light isotopologue will be the defaults found in `weights.dat`. If the name of an isotopolgoue is given, then that isotopologue is then used to replace the default mass behaviour of PyQuiver at a particular atom. For example, if the isotopomer `C2` replaces carbon 2 with 13C, then specifying `mass_overide_isotopomer C2` will place carbon-13 at C2 *for every KIE calculation*.
+* `isoto[pomer/logue]`: the rule used for isotopic substitution. The expected fields are `name ground_state_atom_number transition_state_atom_number substitution`. The final field, `substitution` must correspond to a valid substitution weight. These weights are specified in `weights.dat` (e.g., `13C`, `18O`, `2D`).
 
 ### Input Files
 
@@ -272,33 +275,44 @@ Currently, *PyQuiver* can automatically read output files from the following for
 * PyQuiver Standard. Style name: `pyquiver`
 
 To specify a format other than `g09` from the command line, run with the `-s` flag. For instance:
+
 ```
 python quiver.py -s pyquiver ../test/claisen_demo.config ../test/claisen_gs.qin ../test/claisen_ts.qin
 ```
-would execute the example *PyQuiver* job on the claisen system using the *PyQuiver* standard input files.
 
-If you require *PyQuiver* to support any other program, we'd be pleased to offer some advice on how to implement.
+would execute the example *PyQuiver* job on the Claisen system using the *PyQuiver* standard input files. This allows you to adapt PyQuiver to other electronic structure programs.  (We would be pleased to offer some advice on how to accomplish this.)
 
 The *PyQuiver* Standard is a generic format for the output of an electronic structure program in plain-text outlined as follows:
+
 * The first line of a file should be of the form `NumberOfAtoms` (Ex. `11` would be a valid first line of a file with 11 atoms).
-* The next *n* lines, where *n* is the number of atoms specified in the first line define the geometry. Each line should be of the form `CenterNumber,AtomicNumber,XPosition,YPosition,ZPosition`. The positions should be provided in units of Angstroms. The center number simply refers to a numbered label of the atom ranging between 0 and *n-1* (inclusive).
-* The next line should contain the lower-right triangular Cartesian Hessian matrix with no line breaks. In particular, if *H* is the Hessian matrix then *H_(3p+i,3q+j)* corresponds to taking derivatives with respect to atom *p* moving in the *i*th coordinate and atom *q* moving in the `j`th coordinate (*i* and *j* run across the three cartesian coordinates). The entries in the serialized form should be separated by commas. The serialization should occur by stringing together the rows (truncated at the main diagonal). For example, suppose the following is the lower-right triangular form of the Cartesian Hessian for a one atom system:
+* The next *n* lines, where *n* is the number of atoms, define the geometry. Each line should be of the form:
+
+```
+CenterNumber,AtomicNumber,XPosition,YPosition,ZPosition
+```
+
+The positions should be provided in units of Angstroms. The center number is the atom index (ranging from 0 and *n-1*, inclusive).
+* The next line should contain the lower triangular Cartesian Hessian matrix with no line breaks. In particular, if *H* is the Hessian matrix then *H_(3p+i,3q+j)* corresponds to taking derivatives with respect to atom *p* moving in the *i*th coordinate and atom *q* moving in the `j`th coordinate (*i* and *j* run across the three cartesian coordinates). The entries in the serialized form should be separated by commas. The serialization should occur by stringing together the rows (truncated at the main diagonal). For example, suppose the following is the lower-right triangular form of the Cartesian Hessian for a one atom system:
+
 ```
 1.0
 2.0 3.0
 4.0 5.0 6.0
 ```
+
 then the *PyQuiver* would expect the following line:
+
 ```
 1.0,2.0,3.0,4.0,5.0,6.0
 ```
+
 * Example *PyQuiver* standard input files are available in the `test/` directory. The files `claisen_gs.qin` and `claisen_ts.qin` are *PyQuiver* input files corresponding to the example Claisen system discussed in the tutorial.
 
 If input files are provided in a known format other than the *PyQuiver* standard, *PyQuiver* can dump the appropriate *PyQuiver* input files. To do this load the appropriate system (ex. `gs = System("./ground_state.g09")`) and then run `gs.dump_pyquiver_input_file()` which will create the appropriate input file at the same path with the extension `.qin`.
 
-### Defining Masses
-
 ### Math
+
+*Not written yet!*
 
 The math behind a quiver calculation is detailed in the PDF `doc/technical_details.pdf` generated from the TeX file `doc/technical_details.tex`.
 
@@ -319,10 +333,11 @@ The math behind a quiver calculation is detailed in the PDF `doc/technical_detai
   * <span id="ref5">Meyer, M.P.; DelMonte, A.J.; Singleton, D.A.</span> *J. Am. Chem. Soc.*, **1999**, *121*, 10865-10874.
 
 ## Authors
+
 *PyQuiver* was written by Thayer Anderson and Eugene Kwan at the Department of Chemistry and Chemical Biology at Harvard University.  Please email `ekwan@fas.harvard.edu` with any questions.
 
 ## License
    
-   This project is licensed under the Apache License, Version 2.0. See LICENSE.txt for full terms and conditions.
+This project is licensed under the Apache License, Version 2.0. See LICENSE.txt for full terms and conditions.
    
-   Copyright 2016 Eugene E. Kwan
+Copyright 2016 Thayer L. Anderson and Eugene E. Kwan
