@@ -35,7 +35,7 @@ class KIE_Calculation(object):
         else:
             raise TypeError("ts argument must be either a filepath or quiver.System object.")
 
-        # set the eie_flag to the recognized unitialized value (used for checking if there are inconsistent calculation types
+        # set the eie_flag to the recognized uninitialized value (used for checking if there are inconsistent calculation types)
         self.eie_flag = -1
 
         print self.config
@@ -58,7 +58,7 @@ class KIE_Calculation(object):
                         else:
                             raise ValueError("quiver attempted to run an EIE calculation (isotopomer {0}) after a KIE calculation (isotopomer {1}). Check the frequency threshold.".format(name, eie_flag_iso))
 
-                if self.config.reference_isotopologue != "default":
+                if self.config.reference_isotopologue != "default" and self.config.reference_isotopologue != "none":
                     k.apply_reference(KIES[self.config.reference_isotopologue])
 
         self.KIES = KIES
@@ -154,7 +154,7 @@ class KIE_Calculation(object):
             string += "Isotopologue                                                  EIE"
             
         keys = self.KIES.keys()
-        if self.config.reference_isotopologue != "default":
+        if self.config.reference_isotopologue != "default" and self.config.reference_isotopologue != "none":
             keys.remove(self.config.reference_isotopologue)
         if self.config.mass_override_isotopologue != "default":
             keys.remove(self.config.mass_override_isotopologue)
@@ -162,7 +162,7 @@ class KIE_Calculation(object):
         for name in keys:
             string += "\n" + str(self.KIES[name])
 
-        if self.config.reference_isotopologue != "default":
+        if self.config.reference_isotopologue != "default" and self.config.reference_isotopologue != "none":
             string += "\n\nKIEs referenced to isotopologue {0}. Absolute KIEs are:".format(self.config.reference_isotopologue)
             string += "\n" + str(self.KIES[self.config.reference_isotopologue])
         else:

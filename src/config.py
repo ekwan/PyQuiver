@@ -137,12 +137,16 @@ class Config(object):
                     (self.filename, self.temperature, self.scaling, self.reference_isotopologue, self.frequency_threshold)
 
         keys = self.isotopologues.keys()
-        if self.reference_isotopologue != "default":
-            keys.remove(self.reference_isotopologue)
+        if self.reference_isotopologue != "default" and self.reference_isotopologue != "none":
+            try:
+                keys.remove(self.reference_isotopologue)
+            except:
+                print "\nCould not find the following reference isotopologue: %s" % self.reference_isotopologue
+                sys.exit(1)
         keys.sort()
 
-        if self.reference_isotopologue == "default":
-            to_string += "   Reference isotopologue is default.\n"
+        if self.reference_isotopologue == "default" or self.reference_isotopologue == "none":
+            to_string += "   No reference isotopologue.\n"
         else:
             keys = [self.reference_isotopologue] + keys
         for i in keys:
