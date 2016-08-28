@@ -3,3 +3,5 @@
 .ipynb_checkpoints/*
 *.pyc
 *.csv
+*DS_Store*
+.ipynb_checkpoints

@@ -3,12 +3,13 @@ import sys
 import re
 import os
 
-import numpy  as np
+import numpy as np
 
 from utility import proj, normalize, test_orthogonality, schmidt
 from constants import DEFAULT_MASSES, PHYSICAL_CONSTANTS
 from config import Config
 
+# if True, print out extra information about the contributions to the reduced isotopic partition function ratios
 DEBUG = False
 
 # represents a geometric arrangement of atoms with specific masses
@@ -26,6 +27,11 @@ class Isotopologue(object):
 
         self.number_of_atoms = system.number_of_atoms
         self.mw_hessian = self.calculate_mw_hessian(self.masses3)
+
+    def __str__(self):
+        returnString  = "Isotopologue: %s\n" % self.name
+        returnString += " masses: %s" % self.masses.__str__()
+        return returnString
 
     def calculate_mw_hessian(self, masses3):
         hessian = self.system.hessian

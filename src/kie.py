@@ -146,7 +146,7 @@ class KIE_Calculation(object):
                 yield ((default_gs, sub_gs), (default_ts, sub_ts))
                
     def __str__(self):
-        string = "\n=== PY-QUIVER ANALYSIS ===\n"
+        string = "\n=== PyQuiver Analysis ===\n"
         if self.eie_flag == 0:
             string += "Isotopologue                                              uncorrected      Wigner     infinite parabola\n"
             string += "                                                              KIE           KIE              KIE"
@@ -163,10 +163,10 @@ class KIE_Calculation(object):
             string += "\n" + str(self.KIES[name])
 
         if self.config.reference_isotopologue != "default":
-            string += "\nKIEs referenced to isotopolouge {0}. Absolute KIES are:".format(self.config.reference_isotopologue)
+            string += "\n\nKIEs referenced to isotopologue {0}. Absolute KIEs are:".format(self.config.reference_isotopologue)
             string += "\n" + str(self.KIES[self.config.reference_isotopologue])
         else:
-            string += "\n KIEs calculated absolutely with no reference."
+            string += "\n\nAbsolute KIEs are given."
 
         return string
             

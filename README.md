@@ -3,8 +3,9 @@
 ## Contents
   - [Introduction](#introduction)
     - [Features](#features)
+    - [Compatability with Quiver](#compatibility-with-QUIVER)
     - [Installation](#installation)
-
+  
   - [Tutorial](#tutorial)
    - [Summary](#summary)
    - [`autoquiver.py`](#autoquiverpy)
@@ -24,7 +25,7 @@
   
 ## Introduction
 
-*PyQuiver* is an open-source Python program for calculating kinetic isotope effects (KIEs) and equilibrium isotope effects (EIEs) using harmonic frequencies and the Bigeleisen-Mayer equation.  *PyQuiver* requires the Cartesian Hessian matrix, which can be calculated using any electronic structure program. 
+*PyQuiver* is an open-source Python program for calculating kinetic isotope effects (KIEs) and equilibrium isotope effects (EIEs) using harmonic frequencies and the Bigeleisen-Mayer equation.  *PyQuiver* requires Cartesian Hessian matrices, which can be calculated using any electronic structure program. 
 
 ### Features
 
@@ -36,11 +37,13 @@
 * tunnelling corrections: Wigner and Bell infinite parabola
 * run via command line or simple Python API
 
-The development of *PyQuiver* was inspired by the orignal fortran program [QUIVER](https://github.com/ekwan/quiver), written by Keith Laidig. *PyQuiver* is designed to be as compatible as possible with the QUIVER program, but to clarify some ambiguity in choice of masses, configuration files need to updated for use with *PyQuiver*. See the [Configuration](#config-files) section for detail.
+### Compatability with QUIVER
+
+The development of *PyQuiver* was inspired by the [original](#ref2) Fortran program [QUIVER](https://github.com/ekwan/quiver). *PyQuiver* is designed to be as compatible as possible with the original QUIVER program, but to clarify some ambiguity in choice of masses, configuration files need to be updated for use with *PyQuiver*. See the [Configuration](#config-files) section for detail.
 
 ### Installation
 
-*PyQuiver* is written in pure Python 2.7.  Its only dependency is  `numpy`, a standard Python package for scientific computing that is included in virtually every Python distribution.
+*PyQuiver* is written in pure Python 2.7.  Its only dependency is `numpy`, a standard Python package for scientific computing that is included in virtually every Python distribution.
 
 1. Install [Python](https://www.continuum.io/downloads) if necesary.
 2. Install `numpy` if necessary: [`pip install numpy`](https://pip.pypa.io/en/stable/installing/)
@@ -54,78 +57,90 @@ Other than downloading the source code, there is nothing to configure, compile, 
 
 ## Tutorial
 
-Picture and table references from paper for claisen reaction
+In this tutorial, we reproduce the B3LYP/6-31G* KIE predictions for the following Claisen rearrangement reported by [Singleton](#ref5):
 
-This tutorial will walk through an example KIE calculation while explaining the components in broad terms. More detailed and sophisticated techniques are exposed in the form of the underlying Python objects, but the simple command line interface should suffice for most use cases.
+<img src="img/claisen_scheme.png" height=100>
 
-All the files associated with this tutorial are available in the `test/` directory. In particular, the tutorial will reference the configuration file `claisen_demo.config` and the g09 output files `claisen_gs.out` and `claisen_ts.out` representing the ground and transition state frequency calculations, respectively.
+<img src="img/claisen_table4.png" height=200>
 
-All KIEs (and EIEs) refer to an isotopic substitution made in both the ground and transition state (or the exchanging systems for an EIE calculation). In the `claisen_demo.config` file, one line reads:
+(This is Table 4 in the paper.)
+
+All the files associated with this tutorial are available in the `test/` directory. In particular, the tutorial requires the *PyQuiver* configuration file `claisen_demo.config` and the g09 output files `claisen_gs.out` and `claisen_ts.out`, representing the ground and transition state frequency calculations, respectively.
+
+In general, all KIEs are defined as rate(light)/rate(heavy).  For example, the absolute KIE at C1 is defined as the rate of the rearrangement with carbon-12 at C1 divided by the rate with carbon-13 at C1. This definition is given by this line of the `claisen_demo.config` file:
 
 ```
 isotopomer C1 1 1 13C
 ```
 
-This line provides the details of isotopic substitution necessary for *PyQuiver* to make the replacements. The keyword `isotopomer` lets *PyQuiver* know that the line will describe an isotopic substitution. The label `C1` defines the name of the isotopomer (substitution). This name has no syntactic significance - it can be any string without a space character. The numbers `1` and `1` tell *PyQuiver* which atom to replace in the ground and transition state, respectively. The final entry, `13C`, defines the weight of the isotope used in the substitution. This weight must be drawn from `src/weights.dat` file. Examples include `13C` (for Carbon-13), `2D` (for Deuterium), and `18O` for (Oxygen-18). An isotopomer need not contain only a single replacement. KIEs can be calculated for systems where the heavy isotopomer has substitutions at multiple atoms. To make a multiple replacement, the label of the isotopomer is simply repeated (as seen at the end of the example configuration file):
+`C1` is an arbitrary label for the KIE of interest (it can be any string without a space character).  In general, we may want to calculate multiple KIEs using one configuration file.  For example, the next few lines define the KIEs at C2 and the oxygen:
+
+```
+isotopomer C2 2 2 13C
+isotopomer O3 3 3 17O
+```
+
+In each case, the isotopomer definition is followed by three parameters: the atom number in the ground state, the atom number in the transition state, and the isotope to substitute with.  For example, for C1, atom 1 in the ground state and atom 1 in the transition state will be substituted with carbon-13.  In general, *PyQuiver* will try to prevent you from 
+
+The definition of `13C` is drawn from `src/weights.dat`:
+
+```
+carbon,6,C,12.0,12C,12.0,13C,13.00335,14C,14.0031
+```
+
+In English, this says that carbon has an atomic number of 6 and has the symbol `C`.  In all cases (`C1`, `C2`, `O`, etc.), whenever carbon appears in the "light" isotopomer, it is defined to have a mass of `12.0`.  This is called the "default mass."  If the "heavy" replacement is specified as `13C`, it is given a mass of `13.00335`.  Although a number of common replacements are already defined (e.g., `2D` (deuterium) or `18O` (oxygen-18)), it is easy to add more definitions.
+
+Note that KIEs can be defined for multiple isotopic replacements by repeating the label of the isotopomer.  For example, these entries replace two hydrogens with two deuteriums:
 
 ```
 isotopomer H/D 7 7 2D
 isotopomer H/D 8 8 2D
 ```
 
-This defines an isotopomer named `H/D` that replaces hydrogens 7 and 8 in the ground and transition with deuterium.
+We now ready to calculate the KIEs!  Enter in the following:
 
-Once the substitutions are specified in the configuration file, *PyQuiver* will read in the cartesian Hessian/second derivative matrix/force constant matrix to calculate the appropriate KIE. The Bigeleisen-Mayer method for KIE calculation relates the KIEs to the normal modes of vibration of the molecule. In particular, the frequencies of the normal modes are used to calculate the reduced isotopic partition functions for the ground and transition state, which are then divided to find the KIE. 
-
-*PyQuiver* automates this procedure. To run a KIE calculation for the example system, move to the `src/` directory and run `quiver.py` from the command line:
 ```
 cd src/
 python quiver.py ../test/claisen_demo.config ../test/claisen_gs.out ../test/claisen_ts.out
 ```
-This command accepts (in order) the configuration file, the ground state file, and the transition state file. When run, the command will print a summary of the configuration file used (including all isotopic substitutions) and then calculated and print the KIEs corresponding to each isotopomer. For each KIE, three numbers are printed. These numbers correspond to the uncorrected KIE and two tunneling-corrected KIEs.
 
-The expected output of the claisen test case is as follows:
+When run from the command line, *PyQuiver* expects the names (in order) of the configuration file, the ground state file, and the transition state file.  The expected output is:
 
 ```
-Read atomic weight data for 30 elements.
-
-Reading configuration from ./claisen_demo.config
-Reading data from claisen_gs.out... with style g09
-Reading data from claisen_ts.out... with style g09
-Config file: ./claisen_demo.config
-Temperature: 393.0 K
-Scaling: 0.961
-Reference Isotopologue: C5
-Frequency threshold (cm-1): 50
-   Isotopologue         C5, replacement  1: replace gs atom  5  and ts atom  5  with 13C
-   Isotopologue         C1, replacement  1: replace gs atom  1  and ts atom  1  with 13C
-   Isotopologue         C2, replacement  1: replace gs atom  2  and ts atom  2  with 13C
-   Isotopologue         C4, replacement  1: replace gs atom  4  and ts atom  4  with 13C
-   Isotopologue         C6, replacement  1: replace gs atom  6  and ts atom  6  with 13C
-   Isotopologue        H/D, replacement  1: replace gs atom  7  and ts atom  7  with  2D
-   Isotopologue        H/D, replacement  2: replace gs atom  8  and ts atom  8  with  2D
-   Isotopologue         O3, replacement  1: replace gs atom  3  and ts atom  3  with 17O
-
-=== PY-QUIVER ANALYSIS ===
-Isotopologue                                              uncorrected      Widmer     infinite parabola
+=== PyQuiver Analysis ===
+Isotopologue                                              uncorrected      Wigner     infinite parabola
                                                               KIE           KIE              KIE
-Isotopologue         C1                                      1.011         1.012            1.013      
-Isotopologue         C2                                      1.000         1.000            1.000      
-Isotopologue         C4                                      1.028         1.031            1.031      
-Isotopologue         C6                                      1.013         1.015            1.015      
-Isotopologue        H/D                                      0.953         0.954            0.955      
-Isotopologue         O3                                      1.017         1.018            1.019      
-KIEs referenced to isotopolouge C5:
-Isotopologue         C5                                      1.002         1.002            1.002      
+Isotopologue         C1                                      1.011         1.012            1.013
+Isotopologue         C2                                      1.000         1.000            1.000
+Isotopologue         C4                                      1.028         1.031            1.031
+Isotopologue         C6                                      1.013         1.015            1.015
+Isotopologue        H/D                                      0.953         0.954            0.955
+Isotopologue         O3                                      1.017         1.018            1.019
+
+KIEs referenced to isotopologue C5. Absolute KIEs are:
+Isotopologue         C5                                      1.002         1.002            1.002
 ```
 
+Note that these KIEs are *relative* to the KIE at `C5`.  This is controlled by this line of the config file:
+
+```
+reference_isotopomer C5
+```
+
+This means that all absolute KIEs will be divided by this one to give relative KIEs.  Use `none` to calculate absolute KIEs only.
+
+These numbers agree closely with the predictions reported by Singleton.  There are small (0.001-0.002) differences that arise from roundoff errors, differing values of physical constants, and slight changes in the way masses are handled.  These slight differences should not affect any chemical conclusions.
 
 ### Summary
 
 The above captures the basic workflow of a *PyQuiver* calculation:
-* run a frequency calculation and collect the output files.
-* write a configuration file specifying the desired isotopic substitutions. (Note that there are other necessary parts of a configuration file, see the [appropriate section](#config-files) for details).
-* run `python quiver.py` on the configuration, ground state, and transition state files to print the KIEs.
+
+* locate ground and transition states using g09
+* run a frequency calculations
+* specify the desired isotopic substitutions in a configuration file
+* run `python quiver.py` on the configuration, ground state, and transition state files
+
+If EIEs are desired, simply replace the transition state with the equilibrium state of interest.
 
 ### `autoquiver.py`
 
@@ -293,13 +308,15 @@ The math behind a quiver calculation is detailed in the PDF `doc/technical_detai
   * Bigeleisen, J.; Mayer, M.G. *J. Chem. Phys.*  **1947**, *15*, 261.
   * Wolfsberg, M.  *Acc. Chem. Res.*, **1972**, *5*, 225.
   * <span style="text-decoration:underline">Isotope Effects in the Chemical, Geological, and Bio Sciences</span>  
-2. **QUIVER:**
+2. <span id="ref2">**QUIVER:**</span>
   * Saunders, M.; Laidig, K.E. Wolfsberg, M.  *J. Am. Chem. Soc.*, **1988**, *111*, 8989.
 3. **Scaling Factors:**
   * Wong.  *Chem. Phys. Lett.* **1996**, *256*, 391-399.
   * Radom.  *J Phys. Chem.* **1996**, *100*, 16502.
 4. **Tunnelling Corrections:**
   * Bell.  *Chem. Soc. Rev.*  **1974**, *3*, 513.
+5. **Claisen Rearragenent KIEs:**
+  * <span id="ref5">Meyer, M.P.; DelMonte, A.J.; Singleton, D.A.</span> *J. Am. Chem. Soc.*, **1999**, *121*, 10865-10874.
 
 ## Authors
 *PyQuiver* was written by Thayer Anderson and Eugene Kwan at the Department of Chemistry and Chemical Biology at Harvard University.  Please email `ekwan@fas.harvard.edu` with any questions.
