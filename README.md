@@ -96,7 +96,7 @@ isotopomer H/D 7 7 2D
 isotopomer H/D 8 8 2D
 ```
 
-We now ready to calculate the KIEs!  Enter in the following:
+Now we are ready to calculate the KIEs!  Enter in the following:
 
 ```
 cd src/
@@ -172,7 +172,7 @@ The arguments are:
 * `ts`: use the string "ts" to find transition state files.
 * `-`: use the field delimiter "-" to test if a ground state and transition states match. All fields after the first "-" must be identical. This means that `gs-type1.output` and `ts-type1.output` will match but `gs-type1.output` and `ts-type2.output` won't.
 
-For more information the output of `python autoquiver.py -h` has been reproduced below:
+For more information, the output of `python autoquiver.py -h` has been reproduced below:
 
 ```
 usage: autoquiver.py [-h] [-v] [-s STYLE] [-e EXT]
