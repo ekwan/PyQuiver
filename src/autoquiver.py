@@ -35,11 +35,13 @@ def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension
 
     os.chdir(filepath)
     for config in glob.glob("*.config"):
-        if config_path == config:
+        if os.path.samefile(config_path, config):
+            print config
             eie_flag = -1
             title = ",,"
             table = ""
             for gs in glob.glob("*"+input_extension):
+                print gs
                 if gs_p(gs):
                     for ts in glob.glob("*"+input_extension):
                         if ts_p(ts) and gs_ts_match_p(gs,ts):
