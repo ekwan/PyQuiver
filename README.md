@@ -14,7 +14,6 @@
    - [Interfaces](#interfaces)
    - [.config Files](#config-files)
    - [Input Files](#input-files)
-   - [Math](#math)
    - [Notes](#notes)
 
   - [Fine Print](#fine-print)
@@ -207,7 +206,6 @@ optional arguments:
    - [.config Files](#config-files)
    - [Input Files](#input-files)
    - [Defining Masses](#masses)
-   - [Math](#math)
    - [Notes](#notes)
 
 ### Interfaces
@@ -309,12 +307,6 @@ then the *PyQuiver* would expect the following line:
 * Example *PyQuiver* standard input files are available in the `test/` directory. The files `claisen_gs.qin` and `claisen_ts.qin` are *PyQuiver* input files corresponding to the example Claisen system discussed in the tutorial.
 
 If input files are provided in a known format other than the *PyQuiver* standard, *PyQuiver* can dump the appropriate *PyQuiver* input files. To do this load the appropriate system (ex. `gs = System("./ground_state.g09")`) and then run `gs.dump_pyquiver_input_file()` which will create the appropriate input file at the same path with the extension `.qin`.
-
-### Math
-
-*Not written yet!*
-
-The math behind a quiver calculation is detailed in the PDF `doc/technical_details.pdf` generated from the TeX file `doc/technical_details.tex`.
 
 ## References
 

@@ -4,6 +4,7 @@ import numpy as np
 import quiver
 from config import Config
 from constants import DEFAULT_MASSES
+from collections import OrderedDict
 
 # load constants
 from constants import PHYSICAL_CONSTANTS, REPLACEMENTS
@@ -39,7 +40,7 @@ class KIE_Calculation(object):
         self.eie_flag = -1
 
         print self.config
-        KIES = {}
+        KIES = OrderedDict()
         for p in self.make_isotopologues():
             gs_tuple, ts_tuple = p
             name = gs_tuple[1].name
@@ -73,7 +74,7 @@ class KIE_Calculation(object):
         if self.config.mass_override_isotopologue != "default":
             keys.remove(self.config.mass_override_isotopologue)
 
-        keys.sort()
+        #keys.sort()
         for name in keys:
             title_row += "{0},".format(name)
             if self.eie_flag == 0:
@@ -152,13 +153,12 @@ class KIE_Calculation(object):
             string += "                                                              KIE           KIE              KIE"
         else:
             string += "Isotopologue                                                  EIE"
-            
         keys = self.KIES.keys()
         if self.config.reference_isotopologue != "default" and self.config.reference_isotopologue != "none":
             keys.remove(self.config.reference_isotopologue)
         if self.config.mass_override_isotopologue != "default":
             keys.remove(self.config.mass_override_isotopologue)
-        keys.sort()
+        #keys.sort()
         for name in keys:
             string += "\n" + str(self.KIES[name])
 

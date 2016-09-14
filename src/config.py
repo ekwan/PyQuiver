@@ -2,6 +2,7 @@
 import sys
 import re
 from constants import REPLACEMENTS, REPLACEMENTS_Z
+from collections import OrderedDict
 
 # Reads PyQuiver .config files.
 class Config(object):
@@ -16,7 +17,7 @@ class Config(object):
         # each entry is a list of tuples
         # each tuple is (from_atom_number, to_atom_number, replacement_isotope)
         # this format allows for multiple replacements in one isotopologue
-        isotopologues = {}
+        isotopologues = OrderedDict()
         
         # read file
         for line in open(filename, "r"):
