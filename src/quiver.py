@@ -43,7 +43,7 @@ class Isotopologue(object):
 
         return mw_hessian
         
-    def calculate_frequencies(self, threshold, scaling=1.0, method="mass weighted hessian"):
+    def calculate_frequencies(self, threshold, imag_threshold, scaling=1.0, method="mass weighted hessian"):
         # short circuit if frequencies have already been calculated
         if self.frequencies is not None:
             return self.frequencies
@@ -58,12 +58,12 @@ class Isotopologue(object):
 
             for lam in v:
                 freq = np.sqrt(np.abs(lam))/(2*np.pi*PHYSICAL_CONSTANTS['c'])*(scaling)
-                if np.linalg.norm(freq) < threshold:
-                    small_freqs.append(freq)
-                elif lam < 0: 
-                    imaginary_freqs.append(-1 * freq)
-                else:
+                if lam < 0 and np.linalg.norm(freq) >= imag_threshold:
+                    imaginary_freqs.append(-1 * freq)                    
+                elif lam > 0 and np.linalg.norm(freq) >= threshold:
                     freqs.append(freq)
+                else:
+                    small_freqs.append(freq)
 
             imaginary_freqs.sort()
             freqs.sort()

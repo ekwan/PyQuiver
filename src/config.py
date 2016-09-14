@@ -7,7 +7,7 @@ from collections import OrderedDict
 # Reads PyQuiver .config files.
 class Config(object):
     def __init__(self,filename):
-        expected_fields = "scaling temperature mass_override_isotopologue reference_isotopologue frequency_threshold".split(" ")
+        expected_fields = "scaling temperature mass_override_isotopologue reference_isotopologue imag_threshold frequency_threshold".split(" ")
         config = { i : None for i in expected_fields }
         config["filename"] = filename
 
@@ -97,7 +97,11 @@ class Config(object):
         config["frequency_threshold"] = float(config["frequency_threshold"])
         if config["frequency_threshold"] > 100.0:
             raise ValueError("frequency threshold is too high")
- 
+
+        config["imag_threshold"] = float(config["imag_threshold"])
+        if config["imag_threshold"] > 100.0:
+            raise ValueError("imag threshold is too high")
+
         # store all the information in the object dictionary
         config["isotopologues"] = isotopologues
         self.__dict__ = config
@@ -134,8 +138,8 @@ class Config(object):
 
     # convert to human-readable format
     def __str__(self):
-        to_string = "Config file: %s\nTemperature: %.1f K\nScaling: %.3f\nReference Isotopologue: %s\nFrequency threshold (cm-1): %d\n" % \
-                    (self.filename, self.temperature, self.scaling, self.reference_isotopologue, self.frequency_threshold)
+        to_string = "Config file: %s\nTemperature: %.1f K\nScaling: %.3f\nReference Isotopologue: %s\nImag threshold (cm-1): %d\nFrequency threshold (cm-1): %d\n" % \
+                    (self.filename, self.temperature, self.scaling, self.reference_isotopologue, self.imag_threshold, self.frequency_threshold)
 
         keys = self.isotopologues.keys()
         if self.reference_isotopologue != "default" and self.reference_isotopologue != "none":
