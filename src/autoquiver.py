@@ -78,7 +78,9 @@ if __name__ == "__main__":
     parser.add_argument('delimiter', help='delimiter used to match ground and transition state files (all fields separated by the delimiter after the first must match)')
 
     args = parser.parse_args()
+    settings.DEBUG = 0
     if args.debug:
-        settings.DEBUG = args.debug
+        settings.DEBUG += args.debug
+    print settings.DEBUG
         
     autoquiver(args.target, args.config, args.gs_p, args.ts_p, args.delimiter, style=args.style, input_extension=args.ext)
