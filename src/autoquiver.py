@@ -36,7 +36,7 @@ def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension
     os.chdir(filepath)
     for config in glob.glob("*.config"):
         if os.path.samefile(config_path, config):
-            print config
+            print "Working on config file: {0}".format(config)
             eie_flag = -1
             title = ",,"
             table = ""
