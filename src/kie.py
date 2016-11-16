@@ -40,7 +40,9 @@ class KIE_Calculation(object):
         # set the eie_flag to the recognized uninitialized value (used for checking if there are inconsistent calculation types)
         self.eie_flag = -1
 
-        print self.config
+        if settings.DEBUG != 0:
+            print self.config
+            
         KIES = OrderedDict()
         for p in self.make_isotopologues():
             gs_tuple, ts_tuple = p
@@ -77,11 +79,12 @@ class KIE_Calculation(object):
 
         for name in keys:
             title_row += "{0},".format(name)
-            if self.eie_flag == 0:
-                print "KIE calculation detected using {0}th tunneling correction".format(len(self.KIES[name].value))
-                row += "{0:.3f},".format(self.KIES[name].value[-1])
-            else:
-                row += "{0:.3f},".format(self.KIES[name].value)
+            if settings.DEBUG >= 2:
+                if self.eie_flag == 0:
+                    print "KIE calculation detected using {0}th tunneling correction".format(len(self.KIES[name].value))
+                    row += "{0:.3f},".format(self.KIES[name].value[-1])
+                else:
+                    row += "{0:.3f},".format(self.KIES[name].value)
 
         return (title_row, row, self.eie_flag)
 
@@ -183,21 +186,21 @@ class KIE(object):
         self.temperature = temperature
         self.scaling = scaling
         
-        if settings.DEBUG:
+        if settings.DEBUG >= 2:
             print "Calculating KIE for isotopologue {0}.".format(name)
         self.value = self.calculate_kie()
 
     def calculate_kie(self):
-        if settings.DEBUG:
+        if settings.DEBUG >= 2:
             print "  Calculating Reduced Partition Function Ratio for Ground State."        
         rpfr_gs, gs_imag_ratios, gs_heavy_freqs, gs_light_freqs = calculate_rpfr(self.gs_tuple, self.freq_threshold, self.imag_threshold, self.scaling, self.temperature)
-        if settings.DEBUG:
+        if settings.DEBUG >= 2:
             print "    rpfr_gs:", np.prod(rpfr_gs)
-        if settings.DEBUG:
+        if settings.DEBUG >= 2:
             print "  Calculating Reduced Partition Function Ratio for Transition State."
 
         rpfr_ts, ts_imag_ratios, ts_heavy_freqs, ts_light_freqs = calculate_rpfr(self.ts_tuple, self.freq_threshold, self.imag_threshold, self.scaling, self.temperature)
-        if settings.DEBUG:
+        if settings.DEBUG >= 2:
             print "    rpfr_ts:", np.prod(rpfr_ts)
 
         if ts_imag_ratios is not None:
@@ -250,6 +253,9 @@ def partition_components(freqs_heavy, freqs_light, temperature):
         product_factor = wavenumber_heavy/wavenumber_light
         u_light = u(wavenumber_light, temperature)
         u_heavy = u(wavenumber_heavy, temperature)
+        if settings.DEBUG >= 3:
+            pass
+            #print "LIGHT: {0}     HEAVY {1}     RATIO {2}".format(wavenumber_light, wavenumber_heavy, product_factor)
         excitation_factor = (1.0-np.exp(-u_light))/(1.0-np.exp(-u_heavy))
         ZPE_factor = np.exp(0.5*(u_light-u_heavy))
         components.append([product_factor,excitation_factor,ZPE_factor])
@@ -275,7 +281,7 @@ def calculate_rpfr(tup, freq_threshold, imag_threshold, scaling, temperature):
 
     partition_factors = partition_components(heavy_freqs, light_freqs, temperature)
 
-    if settings.DEBUG:
+    if settings.DEBUG >= 2:
         factors = np.prod(partition_factors, axis=0)
         print "{3: ^8}Product Factor: {0}\n{3: ^8}Excitation Factor: {1}\n{3: ^8}ZPE Factor: {2}".format(factors[0], factors[1], factors[2], "")
 

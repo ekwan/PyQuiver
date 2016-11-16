@@ -2,6 +2,7 @@ import argparse
 import sys
 import re
 import os
+import pickle
 
 import numpy as np
 
@@ -9,9 +10,6 @@ import settings
 from utility import proj, normalize, test_orthogonality, schmidt
 from constants import DEFAULT_MASSES, PHYSICAL_CONSTANTS
 from config import Config
-
-# if True, print out extra information about the contributions to the reduced isotopic partition function ratios
-DEBUG = False
 
 # represents a geometric arrangement of atoms with specific masses
 class Isotopologue(object):
@@ -34,14 +32,25 @@ class Isotopologue(object):
         returnString += " masses: %s" % self.masses.__str__()
         return returnString
 
+    def dump_debug(self, name, obj):
+        f = open(name+'_'+(self.system.filename)+'.pickle', 'w')
+        ret = pickle.dump(obj, f)
+        f.close()
+    
     def calculate_mw_hessian(self, masses3):
         hessian = self.system.hessian
         mw_hessian = np.zeros_like(hessian)
+        print self.system.filename
+
+        mass_weights=[]
 
         for i in xrange(0, 3*self.number_of_atoms):
             for j in xrange(0, 3*self.number_of_atoms):
+                mass_weights.append(1/(np.sqrt(masses3[i]*masses3[j])))
                 mw_hessian[i,j] = hessian[i,j] / np.sqrt( masses3[i] * masses3[j] )
-
+        if settings.DEBUG >= 3:
+            self.dump_debug("mw", mass_weights)
+            self.dump_debug("mw_hessian", mw_hessian)
         return mw_hessian
         
     def calculate_frequencies(self, threshold, imag_threshold, scaling=1.0, method="mass weighted hessian"):
@@ -73,6 +82,8 @@ class Isotopologue(object):
                 print "WARNING: more than one imaginary frequency detected. Taking mode with largest norm."
                 imaginary_freqs = [imaginary_freqs[-1]]
             self.frequencies = (small_freqs, imaginary_freqs, freqs)
+            if settings.DEBUG >= 3:
+                self.dump_debug("freqs", self.frequencies)
             return self.frequencies
 
 
@@ -146,14 +157,14 @@ class System(object):
                 for l in m.group(1).split('\n'):
                     raw_geom_line = l.split()
                     raw_geom_line = filter(None, l.split(' '))
-                    #print raw_geom_line
+
                     if valid_geom_line_p(raw_geom_line):
                         center_number = int(raw_geom_line[0]) - 1
                         atomic_numbers[center_number] = int(raw_geom_line[1])
                         for e in xrange(0,3):
                             positions[center_number][e] = raw_geom_line[3+e]
 
-                # units = hartrees/bohr^2 ?
+                # units = hartrees/bohr^2 
                 hessian = self._parse_g09_hessian(out_data)
 
         #copy fields
@@ -164,6 +175,12 @@ class System(object):
 
         self.atomic_numbers = atomic_numbers
 
+    def dump_debug(self, obj):
+        f = open('freqs_'+self.name+'.json', 'w')
+        out = json.dumps(self.frequencies)
+        f.write(out)
+        f.close()
+        
     def _lower_triangle_serial_triangle(self,row,col):
         if col > row:
             return self._lower_triangle_serial_triangle(col,row)
@@ -179,7 +196,9 @@ class System(object):
         else:
             raise AttributeError("No frequency job detected.")
 
+        
         raw_fcm = m.group(0).split('\\')[2].split(',')
+        self.raw_fcm = raw_fcm
         fcm = self._parse_serial_lower_hessian(raw_fcm)
         return fcm
 
@@ -192,11 +211,8 @@ class System(object):
 
     def _make_serial_hessian(self):
         serial = ""
-        print self.hessian
-        print self.hessian[1]
         for i in xrange(self.number_of_atoms*3):
             for j in xrange(0,i+1):
-                #print self.hessian[i,j]
                 serial += str(self.hessian[i,j]) + ","
         return serial
 
@@ -220,16 +236,21 @@ class System(object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A program that calculates KIEs and EIEs based on a ground and transition state file.")
-    parser.add_argument('-v', '--verbose', dest="debug", help='when the verbose flag is set debug information is printed', action='store_true')
+    parser.add_argument('-v', '--verbose', dest="debug", help='when the verbose flag is set debug information is printed', action='count')
     parser.add_argument('-s', '--style', dest="style", default='g09', help='style of input files')
     parser.add_argument('config', help='configuration file path')
     parser.add_argument('gs', help='ground state file path')
     parser.add_argument('ts', help='transition state file path')
 
     args = parser.parse_args()
-    settings.DEBUG = args.debug
-    #DEBUG = args.debug
+    if args.debug:
+        settings.DEBUG = args.debug + 1
 
     from kie import KIE_Calculation
     calc = KIE_Calculation(args.config, args.gs, args.ts, style=args.style)
     print calc
+
+
+def slugify(value):
+    return "".join(x for x in value if x.isalnum())
+    
