@@ -254,8 +254,7 @@ def partition_components(freqs_heavy, freqs_light, temperature):
         u_light = u(wavenumber_light, temperature)
         u_heavy = u(wavenumber_heavy, temperature)
         if settings.DEBUG >= 3:
-            pass
-            #print "LIGHT: {0}     HEAVY {1}     RATIO {2}".format(wavenumber_light, wavenumber_heavy, product_factor)
+            print "LIGHT: {0}     HEAVY {1}     RATIO {2}".format(wavenumber_light, wavenumber_heavy, product_factor)
         excitation_factor = (1.0-np.exp(-u_light))/(1.0-np.exp(-u_heavy))
         ZPE_factor = np.exp(0.5*(u_light-u_heavy))
         components.append([product_factor,excitation_factor,ZPE_factor])

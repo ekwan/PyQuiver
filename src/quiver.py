@@ -40,7 +40,6 @@ class Isotopologue(object):
     def calculate_mw_hessian(self, masses3):
         hessian = self.system.hessian
         mw_hessian = np.zeros_like(hessian)
-        print self.system.filename
 
         mass_weights=[]
 
@@ -93,7 +92,9 @@ class System(object):
         if style not in valid_styles:
             raise ValueError("specified style, {0}, not supported".format(style))
 
-        print "Reading data from {0}... with style {1}".format(outfile, style)
+        if settings.DEBUG >= 1:
+            print "Reading data from {0}... with style {1}".format(outfile, style)
+            
         self.filename = outfile
         with open(outfile, 'r') as f:
             out_data = f.read()
