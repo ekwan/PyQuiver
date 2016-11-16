@@ -2,6 +2,7 @@
 import numpy as np
 #from quiver import System, Isotopologue, DEBUG
 import quiver
+import settings
 from config import Config
 from constants import DEFAULT_MASSES
 from collections import OrderedDict
@@ -74,7 +75,6 @@ class KIE_Calculation(object):
         if self.config.mass_override_isotopologue != "default":
             keys.remove(self.config.mass_override_isotopologue)
 
-        #keys.sort()
         for name in keys:
             title_row += "{0},".format(name)
             if self.eie_flag == 0:
@@ -182,22 +182,22 @@ class KIE(object):
         self.gs_tuple, self.ts_tuple = gs_tuple, ts_tuple
         self.temperature = temperature
         self.scaling = scaling
-
-        if quiver.DEBUG:
+        
+        if settings.DEBUG:
             print "Calculating KIE for isotopologue {0}.".format(name)
         self.value = self.calculate_kie()
 
     def calculate_kie(self):
-        if quiver.DEBUG:
+        if settings.DEBUG:
             print "  Calculating Reduced Partition Function Ratio for Ground State."        
         rpfr_gs, gs_imag_ratios, gs_heavy_freqs, gs_light_freqs = calculate_rpfr(self.gs_tuple, self.freq_threshold, self.imag_threshold, self.scaling, self.temperature)
-        if quiver.DEBUG:
+        if settings.DEBUG:
             print "    rpfr_gs:", np.prod(rpfr_gs)
-        if quiver.DEBUG:
+        if settings.DEBUG:
             print "  Calculating Reduced Partition Function Ratio for Transition State."
 
         rpfr_ts, ts_imag_ratios, ts_heavy_freqs, ts_light_freqs = calculate_rpfr(self.ts_tuple, self.freq_threshold, self.imag_threshold, self.scaling, self.temperature)
-        if quiver.DEBUG:
+        if settings.DEBUG:
             print "    rpfr_ts:", np.prod(rpfr_ts)
 
         if ts_imag_ratios is not None:
@@ -275,7 +275,9 @@ def calculate_rpfr(tup, freq_threshold, imag_threshold, scaling, temperature):
 
     partition_factors = partition_components(heavy_freqs, light_freqs, temperature)
 
-    if quiver.DEBUG:
+    print settings.DEBUG
+    print settings.DEBUG
+    if settings.DEBUG:
         factors = np.prod(partition_factors, axis=0)
         print "{3: ^8}Product Factor: {0}\n{3: ^8}Excitation Factor: {1}\n{3: ^8}ZPE Factor: {2}".format(factors[0], factors[1], factors[2], "")
 
