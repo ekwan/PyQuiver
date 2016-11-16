@@ -275,8 +275,6 @@ def calculate_rpfr(tup, freq_threshold, imag_threshold, scaling, temperature):
 
     partition_factors = partition_components(heavy_freqs, light_freqs, temperature)
 
-    print settings.DEBUG
-    print settings.DEBUG
     if settings.DEBUG:
         factors = np.prod(partition_factors, axis=0)
         print "{3: ^8}Product Factor: {0}\n{3: ^8}Excitation Factor: {1}\n{3: ^8}ZPE Factor: {2}".format(factors[0], factors[1], factors[2], "")
