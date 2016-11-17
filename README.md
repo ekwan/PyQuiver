@@ -311,6 +311,8 @@ then the *PyQuiver* would expect the following line:
 
 If input files are provided in a known format other than the *PyQuiver* standard, *PyQuiver* can dump the appropriate *PyQuiver* input files. To do this load the appropriate system (ex. `gs = System("./ground_state.g09")`) and then run `gs.dump_pyquiver_input_file()` which will create the appropriate input file at the same path with the extension `.qin`.
 
+The AWK script `scripts/snip.awk` is provided to convert g09 `.out` files into `.snip` files.  These "snips" contain only the geometry, energies, and frequencies of standard g09 output files.  They are compatible with the PyQuiver standard.  This feature is useful if you have many files and want to "compress" them to save room.
+
 ## References
 
 1. **Bigeleisen-Mayer theory:**

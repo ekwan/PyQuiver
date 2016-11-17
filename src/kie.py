@@ -79,12 +79,16 @@ class KIE_Calculation(object):
 
         for name in keys:
             title_row += "{0},".format(name)
-            if settings.DEBUG >= 2:
-                if self.eie_flag == 0:
-                    print "KIE calculation detected using {0}th tunneling correction".format(len(self.KIES[name].value))
-                    row += "{0:.3f},".format(self.KIES[name].value[-1])
-                else:
-                    row += "{0:.3f},".format(self.KIES[name].value)
+            if self.eie_flag == 0:
+                row += "{0:.3f},".format(self.KIES[name].value[-1])
+            else:
+                row += "{0:.3f},".format(self.KIES[name].value)
+            #if settings.DEBUG >= 2:
+            #    if self.eie_flag == 0:
+            #        print "KIE calculation detected using {0}th tunneling correction".format(len(self.KIES[name].value))
+            #        row += "{0:.3f},".format(self.KIES[name].value[-1])
+            #    else:
+            #        row += "{0:.3f},".format(self.KIES[name].value)
 
         return (title_row, row, self.eie_flag)
 
@@ -254,7 +258,7 @@ def partition_components(freqs_heavy, freqs_light, temperature):
         u_light = u(wavenumber_light, temperature)
         u_heavy = u(wavenumber_heavy, temperature)
         if settings.DEBUG >= 3:
-            print "LIGHT: {0}     HEAVY {1}     RATIO {2}".format(wavenumber_light, wavenumber_heavy, product_factor)
+            print "LIGHT: %9.3f     HEAVY: %9.3f     RATIO: %9.5f" % (wavenumber_light, wavenumber_heavy, product_factor)
         excitation_factor = (1.0-np.exp(-u_light))/(1.0-np.exp(-u_heavy))
         ZPE_factor = np.exp(0.5*(u_light-u_heavy))
         components.append([product_factor,excitation_factor,ZPE_factor])
@@ -264,8 +268,26 @@ def partition_components(freqs_heavy, freqs_light, temperature):
 def calculate_rpfr(tup, freq_threshold, imag_threshold, scaling, temperature):
     # calculate_frequencies gives tuples of the form (small_freqs, imaginary_freqs, freqs)
     #print "Frequency threshold:", self.freq_threshold
-    _, light_imag_freqs, light_freqs = tup[0].calculate_frequencies(freq_threshold, imag_threshold, scaling=scaling)
-    _, heavy_imag_freqs, heavy_freqs = tup[1].calculate_frequencies(freq_threshold, imag_threshold, scaling=scaling)
+    light_small_freqs, light_imag_freqs, light_freqs, light_num_small = tup[0].calculate_frequencies(freq_threshold, imag_threshold, scaling=scaling)
+    heavy_small_freqs, heavy_imag_freqs, heavy_freqs, heavy_num_small = tup[1].calculate_frequencies(freq_threshold, imag_threshold, scaling=scaling, freqs_to_drop=light_num_small)
+    
+    if len(heavy_freqs) != len(light_freqs):
+        raise ValueError("mismatch in the number of frequencies between isotopomers!")
+    if len(light_imag_freqs) != len(heavy_imag_freqs):
+        print "WARNING: mismatch in the number of imaginary frequencies between isotopomers, ignoring imaginary mode"
+        light_imag_freqs = []
+        heavy_imag_freqs = []
+
+    if settings.DEBUG > 2:
+        print "light small frequencies: ",
+        for i in light_small_freqs:
+            print "%.1f  " % i,
+        print
+        print "heavy small frequencies: ",
+        for i in heavy_small_freqs:
+            print "%.1f  " % i,
+        print
+    
     raw_imag_ratio = None
     imag_ratios = None
     try:

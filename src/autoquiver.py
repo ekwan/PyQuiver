@@ -46,9 +46,11 @@ def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension
                 if gs_p(gs):
                     for ts in glob.glob("*"+input_extension):
                         if ts_p(ts) and gs_ts_match_p(gs,ts):
-                            print "Using ground state {0} and transition state {1}".format(gs, ts)
+                            print "Using ground state %s and transition state %s..." % (gs, ts),
                             kie = KIE_Calculation(config, gs, ts, style=style)
                             title_row, row, eie_p = kie.get_row()
+                            print row
+                            print
                             if eie_flag == -1:
                                 eie_flag = eie_p
                             else:

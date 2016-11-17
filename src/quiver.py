@@ -33,9 +33,10 @@ class Isotopologue(object):
         return returnString
 
     def dump_debug(self, name, obj):
-        f = open(name+'_'+(self.system.filename)+'.pickle', 'w')
-        ret = pickle.dump(obj, f)
-        f.close()
+        pass
+        #f = open(name+'_'+(self.system.filename)+'.pickle', 'w')
+        #ret = pickle.dump(obj, f)
+        #f.close()
     
     def calculate_mw_hessian(self, masses3):
         hessian = self.system.hessian
@@ -52,7 +53,7 @@ class Isotopologue(object):
             self.dump_debug("mw_hessian", mw_hessian)
         return mw_hessian
         
-    def calculate_frequencies(self, threshold, imag_threshold, scaling=1.0, method="mass weighted hessian"):
+    def calculate_frequencies(self, threshold, imag_threshold, scaling=1.0, freqs_to_drop=None, method="mass weighted hessian"):
         # short circuit if frequencies have already been calculated
         if self.frequencies is not None:
             return self.frequencies
@@ -63,27 +64,62 @@ class Isotopologue(object):
             conv_factor = PHYSICAL_CONSTANTS['Eh']/(PHYSICAL_CONSTANTS['a0']**2 * PHYSICAL_CONSTANTS['amu'])
             #v,w = np.linalg.eigh(self.mw_hessian*conv_factor)
             v = np.linalg.eigvalsh(self.mw_hessian*conv_factor)
-            freqs = []
-
-            for lam in v:
-                freq = np.sqrt(np.abs(lam))/(2*np.pi*PHYSICAL_CONSTANTS['c'])*(scaling)
-                if lam < 0 and np.linalg.norm(freq) >= imag_threshold:
-                    imaginary_freqs.append(-1 * freq)                    
-                elif lam > 0 and np.linalg.norm(freq) >= threshold:
-                    freqs.append(freq)
-                else:
-                    small_freqs.append(freq)
-
-            imaginary_freqs.sort()
+            constant = scaling / (2*np.pi*PHYSICAL_CONSTANTS['c'])
+            freqs = [ np.copysign(np.sqrt(np.abs(freq)),freq) * constant for freq in v ]
             freqs.sort()
-            small_freqs.sort()
-            if len(imaginary_freqs) > 1:
-                print "WARNING: more than one imaginary frequency detected. Taking mode with largest norm."
-                imaginary_freqs = [imaginary_freqs[-1]]
-            self.frequencies = (small_freqs, imaginary_freqs, freqs)
+ 
+            imaginary_freqs = []
+            small_freqs = []
+            regular_freqs = []
+            
+            if freqs[0] < -imag_threshold:
+                imaginary_freqs = [freqs[0]]
+            warned = False
+            dropped_count = 0
+            for freq in freqs[1:]:
+                if freq < -imag_threshold:
+                    if not warned:
+                        print "Warning, multiple imaginaries: ",
+                        for i in freqs:
+                            if i < -imag_threshold:
+                                print "%.1f" % i,
+                        print "  Taking first and ignoring others."
+                        warned = True
+                elif freq < threshold:
+                    if freqs_to_drop is None:
+                        small_freqs.append(freq)
+                    else:
+                        if dropped_count < freqs_to_drop:
+                            small_freqs.append(freq)
+                            dropped_count += 1
+                        else:
+                            regular_freqs.append(freq)
+                else:
+                    regular_freqs.append(freq)
+
+#            freqs = []
+#
+#            for lam in v:
+#                freq = np.sqrt(np.abs(lam))/(2*np.pi*PHYSICAL_CONSTANTS['c'])*(scaling)
+#                if lam < 0 and np.linalg.norm(freq) >= imag_threshold:
+#                    imaginary_freqs.append(-1 * freq)                    
+#                elif lam > 0 and np.linalg.norm(freq) >= threshold:
+#                    freqs.append(freq)
+#                else:
+#                    small_freqs.append(freq)
+#
+#            imaginary_freqs.sort()
+#            freqs.sort()
+#            small_freqs.sort()
+#            if len(imaginary_freqs) > 1:
+#                print "WARNING: more than one imaginary frequency detected. Taking mode with largest norm and ignoring others."
+#                imaginary_freqs = [imaginary_freqs[-1]]
+            self.frequencies = (small_freqs, imaginary_freqs, np.array(freqs), len(small_freqs))
             if settings.DEBUG >= 3:
                 self.dump_debug("freqs", self.frequencies)
             return self.frequencies
+        else:
+            raise ValueError("unknown frequency calculation type")
 
 
 class System(object):
