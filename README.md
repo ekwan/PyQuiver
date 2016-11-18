@@ -171,7 +171,7 @@ The arguments are:
 * `ts`: use the string "ts" to find transition state files.
 * `-`: use the field delimiter "-" to test if a ground state and transition states match. All fields after the first "-" must be identical. This means that `gs-type1.output` and `ts-type1.output` will match but `gs-type1.output` and `ts-type2.output` won't.
 
-The output of autoquiver is directed to a number csv files corresponding to each configuration file given. These filenames are printed when autoquiver exits.
+The output of autoquiver is directed to a number of csv files corresponding to each configuration file given. These filenames are printed when autoquiver exits.
 
 For more information, the output of `python autoquiver.py -h` has been reproduced below:
 
