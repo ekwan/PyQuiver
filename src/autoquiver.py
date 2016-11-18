@@ -9,7 +9,7 @@ import quiver
 
 from kie import KIE_Calculation
 
-import pandas as pd
+#import pandas as pd
 import glob
 
 def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension='.out', style='g09'):

@@ -1,5 +1,7 @@
 # *PyQuiver*
 
+*A user-friendly program for calculating isotope effects.*
+
 ## Contents
   - [Introduction](#introduction)
     - [Features](#features)
@@ -14,6 +16,7 @@
    - [Interfaces](#interfaces)
    - [.config Files](#config-files)
    - [Input Files](#input-files)
+   - [Snipping Utility](#snipping-utility)
    - [Notes](#notes)
 
   - [Fine Print](#fine-print)
@@ -41,16 +44,15 @@ The development of *PyQuiver* was inspired by the [original](#ref2) Fortran prog
 
 ### Installation
 
-*PyQuiver* is written in pure Python 2.7.  Its only dependency is `numpy`, a standard Python package for scientific computing that is included in virtually every Python distribution.
+*PyQuiver* is written in pure Python 2.7.  It requires a few standard Python libraries like `numpy`.
 
-1. Install [Python](https://www.continuum.io/downloads) if necesary.
-2. Install `numpy` if necessary: [`pip install numpy`](https://pip.pypa.io/en/stable/installing/)
-3. Install [git](https://git-scm.com/downloads).  git comes pre-installed on most Linux distributions and Macs.
-4. Clone the repository: `git clone https://github.com/ekwan/PyQuiver.git`
+1. Install [Python](https://www.continuum.io/downloads) if necesary.  The standard Anaconda distribution will contain the necessary dependencies.
+2. Install [git](https://git-scm.com/downloads).  git comes pre-installed on most Linux distributions and Macs.
+3. Clone the repository: `git clone https://github.com/ekwan/PyQuiver.git`
 
-For those who do not want to deal with git, click on the green "clone or download" button on this github repository page and click on "Download ZIP" to receive an archive.
+For those who do not want to deal with `git`, click on the green "clone or download" button on this github repository page and click on "Download ZIP" to receive an archive.
 
-Other than downloading the source code, there is nothing to configure, compile, or fiddle with to get *PyQuiver* to run.
+Other than downloading the source code, there is nothing to configure, compile, or fiddle with to get *PyQuiver* to run.  *PyQuiver* has been tested on PC, Mac, and Linux platforms.
 
 
 ## Tutorial
@@ -207,6 +209,7 @@ optional arguments:
    - [Interfaces](#interfaces)
    - [.config Files](#config-files)
    - [Input Files](#input-files)
+   - [Snipping Utility](#snipping-utility)
    - [Defining Masses](#masses)
    - [Notes](#notes)
 
@@ -285,15 +288,15 @@ would execute the example *PyQuiver* job on the Claisen system using the *PyQuiv
 
 The *PyQuiver* Standard is a generic format for the output of an electronic structure program in plain-text outlined as follows:
 
-* The first line of a file should be of the form `NumberOfAtoms` (Ex. `11` would be a valid first line of a file with 11 atoms).
-* The next *n* lines, where *n* is the number of atoms, define the geometry. Each line should be of the form:
+* The first line of a file contains the number of atoms (*n*).
+* The next *n* lines define the geometry. Each line should be of the form:
 
 ```
 CenterNumber,AtomicNumber,XPosition,YPosition,ZPosition
 ```
 
 The positions should be provided in units of Angstroms. The center number is the atom index (ranging from 0 and *n-1*, inclusive).
-* The next line should contain the lower triangular Cartesian Hessian matrix with no line breaks. In particular, if *H* is the Hessian matrix then *H_(3p+i,3q+j)* corresponds to taking derivatives with respect to atom *p* moving in the *i*th coordinate and atom *q* moving in the `j`th coordinate (*i* and *j* run across the three cartesian coordinates). The entries in the serialized form should be separated by commas. The serialization should occur by stringing together the rows (truncated at the main diagonal). For example, suppose the following is the lower-right triangular form of the Cartesian Hessian for a one atom system:
+* The next line should contain the lower triangular Cartesian Hessian matrix with no line breaks. In particular, if *H* is the Hessian matrix then *H<sub>3p+i,3q+j</sub>* corresponds to taking derivatives with respect to atom *p* moving in the *i*-th coordinate and atom *q* moving in the *j*-th coordinate (*i* and *j* run across the three cartesian coordinates). The entries in the serialized form should be separated by commas. The serialization should occur by stringing together the rows (truncated at the main diagonal). For example, suppose the following is the lower-right triangular form of the Cartesian Hessian for a one atom system:
 
 ```
 1.0
@@ -311,30 +314,46 @@ then the *PyQuiver* would expect the following line:
 
 If input files are provided in a known format other than the *PyQuiver* standard, *PyQuiver* can dump the appropriate *PyQuiver* input files. To do this load the appropriate system (ex. `gs = System("./ground_state.g09")`) and then run `gs.dump_pyquiver_input_file()` which will create the appropriate input file at the same path with the extension `.qin`.
 
-The AWK script `scripts/snip.awk` is provided to convert g09 `.out` files into `.snip` files.  These "snips" contain only the geometry, energies, and frequencies of standard g09 output files.  They are compatible with the PyQuiver standard.  This feature is useful if you have many files and want to "compress" them to save room.
+### Snipping Utility
+
+The AWK script `scripts/snip.awk` is provided to convert g09 `.out` files into `.snip` files.  These "snips" are contain only the geometry, energies, and frequencies, but retain enough of the g09 format for PyQuiver to read them. This feature is useful if you have many files and want to "compress" them to save room.
+
+To convert a collection of `.out` files to their corresponding `.snip` files:
+
+`awk -f snip.awk *.out` 
+
+Note that this will overwrite any existing snips with the same name without warning.  (`awk` is a standard scripting langauge available on any platform.)
+
+### Notes
+
+The internal workings of *PyQuiver* are relatively simple.  Essentially, a KIE calculation involves parsing the Hessian, mass-weighting, diagonalization with `np.eigvalsh`, calculation of the reduced isotopic partition functions, substitution into the Bigeleisen-Mayer equation, and tunnelling corrections.  The tunnelling corrections are expected to work well for heavy atoms, but poorly for hydrogen, especially when considering primary KIEs.
+
+The frequencies can optionally be scaled (see ref. 3), but this will probably not help much (the harmonic approximation is usually quite adequate).  Note that *PyQuiver* is not sophisticated enough to recognize linear vs. non-linear molecules and remove the corresponding number of translational/rotational modes.  Instead, frequencies below `frequency_threshold` are ignored.  In rare cases, it might be possible for the light and heavy isotopomers to have a different number of "small frequencies" by this criterion.  To avoid this problem, *PyQuiver* will simply calculate the number of smallest modes to ignore for the light isotopomer, and then ignore the same number of smallest modes in the heavy isotopomer.
+
+The performance of *PyQuiver* is generally excellent, even for large systems.  This is largely because of the efficiency of the `np.eighvalsh` implementation.  Note that when multiple isotopomers are calculated using the same configuration file, *PyQuiver* will recalculate the frequencies for the reference isotopomer repeatedly (i.e., once for every isotopomer).  This should not be relevant for routine use.  However, it could be avoided by using the *PyQuiver* API.
 
 ## References
 
 1. **Bigeleisen-Mayer theory:**
   * Bigeleisen, J.; Mayer, M.G. *J. Chem. Phys.*  **1947**, *15*, 261.
   * Wolfsberg, M.  *Acc. Chem. Res.*, **1972**, *5*, 225.
-  * <span style="text-decoration:underline">Isotope Effects in the Chemical, Geological, and Bio Sciences</span>  
+  * Wolfsberg, M. *et al.*  <span style="text-decoration:underline">Isotope Effects in the Chemical, Geological, and Bio Sciences</span>  
 2. <span id="ref2">**QUIVER:**</span>
   * Saunders, M.; Laidig, K.E. Wolfsberg, M.  *J. Am. Chem. Soc.*, **1988**, *111*, 8989.
 3. **Scaling Factors:**
-  * Wong.  *Chem. Phys. Lett.* **1996**, *256*, 391-399.
-  * Radom.  *J Phys. Chem.* **1996**, *100*, 16502.
+  * Wong *et al.*  *Chem. Phys. Lett.* **1996**, *256*, 391-399.
+  * Radom *et al.*  *J Phys. Chem.* **1996**, *100*, 16502.
 4. **Tunnelling Corrections:**
-  * Bell.  *Chem. Soc. Rev.*  **1974**, *3*, 513.
+  * Bell, R.P.  *Chem. Soc. Rev.*  **1974**, *3*, 513.
 5. **Claisen Rearragenent KIEs:**
   * <span id="ref5">Meyer, M.P.; DelMonte, A.J.; Singleton, D.A.</span> *J. Am. Chem. Soc.*, **1999**, *121*, 10865-10874.
 
 ## Authors
 
-*PyQuiver* was written by Thayer Anderson and Eugene Kwan at the Department of Chemistry and Chemical Biology at Harvard University.  Please email `ekwan@fas.harvard.edu` with any questions.
+*PyQuiver* was written by Thayer Anderson and Eugene Kwan at the Department of Chemistry and Chemical Biology at Harvard University.  Please email `ekwan@fas.harvard.edu` with any questions.  We will gladly try to help you.
 
 ## License
    
-This project is licensed under the Apache License, Version 2.0. See LICENSE.txt for full terms and conditions.
+This project is licensed under the Apache License, Version 2.0. See `LICENSE.txt` for full terms and conditions.
    
-Copyright 2016 Thayer L. Anderson and Eugene E. Kwan
+*Copyright 2016 by Thayer L. Anderson and Eugene E. Kwan*
