@@ -36,6 +36,7 @@ def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension
         raise TypeError("gs_ts_p must either be a string or a function that returns a boolean value.")
 
     os.chdir(filepath)
+    print "Starting AutoQuiver analysis...\n"
     for config in glob.glob("*.config"):
         if os.path.samefile(config_path, config):
             print "Working on config file: {0}".format(config)
@@ -49,7 +50,7 @@ def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension
                             print "Using ground state %s and transition state %s..." % (gs, ts),
                             kie = KIE_Calculation(config, gs, ts, style=style)
                             title_row, row, eie_p = kie.get_row()
-                            print row
+                            print "KIEs are:", row[:-1]
                             print
                             if eie_flag == -1:
                                 eie_flag = eie_p
@@ -84,6 +85,6 @@ if __name__ == "__main__":
     settings.DEBUG = 0
     if args.debug:
         settings.DEBUG += args.debug
-    print settings.DEBUG
+    print "Debug level is %d" % settings.DEBUG
         
     autoquiver(args.target, args.config, args.gs_p, args.ts_p, args.delimiter, style=args.style, input_extension=args.ext)

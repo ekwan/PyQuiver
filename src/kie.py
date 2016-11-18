@@ -170,7 +170,7 @@ class KIE_Calculation(object):
             string += "\n" + str(self.KIES[name])
 
         if self.config.reference_isotopologue != "default" and self.config.reference_isotopologue != "none":
-            string += "\n\nKIEs referenced to isotopologue {0}. Absolute KIEs are:".format(self.config.reference_isotopologue)
+            string += "\n\nKIEs referenced to isotopologue {0}, whose absolute KIEs are:".format(self.config.reference_isotopologue)
             string += "\n" + str(self.KIES[self.config.reference_isotopologue])
         else:
             string += "\n\nAbsolute KIEs are given."
