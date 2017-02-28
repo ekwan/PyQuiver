@@ -71,10 +71,11 @@ class KIE_Calculation(object):
         title_row = ""
         row = ""
         keys = self.KIES.keys()
-        if self.config.reference_isotopologue != "default":
+        # two clauses after "and" are hacks--not sure if this is correct
+        if self.config.reference_isotopologue != "default" and self.config.reference_isotopologue != "none":
             keys.remove(self.config.reference_isotopologue)
 
-        if self.config.mass_override_isotopologue != "default":
+        if self.config.mass_override_isotopologue != "default" and self.config.reference_isotopologue != "none":
             keys.remove(self.config.mass_override_isotopologue)
 
         for name in keys:

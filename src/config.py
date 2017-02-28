@@ -11,7 +11,15 @@ class Config(object):
         config = { i : None for i in expected_fields }
         config["filename"] = filename
 
-        print "\nReading configuration from {0}".format(filename)
+        print_message = True
+        try:
+            f=sys._current_frames().values()[0]
+            if "autoquiver" in f.f_back.f_back.f_globals['__file__']:
+                print_message = False
+        except:
+            pass
+        if print_message:
+            print "\nReading configuration from {0}".format(filename)
 
         # a list of isotopologues
         # each entry is a list of tuples

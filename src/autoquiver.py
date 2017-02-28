@@ -46,11 +46,10 @@ def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension
                 if gs_p(gs):
                     for ts in glob.glob("*"+input_extension):
                         if ts_p(ts) and gs_ts_match_p(gs,ts):
-                            print "Using ground state %s and transition state %s..." % (gs, ts),
+                            print "%-50s - %-50s : " % (gs[-50:], ts[-50:]),
                             kie = KIE_Calculation(config, gs, ts, style=style)
                             title_row, row, eie_p = kie.get_row()
-                            print "KIEs are:", row[:-1]
-                            print
+                            print row[:-1]
                             if eie_flag == -1:
                                 eie_flag = eie_p
                             else:
@@ -66,7 +65,7 @@ def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension
                             table += gs + "," + ts + "," + row + "\n"
 
             with open(os.path.splitext(config)[0]+"-kies.csv", 'w') as f:
-                print "----\nAutoQuiver has completed execution.\nOutput is being written to {0}".format(os.path.splitext(config)[0]+"-kies.csv")
+                print "\n\nAutoQuiver has completed execution.\nOutput is being written to {0}".format(os.path.splitext(config)[0]+"-kies.csv")
                 f.write(table)
 
 if __name__ == "__main__":
