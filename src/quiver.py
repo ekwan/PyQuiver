@@ -130,7 +130,10 @@ class System(object):
 
         if settings.DEBUG >= 1:
             print "Reading data from {0}... with style {1}".format(outfile, style)
-            
+        
+        if style == "g09" and not "Normal termination" in tail(outfile):
+            raise ValueError("g09 job %s terminated in an error" % outfile)
+
         self.filename = outfile
         with open(outfile, 'r') as f:
             out_data = f.read()
@@ -290,4 +293,8 @@ if __name__ == "__main__":
 
 def slugify(value):
     return "".join(x for x in value if x.isalnum())
-    
+
+def tail(filename):
+    with open(filename) as f:
+        content = f.readlines()
+    return content[-1].strip()
