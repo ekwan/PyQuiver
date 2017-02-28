@@ -12,7 +12,7 @@ from kie import KIE_Calculation
 #import pandas as pd
 import glob
 
-def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension='.out', style='g09'):
+def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension='.out', style='g09', report_tunnelling=False):
     if type(gs_p) is str:
         gs_str = gs_p
         gs_p = lambda x: (gs_str in x)
@@ -40,7 +40,8 @@ def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension
     for config in glob.glob("*.config"):
         if os.path.samefile(config_path, config):
             eie_flag = -1
-            title = ",,"
+            title_start = "ground_state,transition_state,"
+            title = title_start
             table = ""
             for gs in glob.glob("*"+input_extension):
                 if gs_p(gs):
@@ -52,18 +53,21 @@ def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension
                             except:
                                 print "error"
                                 continue
-                            title_row, row, eie_p = kie.get_row()
+                            title_row, row, eie_p = kie.get_row(report_tunnelling=report_tunnelling)
+
+                            # print the KIEs (minus the comma at the end)
                             print row[:-1]
+                            
                             if eie_flag == -1:
                                 eie_flag = eie_p
                             else:
                                 if eie_flag != eie_p:
                                     raise ValueError("some calculations represented EIEs and others represented KIEs.")
-                            if title is ",,":
+                            if title is title_start:
                                 title = title + title_row
                                 table = title + "\n" + table
                             else:
-                                if ",," + title_row != title:
+                                if title_start + title_row != title:
                                     raise ValueError("the alignment of the table columns is incorrect.")
 
                             table += gs + "," + ts + "," + row + "\n"
@@ -77,11 +81,13 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--verbose', dest="debug", help='when the verbose flag is set debug information is printed', action='count')
     parser.add_argument('-s', '--style', dest="style", default='g09', help='style of input files')
     parser.add_argument('-e', '--extension', dest="ext", default='.out', help='extension of input files')
+    parser.add_argument('-t', '--report_tunnelling', dest="report_tunnelling", action='store_true', help='report both the raw and infinite parabola corrected KIEs')
     parser.add_argument('config', help='configuration file path')
     parser.add_argument('target', help='target directory file path (where the ground and transition state files live')
     parser.add_argument('gs_p', help='substring in ground state files')
     parser.add_argument('ts_p', help='substring in transition state files')
     parser.add_argument('delimiter', help='delimiter used to match ground and transition state files (all fields separated by the delimiter after the first must match)')
+    parser.set_defaults(report_tunnelling=False)
 
     args = parser.parse_args()
     settings.DEBUG = 0
@@ -89,4 +95,4 @@ if __name__ == "__main__":
         settings.DEBUG += args.debug
     print "Debug level is %d" % settings.DEBUG
         
-    autoquiver(args.target, args.config, args.gs_p, args.ts_p, args.delimiter, style=args.style, input_extension=args.ext)
+    autoquiver(args.target, args.config, args.gs_p, args.ts_p, args.delimiter, style=args.style, input_extension=args.ext, report_tunnelling=args.report_tunnelling)

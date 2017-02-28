@@ -67,22 +67,36 @@ class KIE_Calculation(object):
 
         self.KIES = KIES
 
-    def get_row(self):
+    # retrieves KIEs for autoquiver output
+    # if report_tunnelling = True, the first number will be the raw KIE and the second number will be
+    # the KIE with an infinite parabola correction
+    def get_row(self, report_tunnelling=False):
         title_row = ""
         row = ""
         keys = self.KIES.keys()
-        # two clauses after "and" are hacks--not sure if this is correct
+        
+        # don't report the reference isotoplogue
         if self.config.reference_isotopologue != "default" and self.config.reference_isotopologue != "none":
             keys.remove(self.config.reference_isotopologue)
 
         if self.config.mass_override_isotopologue != "default" and self.config.reference_isotopologue != "none":
             keys.remove(self.config.mass_override_isotopologue)
 
+        # for each isotopologue, add the KIEs
         for name in keys:
-            title_row += "{0},".format(name)
-            if self.eie_flag == 0:
-                row += "{0:.3f},".format(self.KIES[name].value[-1])
+            if report_tunnelling:
+                title_row += "%s,%s," % (name + "_uncorr", name + "_inf_para")
             else:
+                title_row += "{0},".format(name)
+
+            if self.eie_flag == 0:
+                # this is a KIE calculation
+                if report_tunnelling:
+                    row += "%.3f,%.3f," % ( self.KIES[name].value[-3], self.KIES[name].value[-1] )
+                else:
+                    row += "{0:.3f},".format(self.KIES[name].value[-1])
+            else:
+                # this is an EIE calculation
                 row += "{0:.3f},".format(self.KIES[name].value)
             #if settings.DEBUG >= 2:
             #    if self.eie_flag == 0:
