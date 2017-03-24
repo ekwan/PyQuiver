@@ -68,8 +68,8 @@ class KIE_Calculation(object):
         self.KIES = KIES
 
     # retrieves KIEs for autoquiver output
-    # if report_tunnelling = True, the first number will be the raw KIE and the second number will be
-    # the KIE with an infinite parabola correction
+    # if report_tunnelling = True, the first number will be the inverted parabola KIE
+    # and the second number will be the tunnelling correction
     def get_row(self, report_tunnelling=False):
         title_row = ""
         row = ""
@@ -92,12 +92,12 @@ class KIE_Calculation(object):
             if self.eie_flag == 0:
                 # this is a KIE calculation
                 if report_tunnelling:
-                    row += "%.3f,%.3f," % ( self.KIES[name].value[-3], self.KIES[name].value[-1] )
+                    row += "%.4f,%.4f," % ( self.KIES[name].value[-1], self.KIES[name].value[-1]-self.KIES[name].value[-3] )
                 else:
-                    row += "{0:.3f},".format(self.KIES[name].value[-1])
+                    row += "{0:.4f},".format(self.KIES[name].value[-1])
             else:
                 # this is an EIE calculation
-                row += "{0:.3f},".format(self.KIES[name].value)
+                row += "{0:.4f},".format(self.KIES[name].value)
             #if settings.DEBUG >= 2:
             #    if self.eie_flag == 0:
             #        print "KIE calculation detected using {0}th tunneling correction".format(len(self.KIES[name].value))
@@ -171,7 +171,7 @@ class KIE_Calculation(object):
     def __str__(self):
         string = "\n=== PyQuiver Analysis ===\n"
         if self.eie_flag == 0:
-            string += "Isotopologue                                              uncorrected      Wigner     infinite parabola\n"
+            string += "Isotopologue                                              uncorrected      Wigner     inverted parabola\n"
             string += "                                                              KIE           KIE              KIE"
         else:
             string += "Isotopologue                                                  EIE"
@@ -246,9 +246,9 @@ class KIE(object):
     def __str__(self):
         if self.value is not None:
             if self.eie_flag == 1:
-                return "Isotopologue {1: >10s} {0: >33s} {2: ^12.3f} ".format("", self.name, self.value)
+                return "Isotopologue {1: >10s} {0: >33s} {2: ^12.4f} ".format("", self.name, self.value)
             else:
-                return "Isotopologue {1: >10s} {0: >33s} {2: ^12.3f} {3: ^14.3f} {4: ^17.3f}".format("", self.name, self.value[0], self.value[1], self.value[2])
+                return "Isotopologue {1: >10s} {0: >33s} {2: ^12.4f} {3: ^14.4f} {4: ^17.4f}".format("", self.name, self.value[0], self.value[1], self.value[2])
         else:
             "KIE Object for isotopomer {0}. No value has been calculated yet.".format(self.name)
 
@@ -337,7 +337,7 @@ def wigner(ts_imag_heavy, ts_imag_light, temperature):
 
     return correction_factor
 
-# calculates the Bell infinite parabola tunneling correction
+# calculates the Bell inverted parabola tunneling correction
 # multiplies the KIE by a factor of (u_H/u_D)*(sin(u_D/2)/sin(u_H/2))
 # assumes the frequencies are sorted in ascending order
 def bell(ts_imag_heavy, ts_imag_light, temperature):

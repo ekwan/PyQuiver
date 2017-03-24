@@ -35,7 +35,7 @@
 * excellent performance for larger systems
 * highly customizable isotopic substitutions
 * arbitrary temperature
-* tunnelling corrections: Wigner and Bell infinite parabola
+* tunnelling corrections: Wigner and Bell inverted parabola
 * run via command line or simple Python API
 
 ### Compatability with QUIVER
@@ -108,7 +108,7 @@ When run from the command line, *PyQuiver* expects the names (in order) of the c
 
 ```
 === PyQuiver Analysis ===
-Isotopologue                                              uncorrected      Wigner     infinite parabola
+Isotopologue                                              uncorrected      Wigner     inverted parabola
                                                               KIE           KIE              KIE
 Isotopologue         C1                                      1.011         1.012            1.013
 Isotopologue         C2                                      1.000         1.000            1.000

@@ -81,7 +81,7 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--verbose', dest="debug", help='when the verbose flag is set debug information is printed', action='count')
     parser.add_argument('-s', '--style', dest="style", default='g09', help='style of input files')
     parser.add_argument('-e', '--extension', dest="ext", default='.out', help='extension of input files')
-    parser.add_argument('-t', '--report_tunnelling', dest="report_tunnelling", action='store_true', help='report both the raw and infinite parabola corrected KIEs')
+    parser.add_argument('-t', '--report_tunnelling', dest="report_tunnelling", action='store_true', help='report the tunnelling correction')
     parser.add_argument('config', help='configuration file path')
     parser.add_argument('target', help='target directory file path (where the ground and transition state files live')
     parser.add_argument('gs_p', help='substring in ground state files')
