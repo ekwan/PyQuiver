@@ -263,7 +263,7 @@ Each configuration file is a plain text file with the following properties:
 Valid configuration files have all of the following directives:
 
 * `scaling`: a linear factor by which to scale the frequencies
-* `frequency_threshold`: the threshold (in units cm^-1) that defines the cutoff between the small frequencies (corresponding to translation and rotation) and the normal vibrational mode frequencies (typical value: 50; tests show that projecting out rotations and translations have a negligible effect on the predictions.)
+* `frequency_threshold`: the threshold (in units cm^-1) that defines the cutoff between the small frequencies (corresponding to translation and rotation) and the normal vibrational mode frequencies (typical value: 50; tests show that projecting out rotations and translations have a negligible effect on the predictions.) *NOTE:* This feature has been *deprecated*. Now the linearity of the molecule is used to drop the lowest frequencies.
 * `imag_threshold`: the threshold (in units cm^-1) that defines the cutoff between small and large imaginary frequencies used to distinguish EIE from KIE calculations (typical value: 50)
 * `temperature`: the temperature in Kelvin
 * `reference_isoto[pomer/logue]`: possible values are `none` or the name of an isotopologue. If `none` is specified, the absolute KIEs will be reported. If the name of an isotopologue is specified, all KIEs will be divided the KIE values for this isotopologue.
@@ -328,7 +328,7 @@ Note that this will overwrite any existing snips with the same name without warn
 
 The internal workings of *PyQuiver* are relatively simple.  Essentially, a KIE calculation involves parsing the Hessian, mass-weighting, diagonalization with `np.eigvalsh`, calculation of the reduced isotopic partition functions, substitution into the Bigeleisen-Mayer equation, and tunnelling corrections.  The tunnelling corrections are expected to work well for heavy atoms, but poorly for hydrogen, especially when considering primary KIEs.
 
-The frequencies can optionally be scaled (see ref. 3), but this will probably not help much (the harmonic approximation is usually quite adequate).  Note that *PyQuiver* is not sophisticated enough to recognize linear vs. non-linear molecules and remove the corresponding number of translational/rotational modes.  Instead, frequencies below `frequency_threshold` are ignored.  In rare cases, it might be possible for the light and heavy isotopomers to have a different number of "small frequencies" by this criterion.  To avoid this problem, *PyQuiver* will simply calculate the number of smallest modes to ignore for the light isotopomer, and then ignore the same number of smallest modes in the heavy isotopomer.
+The frequencies can optionally be scaled (see ref. 3), but this will probably not help much (the harmonic approximation is usually quite adequate).  Note that *PyQuiver* is now capable of differentiating linear molecules from non-linear molecules and dropping the corresponding number of frequencies. This replaces the deprecated thresholding feature.
 
 The performance of *PyQuiver* is generally excellent, even for large systems.  This is largely because of the efficiency of the `np.eighvalsh` implementation.  Note that when multiple isotopomers are calculated using the same configuration file, *PyQuiver* will recalculate the frequencies for the reference isotopomer repeatedly (i.e., once for every isotopomer).  This should not be relevant for routine use.  However, it could be avoided by using the *PyQuiver* API.
 
