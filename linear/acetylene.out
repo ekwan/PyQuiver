@@ -1154,7 +1154,7 @@
 
  Leave Link  103 at Fri Jul 15 09:20:50 2016, MaxMem=    33554432 cpu:         0.0
  (Enter /share/sw/non-free/gaussian/g09/l202.exe)
-                          Input orientation:                          
+                           Standard orientation:
  ---------------------------------------------------------------------
  Center     Atomic      Atomic             Coordinates (Angstroms)
  Number     Number       Type             X           Y           Z
@@ -1164,6 +1164,7 @@
       3          6           0       -1.275701    0.019920    0.000000
       4          1           0       -0.224970    0.019920    0.000000
  ---------------------------------------------------------------------
+Rotational constants (GHZ)
                     Distance matrix (angstroms):
                     1          2          3          4
      1  C    0.000000

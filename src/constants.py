@@ -140,3 +140,9 @@ REPLACEMENTS_Z = {}
 for e in elements:
     for replacement,mass in e.replacements:
         REPLACEMENTS_Z[replacement]=e.atomic_number
+
+
+# threshold to separate linear molecules from non-linear molecules
+LINEARITY_THRESHOLD = 1e-06
+DROP_NUM_LINEAR = 5
+# DROP_NUM_NONLINEAR = 6
