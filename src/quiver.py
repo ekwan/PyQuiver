@@ -8,7 +8,7 @@ import numpy as np
 
 import settings
 from utility import proj, normalize, test_orthogonality, schmidt
-from constants import DEFAULT_MASSES, PHYSICAL_CONSTANTS
+from constants import DEFAULT_MASSES, PHYSICAL_CONSTANTS, LINEARITY_THRESHOLD, DROP_NUM_LINEAR
 from config import Config
 
 # represents a geometric arrangement of atoms with specific masses
@@ -53,7 +53,7 @@ class Isotopologue(object):
             self.dump_debug("mw_hessian", mw_hessian)
         return mw_hessian
         
-    def calculate_frequencies(self, threshold, imag_threshold, scaling=1.0, freqs_to_drop=None, method="mass weighted hessian"):
+    def calculate_frequencies(self, imag_threshold, scaling=1.0, method="mass weighted hessian"):
         # short circuit if frequencies have already been calculated
         if self.frequencies is not None:
             return self.frequencies
@@ -76,6 +76,8 @@ class Isotopologue(object):
                 imaginary_freqs = [freqs[0]]
             warned = False
             dropped_count = 0
+
+            # detect if there are multiple imaginary frequencies
             for freq in freqs[1:]:
                 if freq < -imag_threshold:
                     if not warned:
@@ -85,18 +87,14 @@ class Isotopologue(object):
                                 print "%.1f" % i,
                         print "  Taking first and ignoring others."
                         warned = True
-                elif freq < threshold:
-                    if freqs_to_drop is None:
-                        small_freqs.append(freq)
-                    else:
-                        if dropped_count < freqs_to_drop:
-                            small_freqs.append(freq)
-                            dropped_count += 1
-                        else:
-                            regular_freqs.append(freq)
-                else:
-                    regular_freqs.append(freq)
 
+            if self.system.is_linear:
+                small_freqs = freqs[:1+DROP_NUM_LINEAR]
+                regular_freqs = freqs[1+DROP_NUM_LINEAR:]
+            else:
+                small_freqs = freqs[:2+DROP_NUM_LINEAR]
+                regular_freqs = freqs[2+DROP_NUM_LINEAR:]
+            
 #            freqs = []
 #
 #            for lam in v:
@@ -124,6 +122,13 @@ class Isotopologue(object):
 
 class System(object):
     def __init__(self, outfile, style="g09"):
+        self.positions_angstrom = False
+        self.positions = False
+        self.atomic_numbers = False
+        self.number_of_atoms = False
+        self.hessian = False
+        self.is_linear = False
+        
         valid_styles = ["g09", "pyquiver"]
         if style not in valid_styles:
             raise ValueError("specified style, {0}, not supported".format(style))
@@ -207,12 +212,39 @@ class System(object):
                 # units = hartrees/bohr^2 
                 hessian = self._parse_g09_hessian(out_data)
 
-        #copy fields
+        # copy fields
         self.hessian = hessian
 
         self.positions_angstrom = positions
+        # convert position in angstroms to needed bohr
         self.positions = positions/PHYSICAL_CONSTANTS['atb']
 
+        # detect if molecule is linear
+        # method: take every difference of two centers
+        #   calculate the dot product with other differences
+        if self.number_of_atoms > 2:
+            diffs = []
+            # double loop = loop over distinct pairs
+            for i in xrange(len(positions)-1):
+                for j in range(i+1, len(positions)):
+                    # calculate vector difference between the two distinct centers and tabulate
+                    diff = positions[i] - positions[j]
+                    diffs.append(diff)
+
+            # double loop = loop over distinct pairs
+            res = 0
+            for i in xrange(len(diffs)-1):
+                for j in range(i+1, len(diffs)):
+                    # calculate dot product of the unit vectors that separate different pairs of centers
+                    u = diffs[i]/np.linalg.norm(diffs[i])
+                    v = diffs[j]/np.linalg.norm(diffs[j])
+                    res += np.abs(np.inner(u,v))
+            # normalize by number of pairs of differences (len(diffs) choose 2)
+            res = 2*res/(len(diffs)*(len(diffs) -1))
+
+            if 1 - res <= LINEARITY_THRESHOLD:
+                self.is_linear = True
+                
         self.atomic_numbers = atomic_numbers
 
     def dump_debug(self, obj):
