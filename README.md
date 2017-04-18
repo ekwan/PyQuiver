@@ -107,18 +107,37 @@ python quiver.py ../test/claisen_demo.config ../test/claisen_gs.out ../test/clai
 When run from the command line, *PyQuiver* expects the names (in order) of the configuration file, the ground state file, and the transition state file.  The expected output is:
 
 ```
+Read atomic weight data for 30 elements.
+
+Reading configuration from claisen_demo.config
+Reading data from claisen_gs.out... with style g09
+Reading data from claisen_ts.out... with style g09
+Config file: claisen_demo.config
+Temperature: 393.0 K
+Scaling: 0.961
+Reference Isotopologue: C5
+Imag threshold (cm-1): 50
+   Isotopologue         C5, replacement  1: replace gs atom  5  and ts atom  5  with 13C
+   Isotopologue         C1, replacement  1: replace gs atom  1  and ts atom  1  with 13C
+   Isotopologue         C2, replacement  1: replace gs atom  2  and ts atom  2  with 13C
+   Isotopologue         C4, replacement  1: replace gs atom  4  and ts atom  4  with 13C
+   Isotopologue         C6, replacement  1: replace gs atom  6  and ts atom  6  with 13C
+   Isotopologue        H/D, replacement  1: replace gs atom  7  and ts atom  7  with  2D
+   Isotopologue        H/D, replacement  2: replace gs atom  8  and ts atom  8  with  2D
+   Isotopologue         O3, replacement  1: replace gs atom  3  and ts atom  3  with 17O
+
 === PyQuiver Analysis ===
 Isotopologue                                              uncorrected      Wigner     inverted parabola
                                                               KIE           KIE              KIE
-Isotopologue         C1                                      1.011         1.012            1.013
-Isotopologue         C2                                      1.000         1.000            1.000
-Isotopologue         C4                                      1.028         1.031            1.031
-Isotopologue         C6                                      1.013         1.015            1.015
-Isotopologue        H/D                                      0.953         0.954            0.955
-Isotopologue         O3                                      1.017         1.018            1.019
+Isotopologue         C1                                      1.0091        1.0107          1.0110
+Isotopologue         C2                                      1.0000        1.0000          1.0000
+Isotopologue         O3                                      1.0153        1.0168          1.0171
+Isotopologue         C4                                      1.0249        1.0276          1.0281
+Isotopologue         C6                                      1.0111        1.0128          1.0131
+Isotopologue        H/D                                      0.9515        0.9529          0.9532
 
-KIEs referenced to isotopologue C5. Absolute KIEs are:
-Isotopologue         C5                                      1.002         1.002            1.002
+KIEs referenced to isotopologue C5, whose absolute KIEs are:
+Isotopologue         C5                                      1.0019        1.0019          1.0019
 ```
 
 Note that these KIEs are *relative* to the KIE at `C5`.  This is controlled by this line of the config file:
@@ -129,7 +148,7 @@ reference_isotopomer C5
 
 This means that all absolute KIEs will be divided by this one to give relative KIEs.  Use `none` to calculate absolute KIEs only.
 
-These numbers agree closely with the predictions reported by Singleton.  There are small (0.001-0.002) differences that arise from roundoff errors, differing values of physical constants, and slight changes in the way masses are handled.  These slight differences should not affect any chemical conclusions.
+These numbers agree closely with the predictions reported by Singleton.  There are small (0.001) differences that arise from roundoff errors, differing values of physical constants, slight changes in the way masses are handled, and the way the original QUIVER program handles small rotational/translational frequencies with a threshold system.  These small differences should not affect any chemical conclusions.
 
 ### Summary
 
@@ -263,7 +282,6 @@ Each configuration file is a plain text file with the following properties:
 Valid configuration files have all of the following directives:
 
 * `scaling`: a linear factor by which to scale the frequencies
-* `frequency_threshold`: the threshold (in units cm^-1) that defines the cutoff between the small frequencies (corresponding to translation and rotation) and the normal vibrational mode frequencies (typical value: 50; tests show that projecting out rotations and translations have a negligible effect on the predictions.)
 * `imag_threshold`: the threshold (in units cm^-1) that defines the cutoff between small and large imaginary frequencies used to distinguish EIE from KIE calculations (typical value: 50)
 * `temperature`: the temperature in Kelvin
 * `reference_isoto[pomer/logue]`: possible values are `none` or the name of an isotopologue. If `none` is specified, the absolute KIEs will be reported. If the name of an isotopologue is specified, all KIEs will be divided the KIE values for this isotopologue.
@@ -328,9 +346,11 @@ Note that this will overwrite any existing snips with the same name without warn
 
 The internal workings of *PyQuiver* are relatively simple.  Essentially, a KIE calculation involves parsing the Hessian, mass-weighting, diagonalization with `np.eigvalsh`, calculation of the reduced isotopic partition functions, substitution into the Bigeleisen-Mayer equation, and tunnelling corrections.  The tunnelling corrections are expected to work well for heavy atoms, but poorly for hydrogen, especially when considering primary KIEs.
 
-The frequencies can optionally be scaled (see ref. 3), but this will probably not help much (the harmonic approximation is usually quite adequate).  Note that *PyQuiver* is not sophisticated enough to recognize linear vs. non-linear molecules and remove the corresponding number of translational/rotational modes.  Instead, frequencies below `frequency_threshold` are ignored.  In rare cases, it might be possible for the light and heavy isotopomers to have a different number of "small frequencies" by this criterion.  To avoid this problem, *PyQuiver* will simply calculate the number of smallest modes to ignore for the light isotopomer, and then ignore the same number of smallest modes in the heavy isotopomer.
+The frequencies can optionally be scaled (see ref. 3), but this will probably not help much (the harmonic approximation is usually quite adequate).  Note that *PyQuiver* is recognizees linear vs. non-linear molecules and removes the appropriate number of small translational/rotational modes.  (The `frequency_threshold` keyword has been deprecated and is now ignored.) 
 
 The performance of *PyQuiver* is generally excellent, even for large systems.  This is largely because of the efficiency of the `np.eighvalsh` implementation.  Note that when multiple isotopomers are calculated using the same configuration file, *PyQuiver* will recalculate the frequencies for the reference isotopomer repeatedly (i.e., once for every isotopomer).  This should not be relevant for routine use.  However, it could be avoided by using the *PyQuiver* API.
+
+There is a known issue with getting PyQuiver to work on Cygwin systems due to a problem processing file paths correctly.  Additionally it seems to be hard to get NumPy installed properly on such systems.  We are working on a fix--please contact me if you require this urgently.  (The program works properly on all other kinds unix/linux, as far as we know).
 
 ## References
 
