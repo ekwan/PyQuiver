@@ -44,10 +44,14 @@ class KIE_Calculation(object):
             print self.config
             
         KIES = OrderedDict()
+
+        if self.config.frequency_threshold:
+            print "WARNING: config file uses the frequency_threshold parameter. This has been deprecated and low frequencies are dropped by linearity detection."
+
         for p in self.make_isotopologues():
             gs_tuple, ts_tuple = p
             name = gs_tuple[1].name
-            kie = KIE(name, gs_tuple, ts_tuple, self.config.temperature, self.config.scaling, self.config.frequency_threshold, self.config.imag_threshold)
+            kie = KIE(name, gs_tuple, ts_tuple, self.config.temperature, self.config.scaling, self.config.imag_threshold)
             KIES[name] = kie
         
         for name,k in KIES.iteritems():
@@ -194,12 +198,11 @@ class KIE_Calculation(object):
             
 class KIE(object):
     # the constructor expects a tuple of the form yielded by make_isotopologue
-    def __init__(self, name, gs_tuple, ts_tuple, temperature, scaling, frequency_threshold, imag_threshold):
+    def __init__(self, name, gs_tuple, ts_tuple, temperature, scaling, imag_threshold):
         # copy fields
         # the associated calculation object useful for pulling config fields etc.
         self.eie_flag = -1
         self.name = name
-        self.freq_threshold = frequency_threshold
         self.imag_threshold = imag_threshold
         self.gs_tuple, self.ts_tuple = gs_tuple, ts_tuple
         self.temperature = temperature
@@ -212,13 +215,13 @@ class KIE(object):
     def calculate_kie(self):
         if settings.DEBUG >= 2:
             print "  Calculating Reduced Partition Function Ratio for Ground State."        
-        rpfr_gs, gs_imag_ratios, gs_heavy_freqs, gs_light_freqs = calculate_rpfr(self.gs_tuple, self.freq_threshold, self.imag_threshold, self.scaling, self.temperature)
+        rpfr_gs, gs_imag_ratios, gs_heavy_freqs, gs_light_freqs = calculate_rpfr(self.gs_tuple, self.imag_threshold, self.scaling, self.temperature)
         if settings.DEBUG >= 2:
             print "    rpfr_gs:", np.prod(rpfr_gs)
         if settings.DEBUG >= 2:
             print "  Calculating Reduced Partition Function Ratio for Transition State."
 
-        rpfr_ts, ts_imag_ratios, ts_heavy_freqs, ts_light_freqs = calculate_rpfr(self.ts_tuple, self.freq_threshold, self.imag_threshold, self.scaling, self.temperature)
+        rpfr_ts, ts_imag_ratios, ts_heavy_freqs, ts_light_freqs = calculate_rpfr(self.ts_tuple, self.imag_threshold, self.scaling, self.temperature)
         if settings.DEBUG >= 2:
             print "    rpfr_ts:", np.prod(rpfr_ts)
 
@@ -280,11 +283,10 @@ def partition_components(freqs_heavy, freqs_light, temperature):
     return np.array(components)
 
 # tup is a tuple of a form (light_isotopologue, heavy_isotopologue)
-def calculate_rpfr(tup, freq_threshold, imag_threshold, scaling, temperature):
+def calculate_rpfr(tup, imag_threshold, scaling, temperature):
     # calculate_frequencies gives tuples of the form (small_freqs, imaginary_freqs, freqs)
-    #print "Frequency threshold:", self.freq_threshold
-    light_small_freqs, light_imag_freqs, light_freqs, light_num_small = tup[0].calculate_frequencies(freq_threshold, imag_threshold, scaling=scaling)
-    heavy_small_freqs, heavy_imag_freqs, heavy_freqs, heavy_num_small = tup[1].calculate_frequencies(freq_threshold, imag_threshold, scaling=scaling, freqs_to_drop=light_num_small)
+    light_small_freqs, light_imag_freqs, light_freqs, light_num_small = tup[0].calculate_frequencies(imag_threshold, scaling=scaling)
+    heavy_small_freqs, heavy_imag_freqs, heavy_freqs, heavy_num_small = tup[1].calculate_frequencies(imag_threshold, scaling=scaling)
     
     if len(heavy_freqs) != len(light_freqs):
         raise ValueError("mismatch in the number of frequencies between isotopomers!")
