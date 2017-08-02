@@ -136,8 +136,9 @@ class System(object):
         if settings.DEBUG >= 1:
             print "Reading data from {0}... with style {1}".format(outfile, style)
         
-        if style == "g09" and not "Normal termination" in tail(outfile):
-            raise ValueError("g09 job %s terminated in an error" % outfile)
+        # assumes snip files worked correctly
+        if style == "g09" and not outfile.endswith(".snip") and not "Normal termination" in tail(outfile):
+            raise ValueError("Gaussian job %s terminated in an error" % outfile)
 
         self.filename = outfile
         with open(outfile, 'r') as f:
