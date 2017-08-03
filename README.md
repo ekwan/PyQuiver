@@ -5,7 +5,7 @@
 ## Contents
   - [Introduction](#introduction)
     - [Features](#features)
-    - [Compatability with Quiver](#compatibility-with-QUIVER)
+    - [Compatibility with QUIVER](#Compatibility-with-QUIVER)
     - [Installation](#installation)
   
   - [Tutorial](#tutorial)
@@ -22,6 +22,7 @@
   - [Fine Print](#fine-print)
    - [References](#references)
    - [Authors](#authors)
+   - [How to Cite](#how-to-cite)
    - [License](#license)
   
 ## Introduction
@@ -38,7 +39,7 @@
 * tunnelling corrections: Wigner and Bell inverted parabola
 * run via command line or simple Python API
 
-### Compatability with QUIVER
+### Compatibility with QUIVER
 
 The development of *PyQuiver* was inspired by the [original](#ref2) Fortran program [QUIVER](https://github.com/ekwan/quiver). *PyQuiver* is designed to be as compatible as possible with the original QUIVER program, but to clarify some ambiguity in choice of masses, configuration files need to be updated for use with *PyQuiver*. See the [Configuration](#config-files) section for detail.
 
@@ -352,6 +353,8 @@ The performance of *PyQuiver* is generally excellent, even for large systems.  T
 
 There is a known issue with getting PyQuiver to work on Cygwin systems due to a problem processing file paths correctly.  Additionally it seems to be hard to get NumPy installed properly on such systems.  We are working on a fix--please contact me if you require this urgently.  (The program works properly on all other kinds unix/linux, as far as we know).
 
+# Fine Print
+
 ## References
 
 1. **Bigeleisen-Mayer theory:**
@@ -371,6 +374,10 @@ There is a known issue with getting PyQuiver to work on Cygwin systems due to a 
 ## Authors
 
 *PyQuiver* was written by Thayer Anderson and Eugene Kwan at the Department of Chemistry and Chemical Biology at Harvard University.  Please email `ekwan@fas.harvard.edu` with any questions.  We will gladly try to help you.
+
+## How to Cite
+
+Anderson, T.L.; Kwan, E.E.  *PyQuiver*  **2016**, www.github.com/ekwan/PyQuiver.
 
 ## License
    
