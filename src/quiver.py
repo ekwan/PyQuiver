@@ -231,20 +231,20 @@ class System(object):
                     diff = positions[i] - positions[j]
                     diffs.append(diff)
 
-            # double loop = loop over distinct pairs
+            # loop over the pairs of a single vertex with all others
             res = 0
-            for i in xrange(len(diffs)-1):
-                for j in range(i+1, len(diffs)):
-                    # calculate dot product of the unit vectors that separate different pairs of centers
-                    u = diffs[i]/np.linalg.norm(diffs[i])
-                    v = diffs[j]/np.linalg.norm(diffs[j])
-                    res += np.abs(np.inner(u,v))
-            # normalize by number of pairs of differences (len(diffs) choose 2)
-            res = 2*res/(len(diffs)*(len(diffs) -1))
+            for i in xrange(1,len(diffs)-1):
+                # compares how parallel the unit vectors are
+                u = diffs[0]/np.linalg.norm(diffs[0])
+                v = diffs[i]/np.linalg.norm(diffs[i])
+                res += np.abs(np.inner(u,v))
 
+            # take the average length of the residual
+            res = np.sqrt(res)/(len(diffs)-1)
+            
             if 1 - res <= LINEARITY_THRESHOLD:
                 self.is_linear = True
-                
+
         self.atomic_numbers = atomic_numbers
 
     def dump_debug(self, obj):
