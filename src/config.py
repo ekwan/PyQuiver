@@ -77,8 +77,13 @@ class Config(object):
 
         # ensure we have all the fields we are supposed to
         for k,v in config.iteritems():
+            if k == "frequency_threshold" and v is not None:
+                print "*** Warning: frequency_threshold is now deprecated and will be ignored. ***"
             if v is None:
-                raise ValueError("missing config file field: %s" % k)
+                if k == "frequency_threshold":
+                    config["frequency_threshold"] = 0.0
+                else:
+                    raise ValueError("missing config file field: %s" % k)
         if len(isotopologues) == 0:
             raise ValueError("must specify at least one isotopologue")
 
@@ -103,8 +108,6 @@ class Config(object):
         config["mass_override_isotopologue"] = str(config["mass_override_isotopologue"])
 
         config["frequency_threshold"] = float(config["frequency_threshold"])
-        if config["frequency_threshold"] > 100.0:
-            raise ValueError("frequency threshold is too high")
 
         config["imag_threshold"] = float(config["imag_threshold"])
         if config["imag_threshold"] > 100.0:
@@ -146,8 +149,10 @@ class Config(object):
 
     # convert to human-readable format
     def __str__(self):
-        to_string = "Config file: %s\nTemperature: %.1f K\nScaling: %.3f\nReference Isotopologue: %s\nImag threshold (cm-1): %d\nFrequency threshold (cm-1): %d\n" % \
-                    (self.filename, self.temperature, self.scaling, self.reference_isotopologue, self.imag_threshold, self.frequency_threshold)
+        to_string = "Config file: %s\nTemperature: %.1f K\nScaling: %.3f\nReference Isotopologue: %s\nImag threshold (cm-1): %d\n" % \
+                    (self.filename, self.temperature, self.scaling, self.reference_isotopologue, self.imag_threshold)
+        if self.frequency_threshold != 0:
+            to_string += "Frequency threshold (cm-1): %d\n" % self.frequency_threshold
 
         keys = self.isotopologues.keys()
         if self.reference_isotopologue != "default" and self.reference_isotopologue != "none":
