@@ -127,7 +127,7 @@ class System(object):
         self.atomic_numbers = False
         self.number_of_atoms = False
         self.hessian = False
-        self.is_linear = False
+        self.is_linear = True
         
         valid_styles = ["g09", "pyquiver"]
         if style not in valid_styles:
@@ -221,31 +221,27 @@ class System(object):
         self.positions = positions/PHYSICAL_CONSTANTS['atb']
 
         # detect if molecule is linear
-        # method: take every difference of two centers
+        # method: take every difference of two centers (that share center 0)
         #   calculate the dot product with other differences
+
         if self.number_of_atoms > 2:
-            diffs = []
-            # double loop = loop over distinct pairs
-            for i in xrange(len(positions)-1):
-                for j in range(i+1, len(positions)):
-                    # calculate vector difference between the two distinct centers and tabulate
-                    diff = positions[i] - positions[j]
-                    diffs.append(diff)
-
-            # loop over the pairs of a single vertex with all others
-            res = 0
-            for i in xrange(1,len(diffs)-1):
+            detected_indep = 0
+            for i in xrange(1,len(positions)-1):
+                for j in xrange(i+1, len(positions)):
                 # compares how parallel the unit vectors are
-                u = diffs[0]/np.linalg.norm(diffs[0])
-                v = diffs[i]/np.linalg.norm(diffs[i])
-                res += np.abs(np.inner(u,v))
+                    diff0i = positions[0] - positions[i]
+                    diff0j = positions[0] - positions[j]
+                    u = diff0i/np.linalg.norm(diff0i)
+                    v = diff0j/np.linalg.norm(diff0j)
+                    # if the vectors are (probably) linearly indep, we break
+                    if 1 - np.abs(np.inner(u,v)) > LINEARITY_THRESHOLD:
+                        self.is_linear = False
+                        detected_indep = 1
+                        break
 
-            # take the average length of the residual
-            res = np.sqrt(res)/(len(diffs)-1)
-            
-            if 1 - res <= LINEARITY_THRESHOLD:
-                self.is_linear = True
-
+                if detected_indep:
+                    break
+                        
         self.atomic_numbers = atomic_numbers
 
     def dump_debug(self, obj):
