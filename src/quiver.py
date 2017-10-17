@@ -94,7 +94,7 @@ class Isotopologue(object):
             else:
                 small_freqs = freqs[:2+DROP_NUM_LINEAR]
                 regular_freqs = freqs[2+DROP_NUM_LINEAR:]
-            
+
 #            freqs = []
 #
 #            for lam in v:
@@ -241,7 +241,8 @@ class System(object):
 
                 if detected_indep:
                     break
-                        
+        linear_string = "linear" if self.is_linear else "not linear"
+        print "Molecule is %s." % linear_string
         self.atomic_numbers = atomic_numbers
 
     def dump_debug(self, obj):

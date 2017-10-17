@@ -296,15 +296,27 @@ def calculate_rpfr(tup, imag_threshold, scaling, temperature):
         heavy_imag_freqs = []
 
     if settings.DEBUG > 2:
+        print "light imaginary frequencies: ",
+        if len(light_imag_freqs) == 0:
+            print "none",
+        for i in light_imag_freqs:
+            print "%.1f  " % i,
+        print
         print "light small frequencies: ",
         for i in light_small_freqs:
+            print "%.1f  " % i,
+        print
+        print "heavy imaginary frequencies: ",
+        if len(heavy_imag_freqs) == 0:
+            print "none",
+        for i in light_imag_freqs:
             print "%.1f  " % i,
         print
         print "heavy small frequencies: ",
         for i in heavy_small_freqs:
             print "%.1f  " % i,
         print
-    
+   
     raw_imag_ratio = None
     imag_ratios = None
     try:
