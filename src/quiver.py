@@ -62,7 +62,6 @@ class Isotopologue(object):
             imaginary_freqs = []
             small_freqs = []
             conv_factor = PHYSICAL_CONSTANTS['Eh']/(PHYSICAL_CONSTANTS['a0']**2 * PHYSICAL_CONSTANTS['amu'])
-            #v,w = np.linalg.eigh(self.mw_hessian*conv_factor)
             v = np.linalg.eigvalsh(self.mw_hessian*conv_factor)
             constant = scaling / (2*np.pi*PHYSICAL_CONSTANTS['c'])
             freqs = [ np.copysign(np.sqrt(np.abs(freq)),freq) * constant for freq in v ]
@@ -71,47 +70,25 @@ class Isotopologue(object):
             imaginary_freqs = []
             small_freqs = []
             regular_freqs = []
+
+            # detect imaginary frequencies
+            for f in freqs:
+                if f < -imag_threshold:
+                    imaginary_freqs.append(f)
+                    
+            if len(imaginary_freqs) > 1:
+                print "WARNING: multiple imaginaries"
+
+            # strip the imaginary frequencies
+            freqs = freqs[len(imaginary_freqs):]
             
-            if freqs[0] < -imag_threshold:
-                imaginary_freqs = [freqs[0]]
-            warned = False
-            dropped_count = 0
-
-            # detect if there are multiple imaginary frequencies
-            for freq in freqs[1:]:
-                if freq < -imag_threshold:
-                    if not warned:
-                        print "Warning, multiple imaginaries: ",
-                        for i in freqs:
-                            if i < -imag_threshold:
-                                print "%.1f" % i,
-                        print "  Taking first and ignoring others."
-                        warned = True
-
             if self.system.is_linear:
+                small_freqs = freqs[:DROP_NUM_LINEAR]
+                regular_freqs = freqs[DROP_NUM_LINEAR:]
+            else:
                 small_freqs = freqs[:1+DROP_NUM_LINEAR]
                 regular_freqs = freqs[1+DROP_NUM_LINEAR:]
-            else:
-                small_freqs = freqs[:2+DROP_NUM_LINEAR]
-                regular_freqs = freqs[2+DROP_NUM_LINEAR:]
 
-#            freqs = []
-#
-#            for lam in v:
-#                freq = np.sqrt(np.abs(lam))/(2*np.pi*PHYSICAL_CONSTANTS['c'])*(scaling)
-#                if lam < 0 and np.linalg.norm(freq) >= imag_threshold:
-#                    imaginary_freqs.append(-1 * freq)                    
-#                elif lam > 0 and np.linalg.norm(freq) >= threshold:
-#                    freqs.append(freq)
-#                else:
-#                    small_freqs.append(freq)
-#
-#            imaginary_freqs.sort()
-#            freqs.sort()
-#            small_freqs.sort()
-#            if len(imaginary_freqs) > 1:
-#                print "WARNING: more than one imaginary frequency detected. Taking mode with largest norm and ignoring others."
-#                imaginary_freqs = [imaginary_freqs[-1]]
             self.frequencies = (small_freqs, imaginary_freqs, np.array(freqs), len(small_freqs))
             if settings.DEBUG >= 3:
                 self.dump_debug("freqs", self.frequencies)
