@@ -105,7 +105,8 @@ class System(object):
         self.number_of_atoms = False
         self.hessian = False
         self.is_linear = True
-        
+        self.filename = outfile
+
         valid_styles = ["g09", "pyquiver"]
         if style not in valid_styles:
             raise ValueError("specified style, {0}, not supported".format(style))

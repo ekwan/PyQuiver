@@ -130,8 +130,16 @@ class KIE_Calculation(object):
 
     def build_default_masses(self, system):
         masses = []
+        #print "---start---"
+        #for k in DEFAULT_MASSES:
+        #    print k, DEFAULT_MASSES[k]
+        #print "---"
         for i in xrange(system.number_of_atoms):
+            #print i, system.atomic_numbers[i], DEFAULT_MASSES[system.atomic_numbers[i]]
+            if not system.atomic_numbers[i] in DEFAULT_MASSES:
+                raise ValueError("Default mass not available for atomic number %d at atom number %d in %s!" % (system.atomic_numbers[i], i+1, system.filename))
             masses.append(DEFAULT_MASSES[system.atomic_numbers[i]])
+        #print "--end--"
         return np.array(masses)
 
     def apply_mass_rules(self, prev_masses, rules):
