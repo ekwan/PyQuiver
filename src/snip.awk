@@ -7,6 +7,17 @@
 #
 # These files can be used with PyQuiver, but not with the
 # old version of Quiver.
+BEGIN {
+    if ( ARGC < 2 ) {
+        print "Error: please specify some filenames."
+        print ""
+        print "snip.awk: generates .snip files from Gaussian .out files"
+        print "These files will be compatible with PyQuiver."
+        print ""
+        print "usage: awk -f snip.awk *.out"
+        exit
+    }
+}
 
 FNR == 1 {
     fileCount++
@@ -59,6 +70,9 @@ FNR == 1 {
 }
 
 END {
+    if ( exitCode != 0 )
+        exit
+
     split("Zero-point correction=@ Thermal correction to Energy=@ Thermal correction to Enthalpy=@ Thermal correction to Gibbs Free Energy=@ Sum of electronic and zero-point Energies=@ Sum of electronic and thermal Energies=@ Sum of electronic and thermal Enthalpies=@ Sum of electronic and thermal Free Energies=", energy_lines, "@")
     for (i=1; i <= fileCount; i++)
         {

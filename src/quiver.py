@@ -150,6 +150,15 @@ class System(object):
                 hessian = self._parse_serial_lower_hessian(fcm_fields)
                     
             if style == "g09":
+                # check that the verbose output option has been set
+                verbose_flag_present = re.search(r" *#p ", out_data)
+                if verbose_flag_present == None:
+                    print
+                    print "Error: Gaussian output file %s" % outfile
+                    print "was not run with the verbose flag, so it does not contain enough information for"
+                    print "PyQuiver to run.  Please re-run this calculation with a route card that starts with #p"
+                    sys.exit(1)
+                
                 # read in the number of atoms
                 m = re.search("NAtoms\= +([0-9]+)", out_data)
                 if m:
