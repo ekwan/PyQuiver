@@ -151,6 +151,10 @@ This means that all absolute KIEs will be divided by this one to give relative K
 
 These numbers agree closely with the predictions reported by Singleton.  There are small (0.001) differences that arise from roundoff errors, differing values of physical constants, slight changes in the way masses are handled, and the way the original QUIVER program handles small rotational/translational frequencies with a threshold system.  These small differences should not affect any chemical conclusions.
 
+Please note that the verbose flag should be set in the Gaussian route card.  For example:
+` #p b3lyp 6-31g* freq=noraman`
+This will ensure that Gaussian places the Hessian in the archive string at the end of the file.  (Not including the verbose flag will cause an error.)
+
 ### Summary
 
 The above captures the basic workflow of a *PyQuiver* calculation:
