@@ -27,12 +27,12 @@
   
 ## Introduction
 
-*PyQuiver* is an open-source Python program for calculating kinetic isotope effects (KIEs) and equilibrium isotope effects (EIEs) using harmonic frequencies and the Bigeleisen-Mayer equation.  *PyQuiver* requires Cartesian Hessian matrices, which can be calculated using any electronic structure program. 
+*PyQuiver* is an open-source Python program for calculating kinetic isotope effects (KIEs) and equilibrium isotope effects (EIEs) using harmonic frequencies and the Bigeleisen-Mayer equation.  *PyQuiver* requires Cartesian Hessian matrices, which can be calculated using any electronic structure program.  *PyQuiver* works with Gaussian output files by default (Gaussian '09 and '16 are both supported).
 
 ### Features
 
 * calculate KIEs or EIEs
-* automatically read frequencies from [`g09`](http://www.gaussian.com/g_prod/g09.htm) output files
+* automatically read frequencies from [`Gaussian`](http://www.gaussian.com/g_prod/g09.htm) output files
 * excellent performance for larger systems
 * highly customizable isotopic substitutions
 * arbitrary temperature
@@ -151,15 +151,11 @@ This means that all absolute KIEs will be divided by this one to give relative K
 
 These numbers agree closely with the predictions reported by Singleton.  There are small (0.001) differences that arise from roundoff errors, differing values of physical constants, slight changes in the way masses are handled, and the way the original QUIVER program handles small rotational/translational frequencies with a threshold system.  These small differences should not affect any chemical conclusions.
 
-Please note that the verbose flag should be set in the Gaussian route card.  For example:
-` #p b3lyp 6-31g* freq=noraman`
-This will ensure that Gaussian places the Hessian in the archive string at the end of the file.  (Not including the verbose flag will cause an error.)
-
 ### Summary
 
 The above captures the basic workflow of a *PyQuiver* calculation:
 
-* locate ground and transition states using g09
+* locate ground and transition states using g09 (using the verbose `#p` flag)
 * run a frequency calculations
 * specify the desired isotopic substitutions in a configuration file
 * run `python quiver.py` on the configuration, ground state, and transition state files
@@ -356,6 +352,12 @@ The frequencies can optionally be scaled (see ref. 3), but this will probably no
 The performance of *PyQuiver* is generally excellent, even for large systems.  This is largely because of the efficiency of the `np.eighvalsh` implementation.  Note that when multiple isotopomers are calculated using the same configuration file, *PyQuiver* will recalculate the frequencies for the reference isotopomer repeatedly (i.e., once for every isotopomer).  This should not be relevant for routine use.  However, it could be avoided by using the *PyQuiver* API.
 
 There is a known issue with getting PyQuiver to work on Cygwin systems due to a problem processing file paths correctly.  Additionally it seems to be hard to get NumPy installed properly on such systems.  We are working on a fix--please contact me if you require this urgently.  (The program works properly on all other kinds unix/linux, as far as we know).
+
+Please note that the verbose flag should be set in the Gaussian route card.  For example:
+` #p b3lyp 6-31g* freq=noraman`
+This will ensure that Gaussian places the Hessian in the archive string at the end of the file.  (Not including the verbose flag will cause an error.)
+
+Tunnelling corrections work best for heavy-atom KIEs.  H/D KIEs are more challenging (see the work of the Singleton and Truhlar groups for more details).
 
 # Fine Print
 
