@@ -9,21 +9,21 @@
     - [Installation](#installation)
   
   - [Tutorial](#tutorial)
-   - [Summary](#summary)
-   - [`autoquiver.py`](#autoquiverpy)
+    - [Summary](#summary)
+    - [`autoquiver.py`](#autoquiverpy)
 
   - [Technical Details](#technical-details)
-   - [Interfaces](#interfaces)
-   - [.config Files](#config-files)
-   - [Input Files](#input-files)
-   - [Snipping Utility](#snipping-utility)
-   - [Notes](#notes)
+    - [Interfaces](#interfaces)
+    - [.config Files](#config-files)
+    - [Input Files](#input-files)
+    - [Snipping Utility](#snipping-utility)
+    - [Notes](#notes)
 
   - [Fine Print](#fine-print)
-   - [References](#references)
-   - [Authors](#authors)
-   - [How to Cite](#how-to-cite)
-   - [License](#license)
+    - [References](#references)
+    - [Authors](#authors)
+    - [How to Cite](#how-to-cite)
+    - [License](#license)
   
 ## Introduction
 
