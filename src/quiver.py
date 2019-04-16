@@ -151,12 +151,13 @@ class System(object):
                     
             if style == "g09":
                 # check that the verbose output option has been set
-                verbose_flag_present = re.search(r" *#p ", out_data)
+                verbose_flag_present = re.search(r" *#[pP] ", out_data)
                 if verbose_flag_present == None:
                     print
                     print "Error: Gaussian output file %s" % outfile
                     print "was not run with the verbose flag, so it does not contain enough information for"
                     print "PyQuiver to run.  Please re-run this calculation with a route card that starts with #p"
+                    print
                     sys.exit(1)
                 
                 # read in the number of atoms
@@ -167,13 +168,30 @@ class System(object):
                     raise AttributeError("Number of atoms not detected.")
                 m = None
                 self.number_of_atoms = number_of_atoms
+                
                 # read in the last geometry (assumed cartesian coordinates)
                 atomic_numbers = [0 for i in xrange(number_of_atoms)]
                 positions = np.zeros(shape=(number_of_atoms,3))
+                
+                # use standard orientation if possible
                 for m in re.finditer("Standard orientation(.+?)Rotational constants \(GHZ\)", out_data, re.DOTALL):
                     pass
+                
+                # for input files with nosymm keyword, use input orientation
+                if m is None:
+                    for m in re.finditer("Input orientation(.+?)Distance matrix", out_data, re.DOTALL):
+                        pass
+                    if not m is None:
+                        print "Couldn't find standard orientation so used input orientation instead."
 
-                if not m:
+                if m is None:
+                    for m in re.finditer("Input orientation(.+?)Rotational constants \(GHZ\)", out_data, re.DOTALL):
+                        pass
+                    if not m is None:
+                        print "Couldn't find standard orientation so used input orientation instead."
+
+                # still couldn't find any geometries
+                if m is None:
                     raise AttributeError("Geometry table not detected.")
 
                 def valid_geom_line_p(split_line):
