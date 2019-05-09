@@ -152,7 +152,7 @@ class System(object):
             if style == "g09":
                 # check that the verbose output option has been set
                 verbose_flag_present = re.search(r" *#[pP] ", out_data)
-                if verbose_flag_present == None:
+                if verbose_flag_present == None and not outfile.lower().endswith(".snip"):
                     print
                     print "Error: Gaussian output file %s" % outfile
                     print "was not run with the verbose flag, so it does not contain enough information for"
