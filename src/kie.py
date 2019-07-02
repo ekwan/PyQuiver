@@ -279,15 +279,22 @@ def u(wavenumber, temperature):
 # frequencies below frequency_threshold will be ignored and will not be included in the array
 def partition_components(freqs_heavy, freqs_light, temperature):
     components = []
+    i = -6
     for wavenumber_light, wavenumber_heavy in zip(freqs_light, freqs_heavy):
+        i += 1
         product_factor = wavenumber_heavy/wavenumber_light
         u_light = u(wavenumber_light, temperature)
         u_heavy = u(wavenumber_heavy, temperature)
-        if settings.DEBUG >= 3:
-            print "LIGHT: %9.3f     HEAVY: %9.3f     RATIO: %9.5f" % (wavenumber_light, wavenumber_heavy, product_factor)
         excitation_factor = (1.0-np.exp(-u_light))/(1.0-np.exp(-u_heavy))
         ZPE_factor = np.exp(0.5*(u_light-u_heavy))
         components.append([product_factor,excitation_factor,ZPE_factor])
+        if settings.DEBUG >= 3:
+            overall_factor = product_factor * excitation_factor * ZPE_factor
+            print "MODE %3d    LIGHT: %9.3f cm-1    HEAVY: %9.3f cm-1    FRQ RATIO: %9.5f    ZPE FACTOR: %9.5f    CONTRB TO RIPF: %9.5f" % (i, wavenumber_light, wavenumber_heavy, product_factor, ZPE_factor, overall_factor)
+            #if overall_factor < 0.99 or overall_factor > 1.01:
+            #    print " *"
+            #else:
+            #    print
     return np.array(components)
 
 # tup is a tuple of a form (light_isotopologue, heavy_isotopologue)
@@ -308,7 +315,7 @@ def calculate_rpfr(tup, imag_threshold, scaling, temperature):
         if len(light_imag_freqs) == 0:
             print "none",
         for i in light_imag_freqs:
-            print "%.1f  " % i,
+            print "%.3f  " % i,
         print
         print "light small frequencies: ",
         for i in light_small_freqs:
@@ -317,8 +324,8 @@ def calculate_rpfr(tup, imag_threshold, scaling, temperature):
         print "heavy imaginary frequencies: ",
         if len(heavy_imag_freqs) == 0:
             print "none",
-        for i in light_imag_freqs:
-            print "%.1f  " % i,
+        for i in heavy_imag_freqs:
+            print "%.3f  " % i,
         print
         print "heavy small frequencies: ",
         for i in heavy_small_freqs:
