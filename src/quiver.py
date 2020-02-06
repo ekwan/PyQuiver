@@ -89,7 +89,8 @@ class Isotopologue(object):
                 small_freqs = freqs[:1+DROP_NUM_LINEAR]
                 regular_freqs = freqs[1+DROP_NUM_LINEAR:]
 
-            self.frequencies = (small_freqs, imaginary_freqs, np.array(freqs), len(small_freqs))
+            # bugfix 2/6/20: third argument is regular_freqs, not freqs!
+            self.frequencies = (small_freqs, imaginary_freqs, np.array(regular_freqs), len(small_freqs))
             if settings.DEBUG >= 3:
                 self.dump_debug("freqs", self.frequencies)
             return self.frequencies

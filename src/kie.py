@@ -279,7 +279,7 @@ def u(wavenumber, temperature):
 # frequencies below frequency_threshold will be ignored and will not be included in the array
 def partition_components(freqs_heavy, freqs_light, temperature):
     components = []
-    i = -6
+    i = 0
     for wavenumber_light, wavenumber_heavy in zip(freqs_light, freqs_heavy):
         i += 1
         product_factor = wavenumber_heavy/wavenumber_light
