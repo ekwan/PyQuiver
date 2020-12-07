@@ -37,7 +37,7 @@ class Isotopologue(object):
         #f = open(name+'_'+(self.system.filename)+'.pickle', 'w')
         #ret = pickle.dump(obj, f)
         #f.close()
-    
+
     def calculate_mw_hessian(self, masses3):
         hessian = self.system.hessian
         mw_hessian = np.zeros_like(hessian)
@@ -52,7 +52,7 @@ class Isotopologue(object):
             self.dump_debug("mw", mass_weights)
             self.dump_debug("mw_hessian", mw_hessian)
         return mw_hessian
-        
+
     def calculate_frequencies(self, imag_threshold, scaling=1.0, method="mass weighted hessian"):
         # short circuit if frequencies have already been calculated
         if self.frequencies is not None:
@@ -66,7 +66,7 @@ class Isotopologue(object):
             constant = scaling / (2*np.pi*PHYSICAL_CONSTANTS['c'])
             freqs = [ np.copysign(np.sqrt(np.abs(freq)),freq) * constant for freq in v ]
             freqs.sort()
- 
+
             imaginary_freqs = []
             small_freqs = []
             regular_freqs = []
@@ -75,13 +75,13 @@ class Isotopologue(object):
             for f in freqs:
                 if f < -imag_threshold:
                     imaginary_freqs.append(f)
-                    
+
             if len(imaginary_freqs) > 1:
                 print "WARNING: multiple imaginaries"
 
             # strip the imaginary frequencies
             freqs = freqs[len(imaginary_freqs):]
-            
+
             if self.system.is_linear:
                 small_freqs = freqs[:DROP_NUM_LINEAR]
                 regular_freqs = freqs[DROP_NUM_LINEAR:]
@@ -108,13 +108,13 @@ class System(object):
         self.is_linear = True
         self.filename = outfile
 
-        valid_styles = ["g09", "pyquiver"]
+        valid_styles = ["g09", "pyquiver", "orca"]
         if style not in valid_styles:
             raise ValueError("specified style, {0}, not supported".format(style))
 
         if settings.DEBUG >= 1:
             print "Reading data from {0}... with style {1}".format(outfile, style)
-        
+
         # assumes snip files worked correctly
         if style == "g09" and not outfile.endswith(".snip") and not "Normal termination" in tail(outfile):
             raise ValueError("Gaussian job %s terminated in an error" % outfile)
@@ -132,7 +132,7 @@ class System(object):
 
                 atomic_numbers = [0 for i in xrange(number_of_atoms)]
                 positions = np.zeros(shape=(number_of_atoms,3))
-                
+
                 for l in lines[1:number_of_atoms+1]:
                     fields = l.split(',')
                     try:
@@ -146,10 +146,10 @@ class System(object):
                     positions[center_number][0] = x
                     positions[center_number][1] = y
                     positions[center_number][2] = z
-                
+
                 fcm_fields = lines[number_of_atoms+1].split(',')
                 hessian = self._parse_serial_lower_hessian(fcm_fields)
-                    
+
             if style == "g09":
                 # check that the verbose output option has been set
                 verbose_flag_present = re.search(r" *#[pP] ", out_data)
@@ -160,7 +160,7 @@ class System(object):
                     print "PyQuiver to run.  Please re-run this calculation with a route card that starts with #p"
                     print
                     sys.exit(1)
-                
+
                 # read in the number of atoms
                 m = re.search("NAtoms\= +([0-9]+)", out_data)
                 if m:
@@ -169,15 +169,15 @@ class System(object):
                     raise AttributeError("Number of atoms not detected.")
                 m = None
                 self.number_of_atoms = number_of_atoms
-                
+
                 # read in the last geometry (assumed cartesian coordinates)
                 atomic_numbers = [0 for i in xrange(number_of_atoms)]
                 positions = np.zeros(shape=(number_of_atoms,3))
-                
+
                 # use standard orientation if possible
                 for m in re.finditer("Standard orientation(.+?)Rotational constants \(GHZ\)", out_data, re.DOTALL):
                     pass
-                
+
                 # for input files with nosymm keyword, use input orientation
                 if m is None:
                     for m in re.finditer("Input orientation(.+?)Distance matrix", out_data, re.DOTALL):
@@ -216,8 +216,14 @@ class System(object):
                         for e in xrange(0,3):
                             positions[center_number][e] = raw_geom_line[3+e]
 
-                # units = hartrees/bohr^2 
+                # units = hartrees/bohr^2
                 hessian = self._parse_g09_hessian(out_data)
+
+            elif style == "orca":
+                from orca import parse_orca_output
+                atomic_numbers, positions, hessian = parse_orca_output(out_data)
+                self.number_of_atoms = len(atomic_numbers)
+
 
         # copy fields
         self.hessian = hessian
@@ -256,7 +262,7 @@ class System(object):
         out = json.dumps(self.frequencies)
         f.write(out)
         f.close()
-        
+
     def _lower_triangle_serial_triangle(self,row,col):
         if col > row:
             return self._lower_triangle_serial_triangle(col,row)
@@ -272,7 +278,7 @@ class System(object):
         else:
             raise AttributeError("No frequency job detected.")
 
-        
+
         raw_fcm = m.group(0).split('\\')[2].split(',')
         self.raw_fcm = raw_fcm
         fcm = self._parse_serial_lower_hessian(raw_fcm)
@@ -307,7 +313,7 @@ class System(object):
 
         with open(path, 'w') as f:
             f.write(serial)
-        
+
         return serial
 
 if __name__ == "__main__":
