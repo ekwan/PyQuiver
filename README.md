@@ -28,7 +28,6 @@ To learn how to use *PyQuiver*, please look at the [tutorial](tutorial/TUTORIAL.
 
 ## Further Reading
 
-* [Tutorial]
 * [Technical Details](DETAILS.md) (compatibility with QUIVER, how to invoke PyQuiver, `.config` files, input files, the PyQuiver Standard format, miscellaneous notes)
 * [AutoQuiver](src/AUTOQUIVER.md) (how to run PyQuiver on many related files)
 * [Snipping Utility](scripts/SNIP.md) (how to "snip" out only the relevant parts of a Gaussian output file for publication or archiving purposes)
