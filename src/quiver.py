@@ -316,9 +316,9 @@ class System(object):
         return serial
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="A program that calculates KIEs and EIEs based on a ground and transition state file.")
+    parser = argparse.ArgumentParser(description="PyQuiver calculates KIEs and EIEs based on a ground and transition state file.")
     parser.add_argument('-v', '--verbose', dest="debug", help='when the verbose flag is set debug information is printed', action='count')
-    parser.add_argument('-s', '--style', dest="style", default='g09', help='style of input files')
+    parser.add_argument('-s', '--style', dest="style", default='g09', help='style of input files (g09, orca, or pyquiver)')
     parser.add_argument('config', help='configuration file path')
     parser.add_argument('gs', help='ground state file path')
     parser.add_argument('ts', help='transition state file path')
