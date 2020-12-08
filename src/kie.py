@@ -41,12 +41,12 @@ class KIE_Calculation(object):
         self.eie_flag = -1
 
         if settings.DEBUG != 0:
-            print self.config
+            print(self.config)
             
         KIES = OrderedDict()
 
         if self.config.frequency_threshold:
-            print "WARNING: config file uses the frequency_threshold parameter. This has been deprecated and low frequencies are dropped by linearity detection."
+            print("WARNING: config file uses the frequency_threshold parameter. This has been deprecated and low frequencies are dropped by linearity detection.")
 
         for p in self.make_isotopologues():
             gs_tuple, ts_tuple = p
@@ -54,7 +54,7 @@ class KIE_Calculation(object):
             kie = KIE(name, gs_tuple, ts_tuple, self.config.temperature, self.config.scaling, self.config.imag_threshold)
             KIES[name] = kie
         
-        for name,k in KIES.iteritems():
+        for name,k in KIES.items():
             if name != self.config.reference_isotopologue:
                 if self.eie_flag == -1:
                     eie_flag_iso = name
@@ -77,7 +77,7 @@ class KIE_Calculation(object):
     def get_row(self, report_tunnelling=False):
         title_row = ""
         row = ""
-        keys = self.KIES.keys()
+        keys = list(self.KIES.keys())
         
         # don't report the reference isotoplogue
         if self.config.reference_isotopologue != "default" and self.config.reference_isotopologue != "none":
@@ -134,7 +134,7 @@ class KIE_Calculation(object):
         #for k in DEFAULT_MASSES:
         #    print k, DEFAULT_MASSES[k]
         #print "---"
-        for i in xrange(system.number_of_atoms):
+        for i in range(system.number_of_atoms):
             #print i, system.atomic_numbers[i], DEFAULT_MASSES[system.atomic_numbers[i]]
             if not system.atomic_numbers[i] in DEFAULT_MASSES:
                 raise ValueError("Default mass not available for atomic number %d at atom number %d in %s!" % (system.atomic_numbers[i], i+1, system.filename))
@@ -144,7 +144,7 @@ class KIE_Calculation(object):
 
     def apply_mass_rules(self, prev_masses, rules):
         masses = list(prev_masses)
-        for k,v in rules.iteritems():
+        for k,v in rules.items():
             masses[k] = v
         return masses
 
@@ -171,7 +171,7 @@ class KIE_Calculation(object):
         default_gs = quiver.Isotopologue("default", gs_system, mass_override_gs_masses)
         default_ts = quiver.Isotopologue("default", ts_system, mass_override_ts_masses)
 
-        for id_,iso in config.isotopologues.iteritems():
+        for id_,iso in config.isotopologues.items():
             if id_ != config.mass_override_isotopologue:
                 gs_rules, ts_rules = self.compile_mass_rules(iso)
                 gs_masses = self.apply_mass_rules(mass_override_gs_masses, gs_rules)
@@ -187,7 +187,7 @@ class KIE_Calculation(object):
             string += "                                                              KIE           KIE              KIE"
         else:
             string += "Isotopologue                                                  EIE"
-        keys = self.KIES.keys()
+        keys = list(self.KIES.keys())
         if self.config.reference_isotopologue != "default" and self.config.reference_isotopologue != "none":
             keys.remove(self.config.reference_isotopologue)
         if self.config.mass_override_isotopologue != "default":
@@ -217,21 +217,21 @@ class KIE(object):
         self.scaling = scaling
         
         if settings.DEBUG >= 2:
-            print "Calculating KIE for isotopologue {0}.".format(name)
+            print("Calculating KIE for isotopologue {0}.".format(name))
         self.value = self.calculate_kie()
 
     def calculate_kie(self):
         if settings.DEBUG >= 2:
-            print "  Calculating Reduced Partition Function Ratio for Ground State."        
+            print("  Calculating Reduced Partition Function Ratio for Ground State.")        
         rpfr_gs, gs_imag_ratios, gs_heavy_freqs, gs_light_freqs = calculate_rpfr(self.gs_tuple, self.imag_threshold, self.scaling, self.temperature)
         if settings.DEBUG >= 2:
-            print "    rpfr_gs:", np.prod(rpfr_gs)
+            print("    rpfr_gs:", np.prod(rpfr_gs))
         if settings.DEBUG >= 2:
-            print "  Calculating Reduced Partition Function Ratio for Transition State."
+            print("  Calculating Reduced Partition Function Ratio for Transition State.")
 
         rpfr_ts, ts_imag_ratios, ts_heavy_freqs, ts_light_freqs = calculate_rpfr(self.ts_tuple, self.imag_threshold, self.scaling, self.temperature)
         if settings.DEBUG >= 2:
-            print "    rpfr_ts:", np.prod(rpfr_ts)
+            print("    rpfr_ts:", np.prod(rpfr_ts))
 
         if ts_imag_ratios is not None:
             if self.eie_flag == -1:
@@ -290,7 +290,7 @@ def partition_components(freqs_heavy, freqs_light, temperature):
         components.append([product_factor,excitation_factor,ZPE_factor])
         if settings.DEBUG >= 3:
             overall_factor = product_factor * excitation_factor * ZPE_factor
-            print "MODE %3d    LIGHT: %9.3f cm-1    HEAVY: %9.3f cm-1    FRQ RATIO: %9.5f    ZPE FACTOR: %9.5f    CONTRB TO RIPF: %9.5f" % (i, wavenumber_light, wavenumber_heavy, product_factor, ZPE_factor, overall_factor)
+            print("MODE %3d    LIGHT: %9.3f cm-1    HEAVY: %9.3f cm-1    FRQ RATIO: %9.5f    ZPE FACTOR: %9.5f    CONTRB TO RIPF: %9.5f" % (i, wavenumber_light, wavenumber_heavy, product_factor, ZPE_factor, overall_factor))
             #if overall_factor < 0.99 or overall_factor > 1.01:
             #    print " *"
             #else:
@@ -306,31 +306,31 @@ def calculate_rpfr(tup, imag_threshold, scaling, temperature):
     if len(heavy_freqs) != len(light_freqs):
         raise ValueError("mismatch in the number of frequencies between isotopomers!")
     if len(light_imag_freqs) != len(heavy_imag_freqs):
-        print "WARNING: mismatch in the number of imaginary frequencies between isotopomers, ignoring imaginary mode"
+        print("WARNING: mismatch in the number of imaginary frequencies between isotopomers, ignoring imaginary mode")
         light_imag_freqs = []
         heavy_imag_freqs = []
 
     if settings.DEBUG > 2:
-        print "light imaginary frequencies: ",
+        print("light imaginary frequencies: ", end=' ')
         if len(light_imag_freqs) == 0:
-            print "none",
+            print("none", end=' ')
         for i in light_imag_freqs:
-            print "%.3f  " % i,
-        print
-        print "light small frequencies: ",
+            print("%.3f  " % i, end=' ')
+        print()
+        print("light small frequencies: ", end=' ')
         for i in light_small_freqs:
-            print "%.1f  " % i,
-        print
-        print "heavy imaginary frequencies: ",
+            print("%.1f  " % i, end=' ')
+        print()
+        print("heavy imaginary frequencies: ", end=' ')
         if len(heavy_imag_freqs) == 0:
-            print "none",
+            print("none", end=' ')
         for i in heavy_imag_freqs:
-            print "%.3f  " % i,
-        print
-        print "heavy small frequencies: ",
+            print("%.3f  " % i, end=' ')
+        print()
+        print("heavy small frequencies: ", end=' ')
         for i in heavy_small_freqs:
-            print "%.1f  " % i,
-        print
+            print("%.1f  " % i, end=' ')
+        print()
    
     raw_imag_ratio = None
     imag_ratios = None
@@ -348,7 +348,7 @@ def calculate_rpfr(tup, imag_threshold, scaling, temperature):
 
     if settings.DEBUG >= 2:
         factors = np.prod(partition_factors, axis=0)
-        print "{3: ^8}Product Factor: {0}\n{3: ^8}Excitation Factor: {1}\n{3: ^8}ZPE Factor: {2}".format(factors[0], factors[1], factors[2], "")
+        print("{3: ^8}Product Factor: {0}\n{3: ^8}Excitation Factor: {1}\n{3: ^8}ZPE Factor: {2}".format(factors[0], factors[1], factors[2], ""))
 
     return (np.prod(partition_factors), imag_ratios, np.array(heavy_freqs), np.array(light_freqs))
 

@@ -19,9 +19,9 @@ def test_orthogonality(vectors):
             inner = np.inner(u,v)
             if inner != 0.0 or inner != 1.0:
                 mat[i][j] = inner
-    print "Orthogonality:"
+    print("Orthogonality:")
     for l in mat:
-        print l
+        print(l)
 
 def schmidt(seed_vectors, rest_vectors, dimension):
     vectors = list(seed_vectors)

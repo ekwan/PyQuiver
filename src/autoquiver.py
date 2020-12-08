@@ -9,7 +9,6 @@ import quiver
 
 from kie import KIE_Calculation
 
-#import pandas as pd
 import glob
 
 def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension='.out', style='g09', report_tunnelling=False):
@@ -36,7 +35,7 @@ def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension
         raise TypeError("gs_ts_p must either be a string or a function that returns a boolean value.")
 
     os.chdir(filepath)
-    print "Starting AutoQuiver analysis...\n"
+    print("Starting AutoQuiver analysis...\n")
     for config in glob.glob("*.config"):
         if os.path.samefile(config_path, config):
             eie_flag = -1
@@ -47,17 +46,17 @@ def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension
                 if gs_p(gs):
                     for ts in glob.glob("*"+input_extension):
                         if ts_p(ts) and gs_ts_match_p(gs,ts):
-                            print "%-50s - %-50s : " % (gs[-50:], ts[-50:]),
+                            print("%-50s - %-50s : " % (gs[-50:], ts[-50:]), end=' ')
                             try:
                                 kie = KIE_Calculation(config, gs, ts, style=style)
                             except:
-                                print "error"
+                                print("error")
                                 continue
                             title_row, row, eie_p = kie.get_row(report_tunnelling=report_tunnelling)
 
                             # print the KIEs (minus the comma at the end)
-                            print row[:-1]
-                            
+                            print(row[:-1])
+
                             if eie_flag == -1:
                                 eie_flag = eie_p
                             else:
@@ -74,7 +73,7 @@ def autoquiver(filepath, config_path, gs_p, ts_p, gs_ts_match_p, input_extension
 
             with open(os.path.splitext(config)[0]+"-kies.csv", 'w') as f:
                 f.write(table)
-                print "\nAutoQuiver has completed execution.\nResult written to {0}.".format(os.path.splitext(config)[0]+"-kies.csv")
+                print("\nAutoQuiver has completed execution.\nResult written to {0}.".format(os.path.splitext(config)[0]+"-kies.csv"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A program to automatically run PyQuiver on a config file and all ground state and transition states matching certain constraints.")
@@ -93,6 +92,6 @@ if __name__ == "__main__":
     settings.DEBUG = 0
     if args.debug:
         settings.DEBUG += args.debug
-    print "Debug level is %d" % settings.DEBUG
-        
+    print("Debug level is %d" % settings.DEBUG)
+ 
     autoquiver(args.target, args.config, args.gs_p, args.ts_p, args.delimiter, style=args.style, input_extension=args.ext, report_tunnelling=args.report_tunnelling)

@@ -13,20 +13,20 @@ class Config(object):
 
         print_message = True
         try:
-            f=sys._current_frames().values()[0]
+            f=list(sys._current_frames().values())[0]
             if "autoquiver" in f.f_back.f_back.f_globals['__file__']:
                 print_message = False
         except:
             pass
         if print_message:
-            print "\nReading configuration from {0}".format(filename)
+            print("\nReading configuration from {0}".format(filename))
 
         # a list of isotopologues
         # each entry is a list of tuples
         # each tuple is (from_atom_number, to_atom_number, replacement_isotope)
         # this format allows for multiple replacements in one isotopologue
         isotopologues = OrderedDict()
-        
+
         # read file
         for line in open(filename, "r"):
             # ignore comments and blank lines
@@ -36,8 +36,8 @@ class Config(object):
             line = line.split("#", 1)[0]
 
             # read space-delimited data
-            fields = filter(None, line.encode("ascii","ignore").split(" "))
-            
+            fields = [_f for _f in line.split(" ") if _f]
+
             # for backwards compatibility with quiver
             if fields[0] == "isotopomer":
                 fields[0] = "isotopologue"
@@ -57,7 +57,7 @@ class Config(object):
                     raise ValueError("name default is reserved.")
                 if from_atom_number < 1 or to_atom_number < 1:
                     raise ValueError("check atom numbers:\n%s" % line)
-                if replacement not in REPLACEMENTS.keys():
+                if replacement not in list(REPLACEMENTS.keys()):
                     raise ValueError("invalid isotopic replacement:\n%s" % line)
 
                 # allows for the fact that isotopologues can make multiple replacements
@@ -76,9 +76,9 @@ class Config(object):
                 raise ValueError("unexpected number of fields in config file:\n%s" % line)
 
         # ensure we have all the fields we are supposed to
-        for k,v in config.iteritems():
+        for k,v in config.items():
             if k == "frequency_threshold" and v is not None:
-                print "*** Warning: frequency_threshold is now deprecated and will be ignored. ***"
+                print("*** Warning: frequency_threshold is now deprecated and will be ignored. ***")
             if v is None:
                 if k == "frequency_threshold":
                     config["frequency_threshold"] = 0.0
@@ -123,7 +123,7 @@ class Config(object):
         n_ts_atoms = len(ts.atomic_numbers)
         # check that the isotopic replacements make sense
         isotopologues = self.isotopologues
-        for i,isotopologue in isotopologues.iteritems():
+        for i,isotopologue in isotopologues.items():
             for r in range(len(isotopologue)):
                 # this replacement changes gs atom number from_atom
                 # and ts atom number to_atom
@@ -145,7 +145,7 @@ class Config(object):
                     raise ValueError("gs and ts atomic number do not match for\n" % replacement_string)
 
         if verbose:
-            print "Config file %s makes sense with gs file %s and ts file %s.\n" % (self.filename, gs.filename, ts.filename)
+            print("Config file %s makes sense with gs file %s and ts file %s.\n" % (self.filename, gs.filename, ts.filename))
 
     # convert to human-readable format
     def __str__(self):
@@ -154,12 +154,12 @@ class Config(object):
         if self.frequency_threshold != 0:
             to_string += "Frequency threshold (cm-1): %d\n" % self.frequency_threshold
 
-        keys = self.isotopologues.keys()
+        keys = list(self.isotopologues.keys())
         if self.reference_isotopologue != "default" and self.reference_isotopologue != "none":
             try:
                 keys.remove(self.reference_isotopologue)
             except:
-                print "\nCould not find the following reference isotopologue: %s" % self.reference_isotopologue
+                print("\nCould not find the following reference isotopologue: %s" % self.reference_isotopologue)
                 sys.exit(1)
         keys.sort()
 

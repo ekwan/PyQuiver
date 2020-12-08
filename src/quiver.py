@@ -44,8 +44,8 @@ class Isotopologue(object):
 
         mass_weights=[]
 
-        for i in xrange(0, 3*self.number_of_atoms):
-            for j in xrange(0, 3*self.number_of_atoms):
+        for i in range(0, 3*self.number_of_atoms):
+            for j in range(0, 3*self.number_of_atoms):
                 mass_weights.append(1/(np.sqrt(masses3[i]*masses3[j])))
                 mw_hessian[i,j] = hessian[i,j] / np.sqrt( masses3[i] * masses3[j] )
         if settings.DEBUG >= 3:
@@ -77,7 +77,7 @@ class Isotopologue(object):
                     imaginary_freqs.append(f)
 
             if len(imaginary_freqs) > 1:
-                print "WARNING: multiple imaginaries"
+                print("WARNING: multiple imaginaries")
 
             # strip the imaginary frequencies
             freqs = freqs[len(imaginary_freqs):]
@@ -113,7 +113,7 @@ class System(object):
             raise ValueError("specified style, {0}, not supported".format(style))
 
         if settings.DEBUG >= 1:
-            print "Reading data from {0}... with style {1}".format(outfile, style)
+            print("Reading data from {0}... with style {1}".format(outfile, style))
 
         # assumes snip files worked correctly
         if style == "g09" and not outfile.endswith(".snip") and not "Normal termination" in tail(outfile):
@@ -130,7 +130,7 @@ class System(object):
                     raise ValueError("first line must contain integer number of atoms.")
                 self.number_of_atoms = number_of_atoms
 
-                atomic_numbers = [0 for i in xrange(number_of_atoms)]
+                atomic_numbers = [0 for i in range(number_of_atoms)]
                 positions = np.zeros(shape=(number_of_atoms,3))
 
                 for l in lines[1:number_of_atoms+1]:
@@ -154,11 +154,11 @@ class System(object):
                 # check that the verbose output option has been set
                 verbose_flag_present = re.search(r" *#[pP] ", out_data)
                 if verbose_flag_present == None and not outfile.lower().endswith(".snip"):
-                    print
-                    print "Error: Gaussian output file %s" % outfile
-                    print "was not run with the verbose flag, so it does not contain enough information for"
-                    print "PyQuiver to run.  Please re-run this calculation with a route card that starts with #p"
-                    print
+                    print()
+                    print("Error: Gaussian output file %s" % outfile)
+                    print("was not run with the verbose flag, so it does not contain enough information for")
+                    print("PyQuiver to run.  Please re-run this calculation with a route card that starts with #p")
+                    print()
                     sys.exit(1)
 
                 # read in the number of atoms
@@ -171,7 +171,7 @@ class System(object):
                 self.number_of_atoms = number_of_atoms
 
                 # read in the last geometry (assumed cartesian coordinates)
-                atomic_numbers = [0 for i in xrange(number_of_atoms)]
+                atomic_numbers = [0 for i in range(number_of_atoms)]
                 positions = np.zeros(shape=(number_of_atoms,3))
 
                 # use standard orientation if possible
@@ -183,13 +183,13 @@ class System(object):
                     for m in re.finditer("Input orientation(.+?)Distance matrix", out_data, re.DOTALL):
                         pass
                     if not m is None:
-                        print "Couldn't find standard orientation so used input orientation instead."
+                        print("Couldn't find standard orientation so used input orientation instead.")
 
                 if m is None:
                     for m in re.finditer("Input orientation(.+?)Rotational constants \(GHZ\)", out_data, re.DOTALL):
                         pass
                     if not m is None:
-                        print "Couldn't find standard orientation so used input orientation instead."
+                        print("Couldn't find standard orientation so used input orientation instead.")
 
                 # still couldn't find any geometries
                 if m is None:
@@ -208,12 +208,12 @@ class System(object):
 
                 for l in m.group(1).split('\n'):
                     raw_geom_line = l.split()
-                    raw_geom_line = filter(None, l.split(' '))
+                    raw_geom_line = [_f for _f in l.split(' ') if _f]
 
                     if valid_geom_line_p(raw_geom_line):
                         center_number = int(raw_geom_line[0]) - 1
                         atomic_numbers[center_number] = int(raw_geom_line[1])
-                        for e in xrange(0,3):
+                        for e in range(0,3):
                             positions[center_number][e] = raw_geom_line[3+e]
 
                 # units = hartrees/bohr^2
@@ -238,8 +238,8 @@ class System(object):
 
         if self.number_of_atoms > 2:
             detected_indep = 0
-            for i in xrange(1,len(positions)-1):
-                for j in xrange(i+1, len(positions)):
+            for i in range(1,len(positions)-1):
+                for j in range(i+1, len(positions)):
                 # compares how parallel the unit vectors are
                     diff0i = positions[0] - positions[i]
                     diff0j = positions[0] - positions[j]
@@ -254,7 +254,7 @@ class System(object):
                 if detected_indep:
                     break
         linear_string = "linear" if self.is_linear else "not linear"
-        print "Molecule is %s." % linear_string
+        print("Molecule is %s." % linear_string)
         self.atomic_numbers = atomic_numbers
 
     def dump_debug(self, obj):
@@ -267,7 +267,7 @@ class System(object):
         if col > row:
             return self._lower_triangle_serial_triangle(col,row)
         triangle = lambda n: n*(n+1)/2
-        return triangle(row) + col
+        return int(triangle(row) + col)
 
     def _parse_g09_hessian(self, data):
         raw_archive = re.findall(".*l9999.exe(.+?)\@", data, re.DOTALL)[-1]
@@ -278,7 +278,6 @@ class System(object):
         else:
             raise AttributeError("No frequency job detected.")
 
-
         raw_fcm = m.group(0).split('\\')[2].split(',')
         self.raw_fcm = raw_fcm
         fcm = self._parse_serial_lower_hessian(raw_fcm)
@@ -286,21 +285,21 @@ class System(object):
 
     def _parse_serial_lower_hessian(self, fields):
         fcm = np.zeros(shape=(3*self.number_of_atoms, 3*self.number_of_atoms))
-        for i in xrange(0, 3*self.number_of_atoms):
-            for j in xrange(0, 3*self.number_of_atoms):
+        for i in range(0, 3*self.number_of_atoms):
+            for j in range(0, 3*self.number_of_atoms):
                 fcm[i,j] = fields[self._lower_triangle_serial_triangle(i,j)]
         return fcm
 
     def _make_serial_hessian(self):
         serial = ""
-        for i in xrange(self.number_of_atoms*3):
-            for j in xrange(0,i+1):
+        for i in range(self.number_of_atoms*3):
+            for j in range(0,i+1):
                 serial += str(self.hessian[i,j]) + ","
         return serial
 
     def _make_serial_geometry(self):
         serial = ""
-        for i in xrange(self.number_of_atoms):
+        for i in range(self.number_of_atoms):
             serial += "{0},{1},{2},{3},{4}\n".format(i, self.atomic_numbers[i], self.positions_angstrom[i,0], self.positions_angstrom[i,1], self.positions_angstrom[i,2])
         return serial
 
@@ -330,7 +329,7 @@ if __name__ == "__main__":
 
     from kie import KIE_Calculation
     calc = KIE_Calculation(args.config, args.gs, args.ts, style=args.style)
-    print calc
+    print(calc)
 
 
 def slugify(value):
