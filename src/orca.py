@@ -81,7 +81,8 @@ def parse_orca_output(out_data):
 
         h = np.loadtxt(s, skiprows=1,
                        converters=dict((i+1, float) for i in range(batch_size)),
-                       usecols=tuple(i+1 for i in range(batch_size)))
+                       usecols=tuple(i+1 for i in range(batch_size)),
+                       ndmin=2)
 
         hessian = h if hessian is None else np.hstack((hessian, h))
 
