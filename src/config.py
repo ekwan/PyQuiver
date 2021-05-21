@@ -1,6 +1,7 @@
 # This file reads PyQuiver configuration files. 
 import sys
 import re
+import settings
 from constants import REPLACEMENTS, REPLACEMENTS_Z
 from collections import OrderedDict
 
@@ -18,7 +19,7 @@ class Config(object):
                 print_message = False
         except:
             pass
-        if print_message:
+        if print_message and settings.DEBUG >= 2:
             print("\nReading configuration from {0}".format(filename))
 
         # a list of isotopologues
