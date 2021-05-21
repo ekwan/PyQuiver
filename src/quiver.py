@@ -254,7 +254,8 @@ class System(object):
                 if detected_indep:
                     break
         linear_string = "linear" if self.is_linear else "not linear"
-        print("Molecule is %s." % linear_string)
+        if settings.DEBUG >= 2:
+            print("Molecule is %s." % linear_string)
         self.atomic_numbers = atomic_numbers
 
     def dump_debug(self, obj):

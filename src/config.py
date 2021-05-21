@@ -18,7 +18,7 @@ class Config(object):
                 print_message = False
         except:
             pass
-        if print_message:
+        if print_message and settings.DEBUG >= 2:
             print("\nReading configuration from {0}".format(filename))
 
         # a list of isotopologues
