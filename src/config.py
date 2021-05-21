@@ -1,6 +1,7 @@
 # This file reads PyQuiver configuration files. 
 import sys
 import re
+import settings
 from constants import REPLACEMENTS, REPLACEMENTS_Z
 from collections import OrderedDict
 
