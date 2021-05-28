@@ -270,14 +270,20 @@ class System(object):
         triangle = lambda n: n*(n+1)/2
         return int(triangle(row) + col)
 
+    # search for the archive at the end of the file
+    # then extract the force constant matrix
     def _parse_g09_hessian(self, data):
-        raw_archive = re.findall(".*l9999.exe(.+?)\@", data, re.DOTALL)[-1]
+        raw_archive = re.findall("Unable to Open any file for archive entry(.+?)\\\\\@", data, re.DOTALL)
+        if not raw_archive:
+            raw_archive = re.findall(".*l9999.exe(.+?)\@", data, re.DOTALL)[-1]
+        else:
+            raw_archive = raw_archive[-1]
         raw_archive = re.sub('[\s+]', '', raw_archive) + "@"
         m = re.search("NImag\=(.+?)\@", raw_archive, re.DOTALL)
         if m:
             pass
         else:
-            raise AttributeError("No frequency job detected.")
+            raise AttributeError(f"No frequency job detected in {self.filename}.")
 
         raw_fcm = m.group(0).split('\\')[2].split(',')
         self.raw_fcm = raw_fcm
