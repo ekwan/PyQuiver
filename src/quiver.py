@@ -273,19 +273,18 @@ class System(object):
     # search for the archive at the end of the file
     # then extract the force constant matrix
     def _parse_g09_hessian(self, data):
-        raw_archive = re.findall("Unable to Open any file for archive entry(.+?)\\\\\@", data, re.DOTALL)
-        if not raw_archive:
-            raw_archive = re.findall(".*l9999.exe(.+?)\@", data, re.DOTALL)[-1]
-        else:
-            raw_archive = raw_archive[-1]
-        raw_archive = re.sub('[\s+]', '', raw_archive) + "@"
-        m = re.search("NImag\=(.+?)\@", raw_archive, re.DOTALL)
-        if m:
-            pass
-        else:
-            raise AttributeError(f"No frequency job detected in {self.filename}.")
+        raw_archive = re.findall(r"1\\1\\GINC(.+?)\\\\@", data, re.DOTALL)
+        found_frequencies = False
+        for archive in raw_archive:
+            archive = re.sub('[\s+]', '', archive) + "@"
+            archive = re.search("NImag\=(.+?)\@", archive, re.DOTALL)
+            if archive:
+                found_frequencies = True
+                break
+        if not found_frequencies:
+            raise ValueError(f"No frequency job detected in {self.filename}.")
 
-        raw_fcm = m.group(0).split('\\')[2].split(',')
+        raw_fcm = archive.group(0).split('\\')[2].split(',')
         self.raw_fcm = raw_fcm
         fcm = self._parse_serial_lower_hessian(raw_fcm)
         return fcm
