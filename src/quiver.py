@@ -274,18 +274,21 @@ class System(object):
     # then extract the force constant matrix
     def _parse_g09_hessian(self, data):
         #print("\n\nparsing\n\n")
-        raw_archive = re.findall(r"1\\1\\GINC(.+?)\\\s*\\@", data, re.DOTALL)
+        # regex for finding text between 1\1\GINC and \@
+        # DOTALL means that . will match newlines
+        # there are two capture groups here, which is why we have to use archive[0] later
+        raw_archive = re.findall(r"1\\1\\GINC(.+?)\\(\s*)@", data, re.DOTALL)
         found_frequencies = False
-        #print(len(raw_archive))
         for archive in raw_archive:
-            archive = re.sub('[\s+]', '', archive)
-            #print(archive[:300])
+            archive = re.sub('[\s+]', '', archive[0])
+            #print(archive[:1000])
             #print("...")
-            #print(archive[-300:])
+            #print(archive[-1000:])
             #print("---")
             archive = re.search("NImag\=(.+?)$", archive, re.DOTALL)
             #print(archive)
             #print("*")
+            #print()
             if archive:
                 found_frequencies = True
                 break

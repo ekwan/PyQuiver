@@ -111,7 +111,7 @@ class Config(object):
         config["frequency_threshold"] = float(config["frequency_threshold"])
 
         config["imag_threshold"] = float(config["imag_threshold"])
-        if config["imag_threshold"] > 100.0:
+        if config["imag_threshold"] > 300.0:
             raise ValueError("imag threshold is too high")
 
         # store all the information in the object dictionary
