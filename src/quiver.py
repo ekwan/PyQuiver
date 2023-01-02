@@ -19,14 +19,9 @@ class Isotopologue(object):
         self.system = system
         self.masses = masses
         self.frequencies = None
-        # create vector of masses with each entry repeated three times for convenience
-        masses3_list = []
-        for m in masses:
-            masses3_list.extend([m, m, m])
-        self.masses3 = np.array(masses3_list)
 
         self.number_of_atoms = system.number_of_atoms
-        self.mw_hessian = self.calculate_mw_hessian(self.masses3, self.system.hessian)
+        self.mw_hessian = self.calculate_mw_hessian()
 
     def __str__(self):
         returnString  = "Isotopologue: %s\n" % self.name
@@ -39,7 +34,7 @@ class Isotopologue(object):
         #ret = pickle.dump(obj, f)
         #f.close()
 
-    def calculate_mw_hessian(self, masses3, hessian):
+    def calculate_mw_hessian(self):
         #### old code - this is very inefficient because we calculate sqrt about a zillion times
         #### better to call sqrt on the whole matrix and let numpy vectorize it
 
