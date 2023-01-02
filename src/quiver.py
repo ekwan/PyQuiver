@@ -3,6 +3,7 @@ import sys
 import re
 import os
 import pickle
+import math
 
 import numpy as np
 
@@ -25,7 +26,7 @@ class Isotopologue(object):
         self.masses3 = np.array(masses3_list)
 
         self.number_of_atoms = system.number_of_atoms
-        self.mw_hessian = self.calculate_mw_hessian(self.masses3)
+        self.mw_hessian = self.calculate_mw_hessian(self.masses3, self.system.hessian)
 
     def __str__(self):
         returnString  = "Isotopologue: %s\n" % self.name
@@ -38,19 +39,42 @@ class Isotopologue(object):
         #ret = pickle.dump(obj, f)
         #f.close()
 
-    def calculate_mw_hessian(self, masses3):
-        hessian = self.system.hessian
-        mw_hessian = np.zeros_like(hessian)
+    def calculate_mw_hessian(self, masses3, hessian):
+        #### old code - this is very inefficient because we calculate sqrt about a zillion times
+        #### better to call sqrt on the whole matrix and let numpy vectorize it
 
-        mass_weights=[]
+        #mw_hessian2 = np.zeros_like(hessian)
+        #mass_weights2=[]
+        #for i in range(0, 3*self.number_of_atoms):
+        #    for j in range(0, 3*self.number_of_atoms):
+        #        mass_weights2.append(1/(np.sqrt(masses3[i]*masses3[j])))
+        #        mw_hessian2[i,j] = hessian[i,j] / np.sqrt(masses3[i] * masses3[j] )
 
-        for i in range(0, 3*self.number_of_atoms):
-            for j in range(0, 3*self.number_of_atoms):
-                mass_weights.append(1/(np.sqrt(masses3[i]*masses3[j])))
-                mw_hessian[i,j] = hessian[i,j] / np.sqrt( masses3[i] * masses3[j] )
+        #### new code, a bit more efficient
+
+        # scatter masses into 2D array of combinations
+        masses_ij = np.outer(np.array(self.masses), np.array(self.masses))
+
+        # call sqrt once!
+        # if we wanted we could take advantage of the symmetry of the matrix here...
+        # but numpy is fast enough that it really doesn't matter
+        inv_sqrt_masses = 1 / np.sqrt(masses_ij)
+
+        # now we triple each dimension, to match the dimension of the hessian
+        inv_sqrt_masses = np.repeat(inv_sqrt_masses, 3, 0)
+        inv_sqrt_masses = np.repeat(inv_sqrt_masses, 3, 1)
+
+        # and use matrix multiplication to generate mw_hessian
+        mass_weights = np.ravel(inv_sqrt_masses)
+        mw_hessian = self.system.hessian * inv_sqrt_masses
+
+        #assert np.allclose(mw_hessian, mw_hessian2)
+        #assert all([a == b for a, b in zip(mass_weights, mass_weights2)])
+
         if settings.DEBUG >= 3:
             self.dump_debug("mw", mass_weights)
             self.dump_debug("mw_hessian", mw_hessian)
+
         return mw_hessian
 
     def calculate_frequencies(self, imag_threshold, scaling=1.0, method="mass weighted hessian"):
@@ -62,9 +86,15 @@ class Isotopologue(object):
             imaginary_freqs = []
             small_freqs = []
             conv_factor = PHYSICAL_CONSTANTS['Eh']/(PHYSICAL_CONSTANTS['a0']**2 * PHYSICAL_CONSTANTS['amu'])
+
             v = np.linalg.eigvalsh(self.mw_hessian*conv_factor)
+
             constant = scaling / (2*np.pi*PHYSICAL_CONSTANTS['c'])
-            freqs = [ np.copysign(np.sqrt(np.abs(freq)),freq) * constant for freq in v ]
+            freqs = np.sqrt(np.abs(v)) * np.sign(v) * constant
+
+            #freqs2 = [ np.copysign(np.sqrt(np.abs(freq)),freq) * constant for freq in v ]
+            #assert np.allclose(np.array(freqs), freqs2)
+
             freqs.sort()
 
             imaginary_freqs = []
@@ -76,7 +106,7 @@ class Isotopologue(object):
                 if f < -imag_threshold:
                     imaginary_freqs.append(f)
 
-            if len(imaginary_freqs) > 1:
+            if len(imaginary_freqs) > 1 and settings.DEBUG >= 2:
                 print("WARNING: multiple imaginaries")
 
             # strip the imaginary frequencies
@@ -303,11 +333,22 @@ class System(object):
         return fcm
 
     def _parse_serial_lower_hessian(self, fields):
-        fcm = np.zeros(shape=(3*self.number_of_atoms, 3*self.number_of_atoms))
-        for i in range(0, 3*self.number_of_atoms):
-            for j in range(0, 3*self.number_of_atoms):
-                fcm[i,j] = fields[self._lower_triangle_serial_triangle(i,j)]
-        return fcm
+        #fcm = np.zeros(shape=(3*self.number_of_atoms, 3*self.number_of_atoms))
+        #for i in range(3*self.number_of_atoms):
+        #    for j in range(3*self.number_of_atoms):
+        #        fcm[i,j] = fields[self._lower_triangle_serial_triangle(i,j)]
+
+        # compute index over entire grid at once
+        range1d = np.array(range(3*self.number_of_atoms), dtype=int)
+        xgrid, ygrid = np.meshgrid(range1d, range1d)
+        agrid = np.minimum(xgrid, ygrid)
+        bgrid = np.maximum(xgrid, ygrid)
+        idxs2 = (bgrid*(bgrid+1)/2 + agrid).astype(int)
+
+        fcm2 = np.array(fields, dtype=float)[idxs2]
+        #assert np.allclose(fcm, fcm2)
+
+        return fcm2
 
     def _make_serial_hessian(self):
         serial = ""
@@ -355,6 +396,16 @@ def slugify(value):
     return "".join(x for x in value if x.isalnum())
 
 def tail(filename):
-    with open(filename) as f:
-        content = f.readlines()
-    return content[-1].strip()
+#    with open(filename) as f:
+#        content = f.readlines()
+#    return content[-1].strip()
+
+    # https://stackoverflow.com/questions/46258499/how-to-read-the-last-line-of-a-file-in-python
+    with open(filename, 'rb') as f:
+        try:  # catch OSError in case of a one line file
+            f.seek(-2, os.SEEK_END)
+            while f.read(1) != b'\n':
+                f.seek(-2, os.SEEK_CUR)
+        except OSError:
+            f.seek(0)
+        return f.readline().decode()
