@@ -36,7 +36,7 @@ To learn how to use *PyQuiver*, please look at the [tutorial](tutorial/TUTORIAL.
 
 *PyQuiver* was written by Thayer Anderson and Eugene Kwan.  Please email `ekwan16@gmail.com` with any questions.  We will gladly try to help you.
 
-We thank Gregor Giesen for writing the code to read ORCA output.  We also thank Christoph Riplinger and Giovanni Bistoni for valuable discussions.
+We thank Gregor Giesen for writing the code to read ORCA output.  We thank Corin Wagen for miscellaneous optimization.  We also thank Christoph Riplinger and Giovanni Bistoni for valuable discussions.
 
 ## How to Cite
 
