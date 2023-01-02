@@ -203,7 +203,7 @@ class KIE_Calculation(object):
             string += "\n\nAbsolute KIEs are given."
 
         return string
-            
+
 class KIE(object):
     # the constructor expects a tuple of the form yielded by make_isotopologue
     def __init__(self, name, gs_tuple, ts_tuple, temperature, scaling, imag_threshold):
@@ -215,14 +215,14 @@ class KIE(object):
         self.gs_tuple, self.ts_tuple = gs_tuple, ts_tuple
         self.temperature = temperature
         self.scaling = scaling
-        
+
         if settings.DEBUG >= 2:
             print("Calculating KIE for isotopologue {0}.".format(name))
         self.value = self.calculate_kie()
 
     def calculate_kie(self):
         if settings.DEBUG >= 2:
-            print("  Calculating Reduced Partition Function Ratio for Ground State.")        
+            print("  Calculating Reduced Partition Function Ratio for Ground State.")
         rpfr_gs, gs_imag_ratios, gs_heavy_freqs, gs_light_freqs = calculate_rpfr(self.gs_tuple, self.imag_threshold, self.scaling, self.temperature)
         if settings.DEBUG >= 2:
             print("    rpfr_gs:", np.prod(rpfr_gs))
@@ -302,7 +302,7 @@ def calculate_rpfr(tup, imag_threshold, scaling, temperature):
     # calculate_frequencies gives tuples of the form (small_freqs, imaginary_freqs, freqs)
     light_small_freqs, light_imag_freqs, light_freqs, light_num_small = tup[0].calculate_frequencies(imag_threshold, scaling=scaling)
     heavy_small_freqs, heavy_imag_freqs, heavy_freqs, heavy_num_small = tup[1].calculate_frequencies(imag_threshold, scaling=scaling)
-    
+
     if len(heavy_freqs) != len(light_freqs):
         raise ValueError("mismatch in the number of frequencies between isotopomers!")
     if len(light_imag_freqs) != len(heavy_imag_freqs):
@@ -331,7 +331,7 @@ def calculate_rpfr(tup, imag_threshold, scaling, temperature):
         for i in heavy_small_freqs:
             print("%.1f  " % i, end=' ')
         print()
-   
+
     raw_imag_ratio = None
     imag_ratios = None
     try:
