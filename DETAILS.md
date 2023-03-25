@@ -46,7 +46,7 @@ This command will calculate the KIEs or EIEs associated with the isotopic substi
 
 *PyQuiver* also has a Python API. The advantage of this interface is that it exposes the underlying Python objects. This allows you to run custom calculations, automate routine calculations, and inspect the internal data directly.
 
-An IPython Notebook is provided as a demonstration.  To try it out, move to the `scripts/` directory and run the command `ipython notebook`. Then open the `pyquiver.ipynb` notebook file.
+An IPython Notebook is provided as a demonstration.  To try it out, move to the `scripts/` directory and run the command `ipython notebook`. Then open the `pyquiver.ipynb` notebook file. An IPython Notebook `skodgetruhlar.ipynb` is also provided to calculate KIEs corrected with the Skodge Truhlar tunnelling equation. (see ref. 4)
 
 ### .config Files
 
@@ -143,5 +143,6 @@ Tunnelling corrections work best for heavy-atom KIEs.  H/D KIEs are more challen
   * Radom *et al.*  *J Phys. Chem.* **1996**, *100*, 16502.
 4. **Tunnelling Corrections:**
   * Bell, R.P.  *Chem. Soc. Rev.*  **1974**, *3*, 513.
+  * Skodge, R.T.; Truhlar, D.G. *J. Phys. Chem.* **1981**, *85*, 624-628
 5. **Claisen Rearragenent KIEs:**
   * <span id="ref5">Meyer, M.P.; DelMonte, A.J.; Singleton, D.A.</span> *J. Am. Chem. Soc.*, **1999**, *121*, 10865-10874.
