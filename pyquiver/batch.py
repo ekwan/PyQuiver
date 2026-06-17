@@ -1,43 +1,23 @@
 """Run a KIE/EIE calculation over many ground-state/transition-state pairs.
 
-File discovery and pairing are left to ordinary Python (glob, pathlib, ...);
-``batch`` just maps one configuration over the pairs you give it and collects
-the results into a table. No filename convention is assumed::
+``batch`` maps one configuration over a ``{label: (gs, ts)}`` dictionary and
+collects the results into a table. File discovery is left to ordinary Python,
+so you build that dictionary however you like (e.g. with a dict comprehension
+over a glob)::
 
     import glob
     from pyquiver import batch
 
-    gs = sorted(glob.glob("*_reactant.out"))
-    ts = sorted(glob.glob("*_ts.out"))
-    results = batch("demo.config", zip(gs, ts))   # labels inferred from filenames
+    pairs = {f.split("/")[-1].removesuffix("_gs.out"): (f, f.replace("_gs", "_ts"))
+             for f in glob.glob("*_gs.out")}
+    results = batch("demo.config", pairs)
     results.to_dataframe()
-
-Pairs may be given as a mapping ``{label: (gs, ts)}``, an iterable of
-``(label, gs, ts)`` triples, or an iterable of ``(gs, ts)`` pairs (in which
-case the label is the ground-state filename without its extension).
 """
 
-import os
 from collections import OrderedDict
 
 from .config import Config
 from .kie import KIE_Calculation
-
-
-def _normalize_pairs(pairs):
-    """Yield (label, gs, ts) from any of the supported pair formats."""
-    items = pairs.items() if hasattr(pairs, "items") else pairs
-    for item in items:
-        if hasattr(pairs, "items"):
-            label, (gs, ts) = item
-        elif len(item) == 3:
-            label, gs, ts = item
-        elif len(item) == 2:
-            gs, ts = item
-            label = os.path.splitext(os.path.basename(str(gs)))[0]
-        else:
-            raise ValueError("each pair must be (gs, ts) or (label, gs, ts)")
-        yield label, gs, ts
 
 
 class BatchResults(object):
@@ -103,9 +83,7 @@ def batch(config, pairs, style="gaussian", n_jobs=1, energies=None):
     """Run a KIE calculation for each ground-state/transition-state pair.
 
     ``config`` is a path to a .config file or a :class:`~pyquiver.Config`.
-    ``pairs`` is a mapping ``{label: (gs, ts)}`` or an iterable of ``(gs, ts)``
-    or ``(label, gs, ts)`` (see the module docstring). Returns
-    :class:`BatchResults`.
+    ``pairs`` is a ``{label: (gs, ts)}`` dictionary. Returns :class:`BatchResults`.
 
     If ``energies`` is given, a Skodje-Truhlar correction is computed for every
     pair and included in the results. It maps each label to the three
@@ -119,7 +97,7 @@ def batch(config, pairs, style="gaussian", n_jobs=1, energies=None):
 
     calcs = OrderedDict()
     st = OrderedDict() if energies is not None else None
-    for label, gs, ts in _normalize_pairs(pairs):
+    for label, (gs, ts) in pairs.items():
         calc = KIE_Calculation(config, gs, ts, style=style, n_jobs=n_jobs)
         calcs[label] = calc
         if energies is not None:

@@ -1,9 +1,9 @@
 # Batch processing
 
 To run one configuration over many ground-state/transition-state pairs, use
-`pyquiver.batch`. File discovery and pairing are left to ordinary Python, so no
-filename convention is assumed; `batch` just maps the configuration over the
-pairs you give it and collects the results into a table.
+`pyquiver.batch` with a `{label: (gs, ts)}` dictionary. File discovery is left
+to ordinary Python, so no filename convention is assumed; `batch` just maps the
+configuration over the pairs you give it and collects the results into a table.
 
 ```python
 from pyquiver import batch
@@ -18,26 +18,22 @@ results.to_csv("kies.csv")
 results["b3lyp"]                # the KIE_Calculation for that pair
 ```
 
-## Specifying pairs
+## Building the pairs
 
-`pairs` may be given three ways:
-
-* a mapping `{label: (gs, ts)}`
-* an iterable of `(label, gs, ts)` triples
-* an iterable of `(gs, ts)` pairs, where the label is inferred from the
-  ground-state filename (without its extension)
-
-So you can discover and pair files however you like, then hand the result to
-`batch`. For example, zipping two globs:
+You usually build the dictionary from the files on disk. Glob the ground-state
+files, derive a label from each filename, and pair it with the matching
+transition state:
 
 ```python
 import glob
 from pyquiver import batch
 
-gs = sorted(glob.glob("*_reactant.out"))
-ts = sorted(glob.glob("*_ts.out"))
-results = batch("demo.config", zip(gs, ts))
+label = lambda path: path.removesuffix("_gs.out")
+pairs = {label(gs): (gs, gs.replace("_gs", "_ts")) for gs in sorted(glob.glob("*_gs.out"))}
+results = batch("demo.config", pairs)
 ```
+
+Adjust the `label`/`replace` rule to match your own naming.
 
 ## Skodje-Truhlar in batch
 

@@ -97,9 +97,8 @@ calc.skodje_truhlar(reactant_energy=E_sm, product_energy=E_pr, ts_energy=E_ts)
 # -> {isotopologue: corrected_KIE}
 ```
 
-To run one configuration over many structures, use `batch`: you build the
-ground/transition-state pairs from your own file globbing (no naming
-convention assumed) and get back a table:
+To run one configuration over many structures, use `batch` with a
+`{label: (gs, ts)}` dictionary and get back one table:
 
 ```python
 from pyquiver import batch
@@ -112,9 +111,9 @@ results.to_dataframe()        # label, name, uncorrected, wigner, inverted_parab
 results["b3lyp"]              # the KIE_Calculation for that pair
 ```
 
-Pairs may also be `(label, gs, ts)` triples or bare `(gs, ts)` tuples (label
-inferred from the filename). Pass `energies={label: (reactant, ts, product)}`
-to add a Skodje-Truhlar column.
+You normally build that dictionary from the files on disk, e.g.
+`{f.removesuffix("_gs.out"): (f, f.replace("_gs", "_ts")) for f in glob.glob("*_gs.out")}`.
+Pass `energies={label: (reactant, ts, product)}` to add a Skodje-Truhlar column.
 
 PyQuiver logs through the standard `logging` module (logger name `pyquiver`) and
 raises exceptions on bad input; it never prints on import or calls `sys.exit`,

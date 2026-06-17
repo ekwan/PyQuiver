@@ -21,25 +21,13 @@ def test_pairs_as_mapping(files):
     assert set(results) == {"a", "b"}
     assert len(results) == 2
     assert "C1" in results["a"].KIES        # __getitem__ -> KIE_Calculation
+    assert [label for label, _ in results.items()] == ["a", "b"]   # order preserved
 
 
-def test_pairs_as_triples(files):
-    cfg, gs, ts = files
-    results = batch(cfg, [("low", gs, ts), ("high", gs, ts)])
-    assert [label for label, _ in results.items()] == ["low", "high"]
-
-
-def test_pairs_as_two_tuples_infer_label(files):
-    cfg, gs, ts = files
-    results = batch(cfg, [(gs, ts)])
-    # label inferred from the gs filename without its extension
-    assert "claisen_gs" in results
-
-
-def test_bad_pair_shape_rejected(files):
+def test_bad_pair_value_rejected(files):
     cfg, gs, ts = files
     with pytest.raises(ValueError):
-        batch(cfg, [(gs,)])
+        batch(cfg, {"a": (gs,)})            # value must be a (gs, ts) pair
 
 
 def test_to_records_and_dataframe(files):
