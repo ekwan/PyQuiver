@@ -57,7 +57,7 @@ def test_wigner_rejects_real_frequencies():
         wigner(500.0, 500.0, 300.0)
 
 
-# --- Bell inverted-parabola correction --------------------------------------
+# --- Bell infinite-parabola correction --------------------------------------
 
 def test_bell_unity_for_equal_frequencies():
     assert bell(-500.0, -500.0, 300.0) == pytest.approx(1.0)

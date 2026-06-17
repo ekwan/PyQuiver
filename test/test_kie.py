@@ -27,7 +27,7 @@ def kie(tutorial):
 
 def test_transition_state_is_kie(kie):
     # a real transition state has an imaginary mode -> KIE (eie_flag 0), and
-    # each value is a 3-vector (raw, Wigner, inverted parabola)
+    # each value is a 3-vector (raw, Wigner, infinite parabola)
     calc = kie()
     assert calc.eie_flag == 0
     assert len(calc.KIES["C1"].value) == 3

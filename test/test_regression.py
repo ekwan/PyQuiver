@@ -15,7 +15,7 @@ import pytest
 from pyquiver.kie import KIE_Calculation
 
 # Each entry: style -> (config, gs, ts files) and the expected
-# (raw, Wigner, inverted-parabola) KIE per isotopologue. Non-reference
+# (raw, Wigner, infinite-parabola) KIE per isotopologue. Non-reference
 # isotopologues are already divided by the C5 reference.
 GOLDEN = {
     "g09": {

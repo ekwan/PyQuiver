@@ -12,7 +12,7 @@
 * automatically read frequencies from [`Gaussian`](https://gaussian.com) (g09/g16) and [`ORCA`](https://orcaforum.kofo.mpg.de/app.php/portal) output files
 * excellent performance for larger systems, with optional multi-threading
 * custom isotopic substitutions and arbitrary temperature
-* tunnelling corrections: Wigner, Bell inverted parabola, and Skodje-Truhlar
+* tunnelling corrections: Wigner, Bell infinite parabola, and Skodje-Truhlar
 * command line **or** a clean Python API with structured (pandas-ready) results
 
 ### Installation
@@ -63,7 +63,7 @@ config = Config.from_dict(
 calc = KIE_Calculation(config, "gs.out", "ts.out", style="gaussian")
 
 print(calc)                       # human-readable table
-calc.to_dict()                    # {name: {uncorrected, wigner, inverted_parabola}}
+calc.to_dict()                    # {name: {uncorrected, wigner, infinite_parabola}}
 calc.to_csv("kies.csv")           # CSV text / file
 calc.to_dataframe()               # pandas DataFrame (needs the pandas extra)
 calc.results["C1"].wigner         # named access to each result
@@ -107,7 +107,7 @@ results = batch("demo.config", {
     "b3lyp": ("b3lyp_gs.out", "b3lyp_ts.out"),
     "m06":   ("m06_gs.out",   "m06_ts.out"),
 })
-results.to_dataframe()        # label, name, uncorrected, wigner, inverted_parabola
+results.to_dataframe()        # label, name, uncorrected, wigner, infinite_parabola
 results["b3lyp"]              # the KIE_Calculation for that pair
 ```
 
@@ -133,7 +133,7 @@ To learn how to use *PyQuiver*, please look at the [tutorial](tutorial/TUTORIAL.
 
 *PyQuiver* was written by Thayer Anderson and Eugene Kwan.  Please email `ekwan16@gmail.com` with any questions.  We will gladly try to help you.
 
-We thank Gregor Giesen for writing the code to read ORCA output.  We thank Corin Wagen for miscellaneous optimization.  We also thank Christoph Riplinger and Giovanni Bistoni for valuable discussions.
+We thank Gregor Giesen for writing the code to read ORCA output.  We thank Gino Occhialini for the Skodje-Truhlar tunnelling correction.  We thank Corin Wagen for miscellaneous optimization.  We also thank Christoph Riplinger and Giovanni Bistoni for valuable discussions.
 
 ## How to Cite
 

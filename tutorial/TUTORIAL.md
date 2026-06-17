@@ -78,7 +78,7 @@ Imag threshold (cm-1): 50
    Isotopologue         O3, replacement  1: replace gs atom  3  and ts atom  3  with 17O
 
 === PyQuiver Analysis ===
-Isotopologue                                              uncorrected      Wigner     inverted parabola
+Isotopologue                                              uncorrected      Wigner     infinite parabola
                                                               KIE           KIE              KIE
 Isotopologue         C1                                      1.0108        1.0125          1.0128
 Isotopologue         C2                                      1.0000        1.0000          1.0000

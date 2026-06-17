@@ -5,7 +5,7 @@ This module gathers the three corrections PyQuiver supports:
 * :func:`wigner` and :func:`bell` (re-exported from :mod:`pyquiver.kie`) need
   only the imaginary frequencies and the temperature.
 * :func:`skodje_truhlar` additionally needs the reaction barrier height
-  (J. Phys. Chem. 1981, 85, 624-626). It is more appropriate than the inverted
+  (J. Phys. Chem. 1981, 85, 624-626). It is more appropriate than the infinite
   parabola for very large imaginary frequencies.
 
 All three take the imaginary frequencies as negative wavenumbers (cm^-1), the

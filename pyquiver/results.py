@@ -10,7 +10,7 @@ from collections import namedtuple
 
 # named view of a kinetic isotope effect (the three reported columns)
 KIEResult = namedtuple("KIEResult",
-                       ["name", "uncorrected", "wigner", "inverted_parabola"])
+                       ["name", "uncorrected", "wigner", "infinite_parabola"])
 
 # named view of an equilibrium isotope effect
 EIEResult = namedtuple("EIEResult", ["name", "value"])
@@ -44,7 +44,7 @@ class Results(object):
     @property
     def columns(self):
         return ["name", "value"] if self.is_eie else \
-            ["name", "uncorrected", "wigner", "inverted_parabola"]
+            ["name", "uncorrected", "wigner", "infinite_parabola"]
 
     def to_records(self):
         """Return a list of dicts, one per isotopologue."""
@@ -56,7 +56,7 @@ class Results(object):
             return {r.name: r.value for r in self._items}
         return {r.name: {"uncorrected": r.uncorrected,
                          "wigner": r.wigner,
-                         "inverted_parabola": r.inverted_parabola}
+                         "infinite_parabola": r.infinite_parabola}
                 for r in self._items}
 
     def to_dataframe(self):

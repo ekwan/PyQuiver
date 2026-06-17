@@ -13,7 +13,7 @@ results = batch("demo.config", {
     "m06":   ("m06_gs.out",   "m06_ts.out"),
 }, style="gaussian")
 
-results.to_dataframe()          # label, name, uncorrected, wigner, inverted_parabola
+results.to_dataframe()          # label, name, uncorrected, wigner, infinite_parabola
 results.to_csv("kies.csv")
 results["b3lyp"]                # the KIE_Calculation for that pair
 ```

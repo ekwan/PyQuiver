@@ -112,7 +112,7 @@ class KIE_Calculation(object):
         self.KIES = KIES
 
     # retrieves KIEs for autoquiver output
-    # if report_tunnelling = True, the first number will be the inverted parabola KIE
+    # if report_tunnelling = True, the first number will be the infinite parabola KIE
     # and the second number will be the tunnelling correction
     def get_row(self, report_tunnelling=False):
         title_row = ""
@@ -297,7 +297,7 @@ class KIE_Calculation(object):
     def __str__(self):
         string = "\n=== PyQuiver Analysis ===\n"
         if self.eie_flag == 0:
-            string += "Isotopologue                                              uncorrected      Wigner     inverted parabola\n"
+            string += "Isotopologue                                              uncorrected      Wigner     infinite parabola\n"
             string += "                                                              KIE           KIE              KIE"
         else:
             string += "Isotopologue                                                  EIE"
@@ -471,7 +471,7 @@ def wigner(ts_imag_heavy, ts_imag_light, temperature):
 
     return correction_factor
 
-# calculates the Bell inverted parabola tunneling correction
+# calculates the Bell infinite parabola tunneling correction
 # multiplies the KIE by a factor of (u_H/u_D)*(sin(u_D/2)/sin(u_H/2))
 # assumes the frequencies are sorted in ascending order
 def bell(ts_imag_heavy, ts_imag_light, temperature):

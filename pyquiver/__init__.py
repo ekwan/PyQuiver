@@ -9,7 +9,7 @@ Typical programmatic use::
     from pyquiver import KIE_Calculation
     calc = KIE_Calculation("demo.config", "gs.out", "ts.out", style="g09")
     print(calc)
-    calc.KIES["C1"].value      # (raw, Wigner, inverted-parabola) KIE
+    calc.KIES["C1"].value      # (raw, Wigner, infinite-parabola) KIE
 """
 
 import logging as _logging
