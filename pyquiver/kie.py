@@ -226,10 +226,10 @@ class KIE_Calculation(object):
             return
         composition = kie.ts_tuple[0].reaction_mode_composition()
         if any(composition[i] > PRIMARY_HYDROGEN_MODE_FRACTION for i in substituted_hydrogens):
-            logger.warning("isotopologue %s looks like a primary hydrogen KIE "
-                           "(the substituted H participates strongly in the "
-                           "reaction mode); the harmonic Wigner and Bell "
-                           "tunnelling corrections are unreliable here", name)
+            logger.warning("isotopologue %s is a primary hydrogen (H/D) KIE; the "
+                           "predicted KIE may be unreliable because tunnelling is "
+                           "large and the harmonic Wigner/Bell corrections are only "
+                           "approximate in this regime", name)
 
     def build_mass_override_masses(self):
         config = self.config
