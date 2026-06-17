@@ -15,10 +15,10 @@ h  = PHYSICAL_CONSTANTS["h"]  # in J . s
 c  = PHYSICAL_CONSTANTS["c"]  # in cm . s
 kB = PHYSICAL_CONSTANTS["kB"] # in J/K
 
-# a hydrogen substitution whose transition-state imaginary-frequency isotope
-# ratio exceeds this is treated as a *primary* H/D KIE (the H sits in the
-# reaction coordinate); secondary substitutions barely shift that frequency
-PRIMARY_HYDROGEN_IMAG_RATIO = 1.1
+# a hydrogen substitution is treated as a *primary* H/D KIE when the substituted
+# atom carries at least this fraction of the (mass-weighted) reaction mode, i.e.
+# it is part of the reaction coordinate; secondary hydrogens carry far less
+PRIMARY_HYDROGEN_MODE_FRACTION = 0.1
 
 class KIE_Calculation(object):
     def __init__(self, config, gs, ts, style="gaussian", n_jobs=1):
@@ -213,22 +213,23 @@ class KIE_Calculation(object):
     def _warn_if_primary_hydrogen(self, name, kie):
         """Warn when an isotopologue is a primary hydrogen KIE, where the
         harmonic tunnelling corrections are unreliable. Treated as primary
-        hydrogen when a substitution replaces a hydrogen (Z=1) and the
-        transition-state imaginary-frequency isotope ratio is large (the H is
-        in the reaction coordinate)."""
-        if kie.eie_flag != 0 or kie.ts_imag_ratio is None:
-            return
-        if kie.ts_imag_ratio <= PRIMARY_HYDROGEN_IMAG_RATIO:
+        hydrogen when a substitution replaces a hydrogen (Z=1) that carries a
+        large fraction of the transition-state reaction mode (i.e. the H is in
+        the reaction coordinate)."""
+        if kie.eie_flag != 0:   # no reaction mode for an EIE
             return
         znums = self.ts_system.atomic_numbers
         default_masses, sub_masses = kie.ts_tuple[0].masses, kie.ts_tuple[1].masses
-        substitutes_hydrogen = any(a != b and znums[i] == 1
-                                   for i, (a, b) in enumerate(zip(default_masses, sub_masses)))
-        if substitutes_hydrogen:
+        substituted_hydrogens = [i for i, (a, b) in enumerate(zip(default_masses, sub_masses))
+                                 if a != b and znums[i] == 1]
+        if not substituted_hydrogens:
+            return
+        composition = kie.ts_tuple[0].reaction_mode_composition()
+        if any(composition[i] > PRIMARY_HYDROGEN_MODE_FRACTION for i in substituted_hydrogens):
             logger.warning("isotopologue %s looks like a primary hydrogen KIE "
-                           "(H/D in the reaction coordinate); the harmonic Wigner "
-                           "and Bell tunnelling corrections are unreliable here",
-                           name)
+                           "(the substituted H participates strongly in the "
+                           "reaction mode); the harmonic Wigner and Bell "
+                           "tunnelling corrections are unreliable here", name)
 
     def build_mass_override_masses(self):
         config = self.config
@@ -325,9 +326,6 @@ class KIE(object):
         self.gs_tuple, self.ts_tuple = gs_tuple, ts_tuple
         self.temperature = temperature
         self.scaling = scaling
-        # raw transition-state imaginary-frequency isotope ratio (light/heavy);
-        # set for KIEs, left None for EIEs
-        self.ts_imag_ratio = None
 
         logger.debug("Calculating KIE for isotopologue %s.", name)
         self.value = self.calculate_kie()
@@ -349,7 +347,6 @@ class KIE(object):
             else:  # pragma: no cover
                 raise ValueError("quiver attempted to run a KIE calculation after an EIE calculation. Check the frequency threshold.")
 
-            self.ts_imag_ratio = float(ts_imag_ratios[0])   # raw light/heavy
             kies = ts_imag_ratios * rpfr_gs/rpfr_ts
             return kies
         else:

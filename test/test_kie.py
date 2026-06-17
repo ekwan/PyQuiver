@@ -95,9 +95,9 @@ def test_no_primary_hydrogen_warning_for_secondary(tutorial, caplog):
 
 
 def test_primary_hydrogen_warning(tutorial, caplog, monkeypatch):
-    # lower the threshold so the H/D substitution counts as "primary"; carbon and
-    # oxygen substitutions must not warn (they aren't hydrogen)
-    monkeypatch.setattr(kiemod, "PRIMARY_HYDROGEN_IMAG_RATIO", 1.0)
+    # lower the reaction-mode threshold so the H/D substitution counts as
+    # "primary"; carbon and oxygen substitutions must not warn (not hydrogen)
+    monkeypatch.setattr(kiemod, "PRIMARY_HYDROGEN_MODE_FRACTION", 0.01)
     with caplog.at_level(logging.WARNING, logger="pyquiver"):
         KIE_Calculation(tutorial(*CFG), tutorial(*GS), tutorial(*TS), style="gaussian")
     primary = [m for m in caplog.messages if "primary hydrogen" in m]

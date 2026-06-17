@@ -16,9 +16,24 @@ class Isotopologue(object):
         self.system = system
         self.masses = masses
         self.frequencies = None
+        self._reaction_mode = None
 
         self.number_of_atoms = system.number_of_atoms
         self.mw_hessian = self.calculate_mw_hessian()
+
+    def reaction_mode_composition(self):
+        """Per-atom mass-weighted participation in the reaction mode (the most
+        negative eigenvalue of the mass-weighted Hessian), as fractions summing
+        to 1. An atom that is part of the reaction coordinate (e.g. a
+        transferring hydrogen) carries a large fraction; a spectator carries a
+        small one. Only meaningful for a transition state."""
+        if self._reaction_mode is None:
+            conv_factor = PHYSICAL_CONSTANTS['Eh'] / (PHYSICAL_CONSTANTS['a0']**2 * PHYSICAL_CONSTANTS['amu'])
+            _, vecs = np.linalg.eigh(self.mw_hessian * conv_factor)
+            v = vecs[:, 0]   # eigh returns ascending eigenvalues; most negative first
+            per_atom = (v.reshape(self.number_of_atoms, 3) ** 2).sum(axis=1)
+            self._reaction_mode = per_atom / per_atom.sum()
+        return self._reaction_mode
 
     def __str__(self):
         returnString  = "Isotopologue: %s\n" % self.name
