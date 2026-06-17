@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    name: test (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - name: Install package + dev/pandas extras
+        run: uv pip install --system -e ".[dev,pandas]"
+      - name: Run tests with coverage
+        run: |
+          coverage run --source=pyquiver -m pytest -q
+          coverage report -m
+
+  build:
+    name: build & check distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+      - name: Build sdist + wheel and validate
+        run: |
+          uv pip install --system build twine
+          python -m build
+          python -m twine check dist/*

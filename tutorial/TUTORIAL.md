@@ -53,18 +53,16 @@ isotopomer H/D 8 8 2D
 Now we are ready to calculate the KIEs!  Enter in the following:
 
 ```
-cd src/
-python quiver.py ../tutorial/gaussian/claisen_demo.config ../tutorial/gaussian/claisen_gs.out ../tutorial/gaussian/claisen_ts.out
+pyquiver tutorial/gaussian/claisen_demo.config tutorial/gaussian/claisen_gs.out tutorial/gaussian/claisen_ts.out
 ```
 
-When run from the command line, *PyQuiver* expects the names (in order) of the configuration file, the ground state file, and the transition state file.  The expected output is:
+(The legacy `python src/quiver.py ...` invocation still works but is deprecated.)
+
+When run from the command line, *PyQuiver* expects the names (in order) of the configuration file, the ground state file, and the transition state file.  Pass `-v` to see the progress messages shown below (by default only the result table is printed).  The expected output is:
 
 ```
-Read atomic weight data for 30 elements.
-
-Reading configuration from claisen_demo.config
-Reading data from claisen_gs.out... with style g09
-Reading data from claisen_ts.out... with style g09
+Reading data from claisen_gs.out with style gaussian
+Reading data from claisen_ts.out with style gaussian
 Config file: claisen_demo.config
 Temperature: 393.0 K
 Scaling: 0.961
@@ -110,6 +108,6 @@ The above captures the basic workflow of a *PyQuiver* calculation:
 * locate ground and transition states (if using Gaussian, turn on the verbose `#p` flag)
 * run a frequency calculations
 * specify the desired isotopic substitutions in a configuration file
-* run `python quiver.py` on the configuration, ground state, and transition state files
+* run the `pyquiver` command on the configuration, ground state, and transition state files
 
 If EIEs are desired, simply replace the transition state with the equilibrium state of interest.
