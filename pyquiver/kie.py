@@ -15,6 +15,11 @@ h  = PHYSICAL_CONSTANTS["h"]  # in J . s
 c  = PHYSICAL_CONSTANTS["c"]  # in cm . s
 kB = PHYSICAL_CONSTANTS["kB"] # in J/K
 
+# a hydrogen substitution whose transition-state imaginary-frequency isotope
+# ratio exceeds this is treated as a *primary* H/D KIE (the H sits in the
+# reaction coordinate); secondary substitutions barely shift that frequency
+PRIMARY_HYDROGEN_IMAG_RATIO = 1.1
+
 class KIE_Calculation(object):
     def __init__(self, config, gs, ts, style="gaussian", n_jobs=1):
         # n_jobs controls optional parallelism over isotopologues (default
@@ -84,6 +89,7 @@ class KIE_Calculation(object):
 
         for name, kie in built:
             KIES[name] = kie
+            self._warn_if_primary_hydrogen(name, kie)
 
 
         for name,k in KIES.items():
@@ -204,6 +210,26 @@ class KIE_Calculation(object):
                 corrected[name] = float(kie.value[0]) * ratio / ref_ratio
         return corrected
 
+    def _warn_if_primary_hydrogen(self, name, kie):
+        """Warn when an isotopologue is a primary hydrogen KIE, where the
+        harmonic tunnelling corrections are unreliable. Treated as primary
+        hydrogen when a substitution replaces a hydrogen (Z=1) and the
+        transition-state imaginary-frequency isotope ratio is large (the H is
+        in the reaction coordinate)."""
+        if kie.eie_flag != 0 or kie.ts_imag_ratio is None:
+            return
+        if kie.ts_imag_ratio <= PRIMARY_HYDROGEN_IMAG_RATIO:
+            return
+        znums = self.ts_system.atomic_numbers
+        default_masses, sub_masses = kie.ts_tuple[0].masses, kie.ts_tuple[1].masses
+        substitutes_hydrogen = any(a != b and znums[i] == 1
+                                   for i, (a, b) in enumerate(zip(default_masses, sub_masses)))
+        if substitutes_hydrogen:
+            logger.warning("isotopologue %s looks like a primary hydrogen KIE "
+                           "(H/D in the reaction coordinate); the harmonic Wigner "
+                           "and Bell tunnelling corrections are unreliable here",
+                           name)
+
     def build_mass_override_masses(self):
         config = self.config
         gs_system = self.gs_system
@@ -299,6 +325,9 @@ class KIE(object):
         self.gs_tuple, self.ts_tuple = gs_tuple, ts_tuple
         self.temperature = temperature
         self.scaling = scaling
+        # raw transition-state imaginary-frequency isotope ratio (light/heavy);
+        # set for KIEs, left None for EIEs
+        self.ts_imag_ratio = None
 
         logger.debug("Calculating KIE for isotopologue %s.", name)
         self.value = self.calculate_kie()
@@ -320,6 +349,7 @@ class KIE(object):
             else:  # pragma: no cover
                 raise ValueError("quiver attempted to run a KIE calculation after an EIE calculation. Check the frequency threshold.")
 
+            self.ts_imag_ratio = float(ts_imag_ratios[0])   # raw light/heavy
             kies = ts_imag_ratios * rpfr_gs/rpfr_ts
             return kies
         else:

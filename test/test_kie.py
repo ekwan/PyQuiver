@@ -1,12 +1,15 @@
 """Tests for the KIE/EIE orchestration in ``kie.py`` (the KIE class and the
 KIE_Calculation driver), beyond the pure physics functions."""
 
+import logging
+
 import numpy as np
 import pytest
 
 from pyquiver.kie import KIE_Calculation
 from pyquiver.config import Config
 from pyquiver import quiver
+import pyquiver.kie as kiemod
 
 CFG = ("gaussian", "claisen_demo.config")
 GS = ("gaussian", "claisen_gs.out")
@@ -82,6 +85,24 @@ def test_accepts_prebuilt_objects(tutorial):
 def test_rejects_bad_argument_types(tutorial):
     with pytest.raises(TypeError):
         KIE_Calculation(123, tutorial(*GS), tutorial(*TS), style="g09")
+
+
+def test_no_primary_hydrogen_warning_for_secondary(tutorial, caplog):
+    # the Claisen H/D is a secondary KIE (small TS imaginary ratio), so no warning
+    with caplog.at_level(logging.WARNING, logger="pyquiver"):
+        KIE_Calculation(tutorial(*CFG), tutorial(*GS), tutorial(*TS), style="gaussian")
+    assert not any("primary hydrogen" in m for m in caplog.messages)
+
+
+def test_primary_hydrogen_warning(tutorial, caplog, monkeypatch):
+    # lower the threshold so the H/D substitution counts as "primary"; carbon and
+    # oxygen substitutions must not warn (they aren't hydrogen)
+    monkeypatch.setattr(kiemod, "PRIMARY_HYDROGEN_IMAG_RATIO", 1.0)
+    with caplog.at_level(logging.WARNING, logger="pyquiver"):
+        KIE_Calculation(tutorial(*CFG), tutorial(*GS), tutorial(*TS), style="gaussian")
+    primary = [m for m in caplog.messages if "primary hydrogen" in m]
+    assert any("H/D" in m for m in primary)
+    assert not any(("C1" in m or "O3" in m) for m in primary)
 
 
 def test_apply_reference_divides(kie):
