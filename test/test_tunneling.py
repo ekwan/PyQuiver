@@ -73,6 +73,29 @@ def test_bad_unit_rejected(calc):
         calc.skodje_truhlar(0.0, 0.0, 0.02, unit="kcal")
 
 
+def test_method_referencing_arithmetic(calc):
+    # corrected[non-ref] = (referenced uncorrected KIE) * st_ratio / ref_ratio.
+    # Check C1 against an independent recomputation from the pure function.
+    from pyquiver.tunneling import skodje_truhlar
+    from pyquiver.constants import PHYSICAL_CONSTANTS
+    barrier = 0.02 * PHYSICAL_CONSTANTS["Eh"]
+    T = calc.config.temperature
+
+    def imag(name):
+        k = calc.KIES[name]
+        light = min(k.ts_tuple[0].calculate_frequencies(50, scaling=calc.config.scaling)[1])
+        heavy = min(k.ts_tuple[1].calculate_frequencies(50, scaling=calc.config.scaling)[1])
+        return heavy, light
+
+    ref = calc.config.reference_isotopologue
+    ref_ratio = skodje_truhlar(*imag(ref), T, barrier)
+    c1_ratio = skodje_truhlar(*imag("C1"), T, barrier)
+    expected = float(calc.KIES["C1"].value[0]) * c1_ratio / ref_ratio
+
+    got = calc.skodje_truhlar(0.0, 0.0, 0.02)["C1"]   # (reactant, product, ts) hartree
+    assert got == pytest.approx(expected)
+
+
 def test_method_without_reference(tutorial):
     # reference 'none' -> absolute ST-corrected KIEs (exercises the no-ref path)
     from pyquiver.config import Config

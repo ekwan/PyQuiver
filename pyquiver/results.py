@@ -21,8 +21,13 @@ class Results(object):
 
     def __init__(self, calc):
         self.is_eie = (calc.eie_flag == 1)
-        self.reference_isotopologue = calc.config.reference_isotopologue
-        self._items = [k.result for k in calc.KIES.values()]
+        ref = calc.config.reference_isotopologue
+        self.reference_isotopologue = ref
+        # exclude the reference isotopologue, matching the printed table and
+        # get_row: its value is absolute while the others are referenced, so
+        # listing it alongside them would be inconsistent
+        keep = (lambda name: True) if ref in ("default", "none") else (lambda name: name != ref)
+        self._items = [k.result for name, k in calc.KIES.items() if keep(name)]
 
     def __iter__(self):
         return iter(self._items)

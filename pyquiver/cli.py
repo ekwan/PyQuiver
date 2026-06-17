@@ -53,3 +53,9 @@ def main(argv=None):
                            n_jobs=args.jobs)
     print(calc)
     return calc
+
+
+def _console():  # pragma: no cover - thin console-script wrapper
+    # the console script must not return a value: setuptools wraps it in
+    # sys.exit(), which would re-print main()'s return and exit non-zero
+    main()

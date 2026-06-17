@@ -35,7 +35,7 @@ Homepage = "https://github.com/ekwan/PyQuiver"
 Repository = "https://github.com/ekwan/PyQuiver"
 
 [project.scripts]
-pyquiver = "pyquiver.cli:main"
+pyquiver = "pyquiver.cli:_console"
 
 [tool.setuptools]
 packages = ["pyquiver", "pyquiver.parsers"]

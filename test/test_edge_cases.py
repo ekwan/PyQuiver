@@ -23,7 +23,8 @@ def test_results_iter_len_and_missing(tutorial):
                            style="gaussian")
     res = calc.results
     assert len(res) == len(list(res))
-    assert {r.name for r in res} == set(calc.KIES)
+    # the reference isotopologue is excluded from the structured results
+    assert {r.name for r in res} == set(calc.KIES) - {calc.config.reference_isotopologue}
     with pytest.raises(KeyError):
         res["does-not-exist"]
 
@@ -220,6 +221,22 @@ class _FreqStub:
 
     def calculate_frequencies(self, imag_threshold, scaling=1.0):
         return self._r
+
+
+def test_calculate_rpfr_return_order(tutorial):
+    # contract: (rpfr, imag_ratios, heavy_freqs, light_freqs) -- heavy at index
+    # 2, light at index 3. The heavier isotopologue has the lower frequencies.
+    from pyquiver import System, Isotopologue
+    from pyquiver.kie import calculate_rpfr
+    from pyquiver.constants import DEFAULT_MASSES, REPLACEMENTS
+    gs = System(tutorial("gaussian", "claisen_gs.out"), style="gaussian")
+    light_masses = [DEFAULT_MASSES[z] for z in gs.atomic_numbers]
+    heavy_masses = list(light_masses)
+    heavy_masses[0] = REPLACEMENTS["13C"]
+    light = Isotopologue("light", gs, light_masses)
+    heavy = Isotopologue("heavy", gs, heavy_masses)
+    rpfr, imag, heavy_freqs, light_freqs = calculate_rpfr((light, heavy), 50.0, 1.0, 393)
+    assert (heavy_freqs <= light_freqs + 1e-9).all()   # heavy never higher
 
 
 def test_calculate_rpfr_imaginary_mismatch_warns(caplog):

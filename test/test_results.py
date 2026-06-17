@@ -27,7 +27,9 @@ def test_named_access(calc):
 
 def test_to_dict_kie(calc):
     d = calc.to_dict()
-    assert set(d) == set(calc.KIES)
+    # the reference isotopologue (C5) is excluded, like the printed table
+    assert set(d) == set(calc.KIES) - {"C5"}
+    assert "C5" not in d
     assert set(d["C1"]) == {"uncorrected", "wigner", "inverted_parabola"}
     assert d["C1"]["uncorrected"] == pytest.approx(1.010830, abs=1e-5)
 
@@ -38,15 +40,15 @@ def test_to_csv_roundtrip(calc, tmp_path):
     assert path.read_text() == text
     lines = [l for l in text.splitlines() if l.strip()]
     assert lines[0] == "name,uncorrected,wigner,inverted_parabola"
-    # one data row per isotopologue
-    assert len(lines) == 1 + len(calc.KIES)
+    # header + one data row per reported isotopologue (reference excluded)
+    assert len(lines) == 1 + (len(calc.KIES) - 1)
 
 
 def test_to_dataframe(calc):
     pandas = pytest.importorskip("pandas")
     df = calc.to_dataframe()
     assert list(df.columns) == ["name", "uncorrected", "wigner", "inverted_parabola"]
-    assert len(df) == len(calc.KIES)
+    assert len(df) == len(calc.KIES) - 1   # reference excluded
     row = df[df["name"] == "C1"].iloc[0]
     assert row["wigner"] == pytest.approx(1.012486, abs=1e-5)
 

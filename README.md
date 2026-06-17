@@ -66,11 +66,11 @@ print(calc)                       # human-readable table
 calc.to_dict()                    # {name: {uncorrected, wigner, inverted_parabola}}
 calc.to_csv("kies.csv")           # CSV text / file
 calc.to_dataframe()               # pandas DataFrame (needs the pandas extra)
-calc.results["C1"].wigner         # named access — no positional indexing
+calc.results["C1"].wigner         # named access to each result
 ```
 
 `System` objects hold a parsed geometry and Hessian, so you can read each file
-once and reuse it — handy for a parameter scan:
+once and reuse it, which is handy for a parameter scan:
 
 ```python
 from pyquiver import System
@@ -97,7 +97,7 @@ calc.skodje_truhlar(reactant_energy=E_sm, product_energy=E_pr, ts_energy=E_ts)
 # -> {isotopologue: corrected_KIE}
 ```
 
-To run one configuration over many structures, use `batch` — you build the
+To run one configuration over many structures, use `batch`: you build the
 ground/transition-state pairs from your own file globbing (no naming
 convention assumed) and get back a table:
 
@@ -108,7 +108,7 @@ results = batch("demo.config", {
     "b3lyp": ("b3lyp_gs.out", "b3lyp_ts.out"),
     "m06":   ("m06_gs.out",   "m06_ts.out"),
 })
-results.to_dataframe()        # label, isotopologue, uncorrected, wigner, inverted_parabola
+results.to_dataframe()        # label, name, uncorrected, wigner, inverted_parabola
 results["b3lyp"]              # the KIE_Calculation for that pair
 ```
 
@@ -117,7 +117,7 @@ inferred from the filename). Pass `energies={label: (reactant, ts, product)}`
 to add a Skodje-Truhlar column.
 
 PyQuiver logs through the standard `logging` module (logger name `pyquiver`) and
-raises exceptions on bad input — it never prints on import or calls `sys.exit`,
+raises exceptions on bad input; it never prints on import or calls `sys.exit`,
 so it is safe to use inside scripts and notebooks.
 
 ## Tutorial

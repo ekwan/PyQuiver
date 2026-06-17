@@ -104,16 +104,28 @@ class Config(object):
         config["reference_isotopologue"] = reference_isotopologue
         config["mass_override_isotopologue"] = mass_override_isotopologue
 
+        def _coerce(r):
+            # a numeric string ("5000.0") is treated as a mass, matching the
+            # .config file parser; a label ("13C") is left as-is
+            if isinstance(r, str):
+                try:
+                    return float(r)
+                except ValueError:
+                    return r
+            return r
+
         normalized = OrderedDict()
         for name, rules in isotopologues.items():
             if str(name) == "default":
                 raise ValueError("name default is reserved.")
+            normalized_rules = []
             for (from_atom, to_atom, replacement) in rules:
                 if from_atom < 1 or to_atom < 1:
                     raise ValueError("check atom numbers for isotopologue %s" % name)
+                replacement = _coerce(replacement)
                 replacement_mass(replacement)   # validates label or numeric mass
-            # preserve the replacement's type (label str or numeric mass)
-            normalized[str(name)] = [(int(f), int(t), r) for (f, t, r) in rules]
+                normalized_rules.append((int(from_atom), int(to_atom), replacement))
+            normalized[str(name)] = normalized_rules
 
         self._finalize(config, normalized)
         return self
@@ -211,6 +223,6 @@ class Config(object):
             isotopologue = self.isotopologues[i]
 
             for j in range(len(isotopologue)):
-                to_string += "   Isotopologue {0: >10s}, replacement {1: >2d}: replace gs atom {2: ^3d} and ts atom {3: ^3d} with {4: >3s}\n".format(i, j+1, isotopologue[j][0], isotopologue[j][1], isotopologue[j][2])
+                to_string += "   Isotopologue {0: >10s}, replacement {1: >2d}: replace gs atom {2: ^3d} and ts atom {3: ^3d} with {4!s: >3}\n".format(i, j+1, isotopologue[j][0], isotopologue[j][1], isotopologue[j][2])
 
         return to_string[:-1]

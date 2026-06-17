@@ -145,6 +145,19 @@ def test_config_file_numeric_mass(make_config):
     assert c.isotopologues["heavyC4"] == [(4, 4, 5000.0)]
 
 
+def test_str_with_numeric_mass(make_config):
+    # str(config) must not crash when a replacement is a numeric mass
+    c = make_config(MINIMAL + "isotopologue heavyC4 4 4 5000.0\n")
+    assert "5000.0" in str(c)
+
+
+def test_from_dict_coerces_numeric_string():
+    # a numeric string is treated as a mass, like the .config file parser
+    c = Config.from_dict(isotopologues={"x": [(1, 1, "5000.0")]},
+                         temperature=300, scaling=0.96, imag_threshold=50)
+    assert c.isotopologues["x"] == [(1, 1, 5000.0)]
+
+
 def test_check_skips_element_match_for_numeric_mass(make_config, claisen_systems):
     # a custom numeric mass carries no element identity, so check() must not
     # try to validate the element and must not raise

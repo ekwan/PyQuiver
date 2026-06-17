@@ -24,8 +24,8 @@ results["b3lyp"]                # the KIE_Calculation for that pair
 
 * a mapping `{label: (gs, ts)}`
 * an iterable of `(label, gs, ts)` triples
-* an iterable of `(gs, ts)` pairs — the label is inferred from the ground-state
-  filename (without its extension)
+* an iterable of `(gs, ts)` pairs, where the label is inferred from the
+  ground-state filename (without its extension)
 
 So you can discover and pair files however you like, then hand the result to
 `batch`. For example, zipping two globs:

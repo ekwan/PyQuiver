@@ -74,7 +74,7 @@ Valid configuration files have all of the following directives:
 * `imag_threshold`: the threshold (in units cm^-1) that defines the cutoff between small and large imaginary frequencies used to distinguish EIE from KIE calculations (typical value: 50)
 * `temperature`: the temperature in Kelvin
 * `reference_isoto[pomer/logue]`: possible values are `none` or the name of an isotopologue. If `none` is specified, the absolute KIEs will be reported. If the name of an isotopologue is specified, all KIEs will be divided the KIE values for this isotopologue.
-* `mass_override_isot[pomer/logue]`: possible values are "default" or the name of an isotopologue. If the value "default" is specified, the masses of the light isotopologue will be the defaults found in `weights.dat`. If the name of an isotopolgoue is given, then that isotopologue is then used to replace the default mass behaviour of PyQuiver at a particular atom. For example, if the isotopomer `C2` replaces carbon 2 with 13C, then specifying `mass_overide_isotopomer C2` will place carbon-13 at C2 *for every KIE calculation*.
+* `mass_override_isot[pomer/logue]`: possible values are "default" or the name of an isotopologue. If the value "default" is specified, the masses of the light isotopologue will be the defaults found in `weights.dat`. If the name of an isotopologue is given, then that isotopologue is used to replace the default mass behaviour of PyQuiver at a particular atom. For example, if the isotopomer `C2` replaces carbon 2 with 13C, then specifying `mass_override_isotopomer C2` will place carbon-13 at C2 *for every KIE calculation*.
 * `isoto[pomer/logue]`: the rule used for isotopic substitution. The expected fields are `name ground_state_atom_number transition_state_atom_number substitution`. The final field, `substitution` must correspond to a valid substitution weight. These weights are specified in `weights.dat` (e.g., `13C`, `18O`, `2D`).
 
 ### Input Files
@@ -128,7 +128,7 @@ If input files are provided in a known format other than the *PyQuiver* standard
 
 The internal workings of *PyQuiver* are relatively simple.  Essentially, a KIE calculation involves parsing the Hessian, mass-weighting, diagonalization with `np.eigvalsh`, calculation of the reduced isotopic partition functions, substitution into the Bigeleisen-Mayer equation, and tunnelling corrections.  The tunnelling corrections are expected to work well for heavy atoms, but poorly for hydrogen, especially when considering primary KIEs.
 
-The frequencies can optionally be scaled (see ref. 3), but this will probably not help much (the harmonic approximation is usually quite adequate).  Note that *PyQuiver* is recognizees linear vs. non-linear molecules and removes the appropriate number of small translational/rotational modes.  (The `frequency_threshold` keyword has been deprecated and is now ignored.) 
+The frequencies can optionally be scaled (see ref. 3), but this will probably not help much (the harmonic approximation is usually quite adequate).  Note that *PyQuiver* recognizes linear vs. non-linear molecules and removes the appropriate number of small translational/rotational modes.  (The `frequency_threshold` keyword has been deprecated and is now ignored.) 
 
 The performance of *PyQuiver* is generally excellent, even for large systems.  This is largely because of the efficiency of the `np.eigvalsh` implementation.  When multiple isotopomers are calculated using the same configuration file, the reference isotopomer's frequencies are computed only once and cached (`Isotopologue.calculate_frequencies` short-circuits once `self.frequencies` is set), so the reference is not re-diagonalized for each isotopomer.
 
@@ -153,6 +153,6 @@ Tunnelling corrections work best for heavy-atom KIEs.  H/D KIEs are more challen
   * Radom *et al.*  *J Phys. Chem.* **1996**, *100*, 16502.
 4. **Tunnelling Corrections:**
   * Bell, R.P.  *Chem. Soc. Rev.*  **1974**, *3*, 513.
-  * Skodge, R.T.; Truhlar, D.G. *J. Phys. Chem.* **1981**, *85*, 624-628
-5. **Claisen Rearragenent KIEs:**
+  * Skodje, R.T.; Truhlar, D.G. *J. Phys. Chem.* **1981**, *85*, 624-626
+5. **Claisen Rearrangement KIEs:**
   * <span id="ref5">Meyer, M.P.; DelMonte, A.J.; Singleton, D.A.</span> *J. Am. Chem. Soc.*, **1999**, *121*, 10865-10874.
