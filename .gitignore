@@ -5,3 +5,12 @@
 *.csv
 *DS_Store*
 .ipynb_checkpoints
+
+# packaging / build artifacts
+build/
+dist/
+*.egg-info/
+.coverage
+.pytest_cache/
+__pycache__/
+*.pyc

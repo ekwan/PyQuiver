@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# distribution name on PyPI (the import package is still `pyquiver`)
+name = "pyquiver-kie"
+version = "1.1.0"
+description = "Calculate kinetic and equilibrium isotope effects from Hessian matrices using the Bigeleisen-Mayer equation."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE.txt" }
+authors = [
+    { name = "Eugene Kwan" },
+    { name = "Thayer Anderson" },
+]
+keywords = ["chemistry", "kinetic isotope effect", "KIE", "EIE", "Bigeleisen-Mayer", "computational chemistry"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Chemistry",
+]
+dependencies = [
+    "numpy",
+]
+
+[project.optional-dependencies]
+pandas = ["pandas"]
+dev = ["pytest", "coverage"]
+
+[project.urls]
+Homepage = "https://github.com/ekwan/PyQuiver"
+Repository = "https://github.com/ekwan/PyQuiver"
+
+[project.scripts]
+pyquiver = "pyquiver.cli:_console"
+
+[tool.setuptools]
+packages = ["pyquiver", "pyquiver.parsers"]
+
+[tool.coverage.run]
+omit = ["pyquiver/__main__.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+]
+
+[tool.setuptools.package-data]
+pyquiver = ["weights.dat"]
