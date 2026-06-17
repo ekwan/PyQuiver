@@ -22,7 +22,7 @@ Once installed (`pip install pyquiver-kie`), run *PyQuiver* from the command lin
 pyquiver config_file ground_state_file transition_state_file
 ```
 
-For more details, run `pyquiver -h` to display the following help message:
+For more details, run `pyquiver -h`. The help message looks like:
 
 ```
 usage: pyquiver [-h] [-v] [-s STYLE] [-j JOBS] config gs ts
@@ -34,13 +34,13 @@ positional arguments:
   gs                    ground state file path
   ts                    transition state file path
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
-  -v, --verbose         print progress/diagnostic logging (repeatable: -vv)
+  -v, --verbose         print debug information (repeatable)
   -s STYLE, --style STYLE
                         style of input files (gaussian, orca, or pyquiver)
-  -j JOBS, --jobs JOBS  worker threads for the isotopologue computations
-                        (default 1; -1 uses all cores)
+  -j JOBS, --jobs JOBS  number of worker threads for the isotopologue
+                        computations (default 1; -1 uses all cores)
 ```
 
 This command will calculate the KIEs or EIEs associated with the isotopic substitutions specified in the configuration file. For details, see the tutorial above. (The legacy `python src/quiver.py ...` invocation still works but is deprecated.)
@@ -147,11 +147,14 @@ Tunnelling corrections work best for heavy-atom KIEs.  H/D KIEs are more challen
   * Wolfsberg, M.  *Acc. Chem. Res.*, **1972**, *5*, 225.
   * Wolfsberg, M. *et al.*  <span style="text-decoration:underline">Isotope Effects in the Chemical, Geological, and Bio Sciences</span>  
 2. <span id="ref2">**QUIVER:**</span>
-  * Saunders, M.; Laidig, K.E. Wolfsberg, M.  *J. Am. Chem. Soc.*, **1988**, *111*, 8989.
+  * Saunders, M.; Laidig, K.E.; Wolfsberg, M.  *J. Am. Chem. Soc.*, **1989**, *111*, 8989.
 3. **Scaling Factors:**
   * Wong *et al.*  *Chem. Phys. Lett.* **1996**, *256*, 391-399.
   * Radom *et al.*  *J Phys. Chem.* **1996**, *100*, 16502.
 4. **Tunnelling Corrections:**
+  * Wigner, E.  *Z. Phys. Chem. B*  **1932**, *19*, 203.
+  * Bell, R.P.  *Trans. Faraday Soc.*  **1959**, *55*, 1.
+  * Bell, R.P.  <span style="text-decoration:underline">The Tunnel Effect in Chemistry</span>; Chapman & Hall: London, **1980**.
   * Bell, R.P.  *Chem. Soc. Rev.*  **1974**, *3*, 513.
   * Skodje, R.T.; Truhlar, D.G. *J. Phys. Chem.* **1981**, *85*, 624-626
 5. **Claisen Rearrangement KIEs:**

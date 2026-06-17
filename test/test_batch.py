@@ -2,7 +2,7 @@
 
 import pytest
 
-from pyquiver import batch
+from pyquiver import batch, KIE_Calculation
 from pyquiver.batch import BatchResults
 
 CONFIG = ("gaussian", "claisen_demo.config")
@@ -78,3 +78,9 @@ def test_skodje_truhlar_column(files):
     by_iso = {r["name"]: r for r in results.to_records()}
     assert "skodje_truhlar" in by_iso["C1"]
     assert by_iso["C1"]["skodje_truhlar"] is not None
+
+    # the batch energy tuple is (reactant, ts, product); confirm it is mapped
+    # onto skodje_truhlar(reactant, product, ts) and not silently transposed
+    direct = KIE_Calculation(cfg, gs, ts).skodje_truhlar(
+        reactant_energy=0.0, product_energy=0.0, ts_energy=0.02)
+    assert by_iso["C1"]["skodje_truhlar"] == pytest.approx(direct["C1"])
